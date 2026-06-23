@@ -269,4 +269,30 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+       --
+-- Table structure for table `favorite`
+--
+
+DROP TABLE IF EXISTS `favorite`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `favorite` (
+                            `id` int NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                            `user_id` int NOT NULL COMMENT '用户ID',
+                            `article_id` int NOT NULL COMMENT '商品ID',
+                            `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
+                            PRIMARY KEY (`id`),
+                            UNIQUE KEY `uk_user_article` (`user_id`,`article_id`),
+                            KEY `idx_article_id` (`article_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商品收藏表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `favorite`
+--
+
+LOCK TABLES `favorite` WRITE;
+/*!40000 ALTER TABLE `favorite` DISABLE KEYS */;
+/*!40000 ALTER TABLE `favorite` ENABLE KEYS */;
+UNLOCK TABLES;
 -- Dump completed on 2026-06-23 17:18:55
