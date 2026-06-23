@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${article.id == null} ? '发布文章' : '编辑文章'">文章表单</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    h1 { color: #333; margin-bottom: 30px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #555; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    .form-group textarea { min-height: 200px; resize: vertical; }
+    .btn-group { display: flex; gap: 15px; margin-top: 30px; }
+    .btn-submit { flex: 1; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-cancel { flex: 1; padding: 12px; background: #909399; color: white; border: none; border-radius: 5px; cursor: pointer; text-align: center; text-decoration: none; display: inline-block; }
+    .hint-text { font-size: 12px; color: #999; margin-top: 5px; }
+
+    .checkbox-row {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .checkbox-item input {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .datetime-group {
+      display: none;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+    .datetime-group.show {
+      display: block;
+    }
+    .datetime-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #555;
+    }
+    .datetime-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 th:text="${article.id == null} ? '📝 发布文章' : '✏️ 编辑文章'"></h1>
+
+  <form action="/admin/articles/save" method="post">
+    <input type="hidden" name="id" th:value="${article.id}">
+
+    <div class="form-group">
+      <label>文章标题 *</label>
+      <input type="text" name="title" th:value="${article.title}" required>
+    </div>
+
+    <div class="form-group">
+      <label>文章内容 *</label>
+      <textarea name="content" required th:text="${article.content}"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>发布状态</label>
+      <select name="status" id="statusSelect">
+        <option value="1" th:selected="${article.status == 1}">📢 立即发布</option>
+        <option value="2" th:selected="${article.status == 2}">⏰ 定时发布</option>
+        <option value="0" th:selected="${article.status == 0}">📄 存为草稿</option>
+      </select>
+    </div>
+
+    <div class="datetime-group" id="scheduledTimeGroup">
+      <label>定时发布时间 <span style="color: red;">*</span></label>
+      <input type="datetime-local" name="publishedAt" id="publishedAt">
+      <div class="hint-text">⏰ 设置文章自动发布的时间（必须大于当前时间）</div>
+    </div>
+
+    <div id="optionsGroup">
+      <div class="checkbox-row">
+        <label class="checkbox-item">
+          <input type="checkbox" name="isTop" value="1" th:checked="${article.isTop == 1}">
+          <span>🔝 置顶文章</span>
+        </label>
+
+        <label class="checkbox-item">
+          <input type="checkbox" name="allowComment" value="1" th:checked="${article.allowComment == 1}">
+          <span>✅ 允许评论</span>
+        </label>
+
+        <label th:if="${article.id == null}" class="checkbox-item">
+          <input type="checkbox" name="sendEmail" value="1" th:checked="${article.sendEmail == 1}">
+          <span>📧 发送邮件通知</span>
+        </label>
+      </div>
+      <div class="hint-text">
+        💡 置顶文章会显示在首页最前面；开启评论后用户可发表评论；勾选邮件通知后发布时会发送邮件
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button type="submit" class="btn-submit">保存</button>
+      <a href="/admin/articles" class="btn-cancel">取消</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  var statusSelect = document.getElementById('statusSelect');
+  var scheduledTimeGroup = document.getElementById('scheduledTimeGroup');
+  var publishedAtInput = document.getElementById('publishedAt');
+  var optionsGroup = document.getElementById('optionsGroup');
+
+  function setDefaultDateTime() {
+    var now = new Date();
+    now.setMinutes(now.getMinutes() + 1);
+    var year = now.getFullYear();
+    var month = (now.getMonth() + 1).toString().padStart(2, '0');
+    var day = now.getDate().toString().padStart(2, '0');
+    var hours = now.getHours().toString().padStart(2, '0');
+    var minutes = now.getMinutes().toString().padStart(2, '0');
+    return year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+  }
+
+  function updateUI() {
+    var selectedStatus = statusSelect.value;
+
+    if (selectedStatus === '2') {
+      scheduledTimeGroup.style.display = 'block';
+      publishedAtInput.required = true;
+      if (!publishedAtInput.value) {
+        publishedAtInput.value = setDefaultDateTime();
+      }
+    } else {
+      scheduledTimeGroup.style.display = 'none';
+      publishedAtInput.required = false;
+      publishedAtInput.value = '';
+    }
+
+    if (selectedStatus === '0') {
+      optionsGroup.style.display = 'none';
+    } else {
+      optionsGroup.style.display = 'block';
+    }
+  }
+
+  statusSelect.addEventListener('change', updateUI);
+  updateUI();
+</script>
+</body>
+</html>

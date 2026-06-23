@@ -1,0 +1,249 @@
+package com.campus.trade.controller;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.campus.trade.entity.User;
+import com.campus.trade.service.AsyncService;
+import com.campus.trade.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Controller
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private AsyncService asyncService;
+
+    /**
+     * 用户列表页（普通页面）
+     */
+    @GetMapping("/users")
+    public String usersPage(Model model) {
+        model.addAttribute("users", userService.list());
+        return "users";
+    }
+
+    // ========== 注意：/admin/users 的管理功能已在 AdminController 中实现，这里不再重复 ==========
+
+    @GetMapping("/admin/users/add")
+    public String addUserPage(Model model) {
+        model.addAttribute("user", new User());
+        return "admin/user-form";
+    }
+
+    @GetMapping("/admin/users/edit/{id}")
+    public String editUserPage(@PathVariable Integer id, Model model) {
+        System.out.println("请求参数：第一次查询从数据库获取并保存，第二次从缓存中获取");
+        User user = userService.getById(id);
+        if (user == null) {
+            return "redirect:/admin/users";
+        }
+        model.addAttribute("user", user);
+        return "admin/user-form";
+    }
+
+    @PostMapping("/admin/users/save")
+    public String saveUser(User user) {
+        String operationType = "";
+        String username = user.getUsername();
+
+        if (user.getId() == null) {
+            user.setRole(0);
+            user.setStatus(1);
+            userService.save(user);
+            operationType = "新增用户";
+
+            asyncService.asyncLogOperation("admin", operationType, "用户名: " + username);
+            asyncService.asyncSendNotification(username, "欢迎注册", "感谢您注册校园交易平台");
+        } else {
+            if (user.getPassword() == null || user.getPassword().isEmpty()) {
+                User existing = userService.getById(user.getId());
+                if (existing != null) {
+                    user.setPassword(existing.getPassword());
+                }
+            }
+            userService.updateById(user);
+            operationType = "编辑用户";
+
+            asyncService.asyncLogOperation("admin", operationType, "用户ID: " + user.getId() + ", 用户名: " + user.getUsername());
+        }
+        return "redirect:/admin/users";
+    }
+
+    @GetMapping("/admin/users/delete/{id}")
+    public String deleteUser(@PathVariable Integer id) {
+        User user = userService.getById(id);
+        String username = user != null ? user.getUsername() : String.valueOf(id);
+        userService.removeById(id);
+
+        asyncService.asyncLogOperation("admin", "删除用户", "用户ID: " + id + ", 用户名: " + username);
+
+        return "redirect:/admin/users";
+    }
+
+    @GetMapping("/admin/users/batchDelete")
+    public String batchDelete(@RequestParam String ids) {
+        String[] idArray = ids.split(",");
+        for (String id : idArray) {
+            userService.removeById(Integer.parseInt(id));
+        }
+
+        asyncService.asyncLogOperation("admin", "批量删除用户", "删除用户ID列表: " + ids);
+
+        return "redirect:/admin/users";
+    }
+
+    @PostMapping("/admin/users/upload-avatar")
+    @ResponseBody
+    public Map<String, Object> uploadAvatar(@RequestParam("file") MultipartFile file,
+                                            @RequestParam("userId") Integer userId) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            if (file.isEmpty()) {
+                result.put("success", false);
+                result.put("message", "请选择要上传的图片");
+                return result;
+            }
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                result.put("success", false);
+                result.put("message", "只能上传图片文件");
+                return result;
+            }
+            if (file.getSize() > 5 * 1024 * 1024) {
+                result.put("success", false);
+                result.put("message", "图片大小不能超过 5MB");
+                return result;
+            }
+            String avatarPath = userService.uploadAvatar(file, userId);
+            result.put("success", true);
+            result.put("avatarPath", avatarPath);
+            result.put("message", "上传成功");
+
+            asyncService.asyncLogOperation("user_" + userId, "上传头像", "头像路径: " + avatarPath);
+
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "上传失败：" + e.getMessage());
+        }
+        return result;
+    }
+
+    @GetMapping("/api/users")
+    @ResponseBody
+    public List<User> listAll() {
+        return userService.list();
+    }
+
+    @GetMapping("/api/users/{id}")
+    @ResponseBody
+    public User getById(@PathVariable Integer id) {
+        return userService.getById(id);
+    }
+
+    @GetMapping("/api/users/username/{username}")
+    @ResponseBody
+    public User getByUsername(@PathVariable String username) {
+        return userService.getUserByUsername(username);
+    }
+
+    @GetMapping("/api/users/page")
+    @ResponseBody
+    public Page<User> getPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size) {
+        Page<User> page = new Page<>(current, size);
+        return userService.page(page);
+    }
+
+    @PostMapping("/api/users/login")
+    @ResponseBody
+    public User login(@RequestBody LoginRequest loginRequest) {
+        User user = userService.login(loginRequest.getUsername(), loginRequest.getPassword());
+
+        if (user != null) {
+            asyncService.asyncLogOperation(loginRequest.getUsername(), "用户登录", "登录成功");
+        } else {
+            asyncService.asyncLogOperation(loginRequest.getUsername(), "用户登录", "登录失败 - 用户名或密码错误");
+        }
+
+        return user;
+    }
+
+    @PostMapping("/api/users/register")
+    @ResponseBody
+    public boolean register(@RequestBody User user) {
+        boolean result = userService.register(user);
+
+        if (result) {
+            asyncService.asyncLogOperation(user.getUsername(), "用户注册", "注册成功");
+            asyncService.asyncSendNotification(user.getUsername(), "欢迎注册", "感谢您注册校园交易平台");
+        } else {
+            asyncService.asyncLogOperation(user.getUsername(), "用户注册", "注册失败");
+        }
+
+        return result;
+    }
+
+    @PostMapping("/api/users")
+    @ResponseBody
+    public boolean save(@RequestBody User user) {
+        boolean result = userService.save(user);
+
+        if (result) {
+            asyncService.asyncLogOperation("api", "新增用户", "用户名: " + user.getUsername());
+        }
+
+        return result;
+    }
+
+    @PutMapping("/api/users/{id}")
+    @ResponseBody
+    public boolean update(@PathVariable Integer id, @RequestBody User user) {
+        user.setId(id);
+        boolean result = userService.updateById(user);
+
+        if (result) {
+            asyncService.asyncLogOperation("api", "更新用户", "用户ID: " + id);
+        }
+
+        return result;
+    }
+
+    @DeleteMapping("/api/users/{id}")
+    @ResponseBody
+    public boolean delete(@PathVariable Integer id) {
+        User user = userService.getById(id);
+        String username = user != null ? user.getUsername() : String.valueOf(id);
+        boolean result = userService.removeById(id);
+
+        if (result) {
+            asyncService.asyncLogOperation("api", "删除用户", "用户ID: " + id + ", 用户名: " + username);
+        }
+
+        return result;
+    }
+
+    public static class LoginRequest {
+        private String username;
+        private String password;
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+    }
+}

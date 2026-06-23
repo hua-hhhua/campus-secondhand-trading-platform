@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        h1 { color: #333; font-size: 28px; margin: 0; }
+
+        .home-link { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 30px; font-size: 14px; transition: all 0.3s; }
+        .home-link:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .toolbar { display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 14px; }
+        .btn-primary { background-color: #409EFF; color: white; }
+        .btn-add { background-color: #67c23a; color: white; }
+        .btn-edit { background-color: #e6a23c; color: white; }
+        .btn-delete { background-color: #f56c6c; color: white; }
+        .btn-sm { padding: 4px 12px; font-size: 12px; }
+
+        .status-filter { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f5f7fa; font-weight: 600; white-space: nowrap; }
+        tr:hover { background-color: #f5f7fa; }
+
+        .title-cell { max-width: 200px; word-break: break-word; white-space: normal; }
+        .title-link { color: #333; text-decoration: none; font-weight: bold; display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .title-link:hover { color: #409EFF; text-decoration: underline; }
+
+        .summary-cell { max-width: 250px; word-break: break-word; white-space: normal; font-size: 13px; color: #666; }
+
+        .status-published { color: #67c23a; background: #e1f3d8; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
+        .status-draft { color: #e6a23c; background: #fdf6ec; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
+        .status-scheduled { color: #e6a23c; background: #fdf6ec; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
+
+        .top-badge { background-color: #ff9800; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 6px; display: inline-block; vertical-align: middle; }
+
+        .search-area { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .date-input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+
+        .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .pagination a, .pagination span { padding: 6px 12px; border: 1px solid #ddd; text-decoration: none; color: #333; border-radius: 4px; }
+        .pagination .active { background-color: #409EFF; color: white; border-color: #409EFF; }
+
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📝 文章管理</h1>
+        <a href="/" class="home-link">🏠 返回首页</a>
+    </div>
+
+    <div class="toolbar">
+        <div class="search-area">
+            <form method="get" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" name="keyword" placeholder="搜索标题或内容" th:value="${keyword}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;">
+                <select name="statusFilter" class="status-filter">
+                    <option value="">全部状态</option>
+                    <option value="1" th:selected="${statusFilter == 1}">已发布</option>
+                    <option value="0" th:selected="${statusFilter == 0}">草稿</option>
+                    <option value="2" th:selected="${statusFilter == 2}">定时发布</option>
+                </select>
+                <input type="date" name="startTime" class="date-input" th:value="${startTime != null ? #temporals.format(startTime, 'yyyy-MM-dd') : ''}" placeholder="开始时间">
+                <span>至</span>
+                <input type="date" name="endTime" class="date-input" th:value="${endTime != null ? #temporals.format(endTime, 'yyyy-MM-dd') : ''}" placeholder="结束时间">
+                <button type="submit" class="btn btn-primary">搜索</button>
+                <a href="/admin/articles" class="btn" style="background: #909399; color: white;">重置</a>
+            </form>
+        </div>
+        <a href="/admin/articles/form" class="btn btn-add">+ 发布文章</a>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>内容摘要</th>
+                <th>作者</th>
+                <th>分类</th>
+                <th>浏览量</th>
+                <th>状态</th>
+                <th>发布时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="article : ${articlePage.records}">
+                <td th:text="${article.id}">?</td>
+                <td class="title-cell">
+                    <a th:href="@{/article/{id}(id=${article.id})}" class="title-link" target="_blank" th:text="${article.title}">文章标题</a>
+                    <span th:if="${article.isTop == 1}" class="top-badge">置顶</span>
+                </td>
+                <td class="summary-cell" th:text="${#strings.abbreviate(article.content, 60)}">...</td>
+                <td th:text="${article.authorName != null ? article.authorName : '未知'}">作者</td>
+                <td th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类</td>
+                <td th:text="${article.viewCount}">0</td>
+                <td style="white-space: nowrap;">
+                    <span th:if="${article.status == 1}" class="status-published">✅ 已发布</span>
+                    <span th:if="${article.status == 0}" class="status-draft">📝 草稿</span>
+                    <span th:if="${article.status == 2}" class="status-scheduled">⏰ 定时发布</span>
+                </td>
+                <td th:text="${#temporals.format(article.createTime, 'yyyy-MM-dd HH:mm')}">?</td>
+                <td class="action-buttons">
+                    <a th:href="@{/admin/articles/form(id=${article.id})}" class="btn btn-edit btn-sm">编辑</a>
+                    <a th:href="@{/admin/articles/delete/{id}(id=${article.id})}" class="btn btn-delete btn-sm" onclick="return confirm('确定删除？')">删除</a>
+                </td>
+            </tr>
+            <tr th:if="${articlePage == null or articlePage.records.isEmpty()}">
+                <td colspan="9" style="text-align: center; color: #999; padding: 40px;">暂无文章数据</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" th:if="${articlePage != null and articlePage.pages > 1}">
+        <a th:if="${articlePage.hasPrevious}" th:href="@{/admin/articles(page=${articlePage.current-1}, size=10, keyword=${keyword}, statusFilter=${statusFilter}, startTime=${startTime}, endTime=${endTime})}">上一页</a>
+        <span th:unless="${articlePage.hasPrevious}" class="disabled" style="color:#ccc;">上一页</span>
+
+        <a th:each="i : ${#numbers.sequence(1, articlePage.pages)}"
+           th:classappend="${i == articlePage.current} ? 'active'"
+           th:text="${i}"
+           th:href="@{/admin/articles(page=${i}, size=10, keyword=${keyword}, statusFilter=${statusFilter}, startTime=${startTime}, endTime=${endTime})}">
+        </a>
+
+        <a th:if="${articlePage.hasNext}" th:href="@{/admin/articles(page=${articlePage.current+1}, size=10, keyword=${keyword}, statusFilter=${statusFilter}, startTime=${startTime}, endTime=${endTime})}">下一页</a>
+        <span th:unless="${articlePage.hasNext}" class="disabled" style="color:#ccc;">下一页</span>
+    </div>
+</div>
+</body>
+</html>
