@@ -3,6 +3,8 @@ package com.campus.trade.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @TableName("article")
@@ -17,19 +19,20 @@ public class Article {
     private Integer status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private LocalDateTime publishedAt;
+    private Integer isTop;
+    private Integer allowComment;
+    private Integer sendEmail;
+    private Integer categoryId;
 
-    // ========== 定时发布相关字段 ==========
-    private LocalDateTime publishedAt;  // 发布时间（用于定时发布）
-    private Integer isTop;               // 是否置顶 0-否 1-是
-
-    // ========== 允许评论字段 ==========
-    private Integer allowComment;        // 是否允许评论 0-不允许 1-允许
-
-    // ========== 是否发送邮件通知 ==========
-    private Integer sendEmail;           // 是否发送邮件通知 0-不发送 1-发送
-
-    // ========== 分类ID ==========
-    private Integer categoryId;          // 分类ID
+    // ========== 商品字段 ==========
+    private BigDecimal price;
+    private Integer stock;
+    private Integer schoolId;
+    private String location;
+    private String contactInfo;
+    private String coverImage;
+    private Integer productStatus;
 
     // ========== Getters and Setters ==========
     public Integer getId() { return id; }
@@ -60,20 +63,35 @@ public class Article {
     public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
 
     public Integer getIsTop() { return isTop; }
-    public void setIsTop(Integer isTop) {
-        this.isTop = isTop != null ? isTop : 0;
-    }
+    public void setIsTop(Integer isTop) { this.isTop = isTop; }
 
     public Integer getAllowComment() { return allowComment; }
-    public void setAllowComment(Integer allowComment) {
-        this.allowComment = allowComment != null ? allowComment : 0;
-    }
+    public void setAllowComment(Integer allowComment) { this.allowComment = allowComment; }
 
     public Integer getSendEmail() { return sendEmail; }
-    public void setSendEmail(Integer sendEmail) {
-        this.sendEmail = sendEmail != null ? sendEmail : 0;
-    }
+    public void setSendEmail(Integer sendEmail) { this.sendEmail = sendEmail; }
 
     public Integer getCategoryId() { return categoryId; }
     public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
+
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+
+    public Integer getStock() { return stock; }
+    public void setStock(Integer stock) { this.stock = stock; }
+
+    public Integer getSchoolId() { return schoolId; }
+    public void setSchoolId(Integer schoolId) { this.schoolId = schoolId; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public String getContactInfo() { return contactInfo; }
+    public void setContactInfo(String contactInfo) { this.contactInfo = contactInfo; }
+
+    public String getCoverImage() { return coverImage; }
+    public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
+
+    public Integer getProductStatus() { return productStatus; }
+    public void setProductStatus(Integer productStatus) { this.productStatus = productStatus; }
 }

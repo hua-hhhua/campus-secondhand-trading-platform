@@ -4,9 +4,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.campus.trade.constant.ArticleStatus;
 import com.campus.trade.entity.Article;
 import com.campus.trade.entity.ArticleVO;
+import com.campus.trade.entity.Category;
+import com.campus.trade.entity.School;
 import com.campus.trade.entity.User;
 import com.campus.trade.service.ArticleService;
 import com.campus.trade.service.AsyncService;
+import com.campus.trade.service.CategoryService;
+import com.campus.trade.service.SchoolService;
 import com.campus.trade.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin/articles")
@@ -29,6 +34,12 @@ public class ArticleController {
 
     @Autowired
     private AsyncService asyncService;
+
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private SchoolService schoolService;
 
     @GetMapping
     public String articlesEntry(
@@ -62,6 +73,14 @@ public class ArticleController {
 
     @GetMapping("/form")
     public String articleForm(@RequestParam(required = false) Integer id, Model model, HttpSession session) {
+        // 获取分类列表
+        List<Category> categories = categoryService.list();
+        model.addAttribute("categories", categories);
+
+        // 获取学校列表
+        List<School> schools = schoolService.list();
+        model.addAttribute("schools", schools);
+
         if (id != null) {
             Article article = articleService.getById(id);
             if (article.getSendEmail() == null) {
@@ -105,12 +124,12 @@ public class ArticleController {
                 if (article.getStatus() == ArticleStatus.SCHEDULED) {
                     statusDesc = "定时发布";
                 } else if (article.getStatus() == ArticleStatus.PUBLISHED) {
-                    statusDesc = "发布文章";
+                    statusDesc = "发布商品";
                 } else {
                     statusDesc = "保存草稿";
                 }
             }
-            asyncService.asyncLogOperation(currentUser.getUsername(), statusDesc, "文章标题: " + article.getTitle());
+            asyncService.asyncLogOperation(currentUser.getUsername(), statusDesc, "商品标题: " + article.getTitle());
 
             if (article.getStatus() != null && article.getStatus() == ArticleStatus.PUBLISHED) {
                 asyncService.asyncUpdateArticleStats(article.getId(), "publish");
@@ -128,7 +147,7 @@ public class ArticleController {
         if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
             String articleTitle = article.getTitle();
             articleService.deleteArticle(id);
-            asyncService.asyncLogOperation(currentUser.getUsername(), "删除文章", "文章ID: " + id + ", 标题: " + articleTitle);
+            asyncService.asyncLogOperation(currentUser.getUsername(), "删除商品", "商品ID: " + id + ", 标题: " + articleTitle);
         }
         return "redirect:/admin/articles";
     }

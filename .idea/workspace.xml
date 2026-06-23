@@ -4,211 +4,59 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7fd663db-3713-44ec-8292-01f135e5ebd6" name="Changes" comment="" />
+    <list default="true" id="8799836d-c57b-43dd-a1da-c3e1cb8e813e" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/Article.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/Article.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/admin/article-form.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/admin/article-form.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="HTML File" />
-        <option value="Interface" />
-        <option value="Class" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/src/main/resources/i18n/messages.properties" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 6
-}</component>
-  <component name="ProjectId" id="3BIavTqUOzjMGGwE78F8tIoEu0I" />
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 7
+}]]></component>
+  <component name="ProjectId" id="3FXFCYswOwaYSyb6ZCTgqI5026e" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "D:/viours apps/app files/Tencent Files/1538292542/FileRecv/23软件3/第七章/campus-trade/src/main/java/com/campus/trade/service",
+    "git-widget-placeholder": "商品模块",
+    "last_opened_file_path": "D:/viours apps/app files/Tencent Files/1538292542/FileRecv/23软件3/第七章/campus-trade/campus-trade",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
-  },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql"
-    ]
   }
 }]]></component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\viours apps\app files\Tencent Files\1538292542\FileRecv\23软件3\第七章\campus-trade\src\main\java\com\campus\trade\service" />
-      <recent name="D:\viours apps\app files\Tencent Files\1538292542\FileRecv\23软件3\第七章\campus-trade\src\main\java\com\campus\trade\entity" />
-      <recent name="D:\viours apps\app files\Tencent Files\1538292542\FileRecv\23软件3\第七章\campus-trade\src\main\java\com\campus\trade\controller" />
-      <recent name="D:\viours apps\app files\Tencent Files\1538292542\FileRecv\23软件3\第七章\campus-trade\src\main\java\com\campus\trade\config" />
-    </key>
-  </component>
-  <component name="RunManager" selected="Spring Boot.CampusTradeApplication">
-    <configuration name="UserMapperTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="xiehh_campus_trade" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.campus.trade.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.campus.trade" />
-      <option name="MAIN_CLASS_NAME" value="com.campus.trade.UserMapperTest" />
-      <option name="TEST_OBJECT" value="class" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="UserMapperTest.saveUserTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="xiehh_campus_trade" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.campus.trade.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.campus.trade" />
-      <option name="MAIN_CLASS_NAME" value="com.campus.trade.UserMapperTest" />
-      <option name="METHOD_NAME" value="saveUserTest" />
-      <option name="TEST_OBJECT" value="method" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="CampusTradeApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-      <module name="xiehh_campus_trade" />
-      <option name="SPRING_BOOT_MAIN_CLASS" value="com.campus.trade.CampusTradeApplication" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="CampusTradeApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-      <module name="campus_trade" />
-      <option name="SPRING_BOOT_MAIN_CLASS" value="com.campus.trade.CampusTradeApplication" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="JUnit.UserMapperTest" />
-        <item itemvalue="JUnit.UserMapperTest.saveUserTest" />
-      </list>
-    </recent_temporary>
-  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="7fd663db-3713-44ec-8292-01f135e5ebd6" name="Changes" comment="" />
-      <created>1774179271753</created>
+      <changelist id="8799836d-c57b-43dd-a1da-c3e1cb8e813e" name="Changes" comment="" />
+      <created>1782213379683</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1774179271753</updated>
-      <workItem from="1774179272798" duration="1828000" />
-      <workItem from="1774181112105" duration="1701000" />
-      <workItem from="1774190752780" duration="329000" />
-      <workItem from="1774607806513" duration="4709000" />
-      <workItem from="1775095954059" duration="420000" />
-      <workItem from="1775619166104" duration="649000" />
-      <workItem from="1775653185814" duration="352000" />
-      <workItem from="1775654555842" duration="527000" />
-      <workItem from="1775655098335" duration="893000" />
-      <workItem from="1775656097218" duration="7347000" />
-      <workItem from="1775700788489" duration="3423000" />
-      <workItem from="1776266966046" duration="1166000" />
-      <workItem from="1776306336374" duration="1053000" />
-      <workItem from="1776309752657" duration="1125000" />
-      <workItem from="1776319738449" duration="1997000" />
-      <workItem from="1776321876494" duration="105000" />
-      <workItem from="1777469851345" duration="8310000" />
-      <workItem from="1777508950936" duration="4175000" />
-      <workItem from="1777721905692" duration="131000" />
-      <workItem from="1778514934037" duration="2424000" />
-      <workItem from="1778547949847" duration="7759000" />
-      <workItem from="1778632391342" duration="4610000" />
-      <workItem from="1779205205309" duration="1412000" />
-      <workItem from="1779280974863" duration="1550000" />
-      <workItem from="1779282564317" duration="65000" />
-      <workItem from="1779283448818" duration="4089000" />
-      <workItem from="1779287681993" duration="190000" />
-      <workItem from="1779287893641" duration="155000" />
-      <workItem from="1779329056174" duration="2366000" />
-      <workItem from="1779793517935" duration="7070000" />
-      <workItem from="1779847306729" duration="348000" />
-      <workItem from="1779883832915" duration="7610000" />
-      <workItem from="1779897646421" duration="4883000" />
-      <workItem from="1779935080708" duration="6080000" />
-      <workItem from="1780495712186" duration="4797000" />
-      <workItem from="1780539559962" duration="3543000" />
-      <workItem from="1780905807141" duration="407000" />
-      <workItem from="1780906255195" duration="554000" />
-      <workItem from="1782194883703" duration="1835000" />
-      <workItem from="1782202102774" duration="300000" />
+      <updated>1782213379683</updated>
+      <workItem from="1782213380896" duration="1206000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-method">
-          <url>file://$PROJECT_DIR$/src/test/java/com/campus/trade/UserMapperTest.java</url>
-          <line>17</line>
-          <properties class="com.campus.trade.UserMapperTest" method="saveUserTest">
-            <option name="EMULATED" value="true" />
-            <option name="WATCH_EXIT" value="false" />
-          </properties>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/campus/trade/config/RedisConfig.java</url>
-          <line>22</line>
-          <option name="timeStamp" value="5" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/campus/trade/config/SecurityConfig.java</url>
-          <line>131</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/campus/trade/service/AsyncService.java</url>
-          <line>44</line>
-          <option name="timeStamp" value="8" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
-  </component>
-  <component name="XSLT-Support.FileAssociations.UIState">
-    <expand />
-    <select />
   </component>
 </project>
