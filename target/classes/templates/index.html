@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>校园交易平台 - 首页</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; }
+
+    .navbar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .navbar h1 { font-size: 24px; }
+    .navbar a { color: white; text-decoration: none; }
+
+    .user-info { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .login-btn, .logout-btn {
+      padding: 8px 20px;
+      background-color: rgba(255,255,255,0.2);
+      border: 1px solid white;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .login-btn:hover, .logout-btn:hover { background-color: rgba(255,255,255,0.3); }
+
+    .role-badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    .role-admin { background-color: #e74c3c; color: white; }
+    .role-user { background-color: #95a5a6; color: white; }
+    .admin-link { color: #f1c40f !important; text-decoration: none; margin-left: 10px; }
+    .admin-link:hover { text-decoration: underline; }
+    .article-link { color: #3498db !important; text-decoration: none; margin-left: 10px; }
+    .article-link:hover { text-decoration: underline; }
+
+    .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+    .welcome-card {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    .welcome-card h2 { color: #333; margin-bottom: 15px; }
+    .welcome-card p { color: #666; font-size: 16px; }
+
+    .articles-section {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .articles-section h3 {
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+      display: inline-block;
+    }
+
+    .search-bar { margin: 20px 0; display: flex; gap: 10px; }
+    .search-input {
+      flex: 1;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .search-btn {
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .search-btn:hover { opacity: 0.9; }
+    .clear-btn {
+      padding: 12px 20px;
+      background: #909399;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .clear-btn:hover { background: #a6a9ad; }
+
+    .article-list { list-style: none; margin-top: 20px; }
+    .article-item {
+      padding: 20px 0;
+      border-bottom: 1px solid #eee;
+      transition: all 0.3s ease;
+    }
+    .article-item:hover { background-color: #f9f9f9; padding-left: 10px; }
+
+    .article-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+    .article-title a { color: #333; text-decoration: none; transition: color 0.3s; }
+    .article-title a:hover { color: #667eea; }
+
+    .top-badge {
+      background-color: #ff9800;
+      color: white;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-left: 10px;
+    }
+
+    .article-meta { font-size: 13px; color: #999; margin-bottom: 8px; }
+    .article-meta span { margin-right: 15px; }
+
+    .article-meta .author-name { color: #667eea; font-weight: bold; }
+    .article-meta .category-name { color: #e74c3c; font-weight: bold; }
+
+    .article-summary { font-size: 14px; color: #666; line-height: 1.5; }
+
+    .no-articles { text-align: center; padding: 40px; color: #999; }
+    .no-articles p { font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<div class="navbar">
+  <h1>🏫 校园交易平台</h1>
+  <div class="user-info">
+    <div th:if="${username == null and session.username == null}">
+      <a href="/toLoginPage" class="login-btn">登录</a>
+    </div>
+    <div th:unless="${username == null and session.username == null}">
+      <img th:src="${userAvatar != null ? userAvatar : (session.userAvatar != null ? session.userAvatar : '/avatars/default.png')}" alt="头像" class="user-avatar">
+      <span th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>
+      <span th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="role-badge role-admin">管理员</span>
+      <span th:if="${userRole == 'USER' or session.userRole == 'USER'}" class="role-badge role-user">普通用户</span>
+      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/users" class="admin-link">👑 用户管理</a>
+      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/articles" class="admin-link">📝 文章管理</a>
+      <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/admin/articles" class="article-link">✏️ 我的文章</a>
+      <form th:action="@{/logout}" method="post" style="display: inline;">
+        <button type="submit" class="logout-btn">退出</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 主要内容 -->
+<div class="container">
+
+  <!-- 欢迎卡片 -->
+  <div class="welcome-card">
+    <h2 th:if="${username == null and session.username == null}">欢迎来到校园交易平台</h2>
+    <h2 th:unless="${username == null and session.username == null}">欢迎回来，<span th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>！</h2>
+    <p>这是一个校园二手交易平台，同学们可以在这里发布和浏览二手商品信息。</p>
+    <p style="margin-top: 10px;">请使用上方导航栏进行登录或查看更多功能。</p>
+  </div>
+
+  <!-- 最新文章列表 -->
+  <div class="articles-section">
+    <h3>📰 最新文章</h3>
+
+    <!-- 搜索框 -->
+    <div class="search-bar">
+      <form th:action="@{/}" method="get" style="display: flex; gap: 10px; width: 100%;">
+        <input type="text" name="keyword" class="search-input" placeholder="🔍 搜索文章标题或内容..." th:value="${keyword}">
+        <button type="submit" class="search-btn">搜索</button>
+        <a th:href="@{/}" class="clear-btn" th:if="${keyword != null and keyword != ''}">清除</a>
+      </form>
+    </div>
+
+    <!-- 文章列表 -->
+    <div th:if="${articles == null or #lists.isEmpty(articles)}" class="no-articles">
+      <p>📭 暂无文章，敬请期待！</p>
+    </div>
+
+    <div th:unless="${articles == null or #lists.isEmpty(articles)}">
+      <ul class="article-list">
+        <li th:each="article : ${articles}" class="article-item">
+          <div class="article-title">
+            <a th:href="@{/article/{id}(id=${article.id})}" th:text="${article.title}">文章标题</a>
+            <span th:if="${article.isTop == 1}" class="top-badge">置顶</span>
+          </div>
+          <div class="article-meta">
+            <span>📅 发布时间：<span th:text="${article.publishedAt != null ? #temporals.format(article.publishedAt, 'yyyy-MM-dd HH:mm') : '未知'}">2024-01-01 00:00</span></span>
+            <span>👁️ 阅读量：<span th:text="${article.viewCount != null ? article.viewCount : 0}">0</span></span>
+            <span>✍️ 作者：<strong class="author-name" th:text="${article.authorName != null ? article.authorName : '未知'}">作者名</strong></span>
+            <span>📁 分类：<strong class="category-name" th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类名</strong></span>
+            <span th:if="${article.allowComment == 1}">💬 允许评论</span>
+            <span th:if="${article.allowComment == 0}" style="color: #ccc;">🔇 禁止评论</span>
+          </div>
+          <div class="article-summary" th:text="${article.content != null ? #strings.abbreviate(article.content, 150) : '暂无摘要'}">
+            文章摘要...
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的文章</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    h1 { color: #333; margin-bottom: 30px; border-left: 4px solid #f39c12; padding-left: 15px; }
+    .toolbar { display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }
+    .btn-primary { background-color: #409EFF; color: white; }
+    .btn-add { background-color: #f39c12; color: white; }
+    .btn-edit { background-color: #e6a23c; color: white; }
+    .btn-delete { background-color: #f56c6c; color: white; }
+    .btn-sm { padding: 4px 8px; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background-color: #f5f7fa; font-weight: 600; }
+    tr:hover { background-color: #f5f7fa; }
+    .search-form { display: flex; gap: 10px; align-items: center; }
+    .search-form input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 250px; }
+    .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+    .pagination a, .pagination span { padding: 6px 12px; border: 1px solid #ddd; text-decoration: none; color: #333; border-radius: 4px; }
+    .pagination .active { background-color: #f39c12; color: white; border-color: #f39c12; }
+    .status-published { color: #67c23a; }
+    .status-draft { color: #e6a23c; }
+    .title-link { color: #333; text-decoration: none; font-weight: bold; }
+    .title-link:hover { color: #f39c12; text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>✏️ 我的文章</h1>
+
+  <div class="toolbar">
+    <form class="search-form" method="get">
+      <input type="text" name="keyword" placeholder="搜索我的文章标题或内容" th:value="${keyword}">
+      <button type="submit" class="btn btn-primary">搜索</button>
+    </form>
+    <a href="/admin/articles/form" class="btn btn-add">+ 发布文章</a>
+  </div>
+
+  <div th:if="${articlePage != null and !articlePage.records.isEmpty()}">
+    <table>
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>标题</th>
+        <th>内容摘要</th>
+        <th>浏览量</th>
+        <th>状态</th>
+        <th>发布时间</th>
+        <th>操作</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="article : ${articlePage.records}">
+        <td th:text="${article.id}">?</td>
+        <td>
+          <a th:href="@{/article/{id}(id=${article.id})}" class="title-link" target="_blank" th:text="${article.title}">文章标题</a>
+        </td>
+        <td th:text="${#strings.abbreviate(article.content, 50)}">...</td>
+        <td th:text="${article.viewCount}">0</td>
+        <td>
+          <span th:if="${article.status == 1}" class="status-published">✅ 已发布</span>
+          <span th:if="${article.status == 0}" class="status-draft">📝 草稿</span>
+          <span th:if="${article.status == 2}" class="status-draft">⏰ 定时发布</span>
+        </td>
+        <td th:text="${#temporals.format(article.createTime, 'yyyy-MM-dd HH:mm')}">?</td>
+        <td>
+          <a th:href="@{/admin/articles/form(id=${article.id})}" class="btn btn-edit btn-sm">编辑</a>
+          <a th:href="@{/admin/articles/delete/{id}(id=${article.id})}" class="btn btn-delete btn-sm" onclick="return confirm('确定删除这篇文章吗？')">删除</a>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <!-- 分页 -->
+    <div class="pagination" th:if="${articlePage != null and articlePage.pages > 1}">
+      <a th:if="${articlePage.hasPrevious}" th:href="@{/admin/articles(page=${articlePage.current-1}, size=10, keyword=${keyword})}">上一页</a>
+      <span th:each="i : ${#numbers.sequence(1, articlePage.pages)}"
+            th:classappend="${i == articlePage.current} ? 'active'"
+            th:text="${i}"
+            th:href="@{/admin/articles(page=${i}, size=10, keyword=${keyword})}"></span>
+      <a th:if="${articlePage.hasNext}" th:href="@{/admin/articles(page=${articlePage.current+1}, size=10, keyword=${keyword})}">下一页</a>
+    </div>
+  </div>
+
+  <div th:if="${articlePage == null or articlePage.records.isEmpty()}" style="text-align: center; padding: 40px; color: #999;">
+    📭 暂无文章，点击"发布文章"开始创作吧！
+  </div>
+</div>
+</body>
+</html>
