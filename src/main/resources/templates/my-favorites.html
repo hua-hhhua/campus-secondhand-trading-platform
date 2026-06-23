@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的收藏</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 { font-size: 24px; }
+        .navbar a { color: white; text-decoration: none; }
+
+        .user-info { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .login-btn, .logout-btn {
+            padding: 8px 20px;
+            background-color: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .login-btn:hover, .logout-btn:hover { background-color: rgba(255,255,255,0.3); }
+
+        .role-badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .role-admin { background-color: #e74c3c; color: white; }
+        .role-user { background-color: #95a5a6; color: white; }
+        .admin-link { color: #f1c40f !important; text-decoration: none; margin-left: 10px; }
+        .admin-link:hover { text-decoration: underline; }
+        .article-link { color: #3498db !important; text-decoration: none; margin-left: 10px; }
+        .article-link:hover { text-decoration: underline; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .header-section h2 {
+            color: #333;
+            border-left: 4px solid #e74c3c;
+            padding-left: 15px;
+        }
+        .header-section a {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .header-section a:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .articles-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .articles-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e74c3c;
+            display: inline-block;
+        }
+
+        .article-list { list-style: none; margin-top: 20px; }
+        .article-item {
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+        .article-item:hover { background-color: #f9f9f9; padding-left: 10px; }
+
+        .article-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+        .article-title a { color: #333; text-decoration: none; transition: color 0.3s; }
+        .article-title a:hover { color: #667eea; }
+
+        .top-badge {
+            background-color: #ff9800;
+            color: white;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 10px;
+        }
+
+        .article-meta { font-size: 13px; color: #999; margin-bottom: 8px; }
+        .article-meta span { margin-right: 15px; }
+
+        .article-meta .author-name { color: #667eea; font-weight: bold; }
+        .article-meta .category-name { color: #e74c3c; font-weight: bold; }
+
+        .article-summary { font-size: 14px; color: #666; line-height: 1.5; }
+
+        .no-articles { text-align: center; padding: 40px; color: #999; }
+        .no-articles p { font-size: 16px; }
+
+        .price-tag {
+            background: #ff6b6b;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .stock-tag {
+            background: #4ecdc4;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .unfavorite-btn {
+            padding: 4px 12px;
+            background: #f56c6c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .unfavorite-btn:hover { background: #f78989; }
+        .unfavorite-btn.loading {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .pagination a, .pagination span {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #333;
+            border-radius: 4px;
+        }
+        .pagination .active {
+            background-color: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<div class="navbar">
+    <h1>🏫 校园交易平台</h1>
+    <div class="user-info">
+        <div th:if="${username == null and session.username == null}">
+            <a href="/toLoginPage" class="login-btn">登录</a>
+        </div>
+        <div th:unless="${username == null and session.username == null}">
+            <img th:src="${userAvatar != null ? userAvatar : (session.userAvatar != null ? session.userAvatar : '/avatars/default.png')}" alt="头像" class="user-avatar">
+            <span th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>
+            <span th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="role-badge role-admin">管理员</span>
+            <span th:if="${userRole == 'USER' or session.userRole == 'USER'}" class="role-badge role-user">普通用户</span>
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/users" class="admin-link">👑 用户管理</a>
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/articles" class="admin-link">📝 商品管理</a>
+            <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/admin/articles" class="article-link">✏️ 发布商品</a>
+            <a href="/favorites/my" class="article-link" style="color: #f1c40f !important;">❤️ 我的收藏</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">退出</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 主要内容 -->
+<div class="container">
+    <div class="header-section">
+        <h2>❤️ 我的收藏</h2>
+        <a href="/">← 返回首页</a>
+    </div>
+
+    <!-- 收藏商品列表 -->
+    <div class="articles-section">
+        <h3>📦 收藏的商品</h3>
+
+        <div th:if="${favorites == null or #lists.isEmpty(favorites)}" class="no-articles">
+            <p>📭 还没有收藏任何商品，去逛逛吧！</p>
+        </div>
+
+        <div th:unless="${favorites == null or #lists.isEmpty(favorites)}">
+            <ul class="article-list">
+                <li th:each="article : ${favorites}" class="article-item">
+                    <div class="article-title">
+                        <a th:href="@{/article/{id}(id=${article.id})}" th:text="${article.title}">商品标题</a>
+                        <span th:if="${article.isTop == 1}" class="top-badge">置顶</span>
+                        <span class="price-tag" th:text="'¥' + ${article.price}">¥0</span>
+                        <span class="stock-tag" th:text="'库存：' + ${article.stock}">库存：0</span>
+                    </div>
+                    <div class="article-meta">
+                        <span>📅 发布时间：<span th:text="${article.publishedAt != null ? #temporals.format(article.publishedAt, 'yyyy-MM-dd HH:mm') : '未知'}">2024-01-01 00:00</span></span>
+                        <span>👁️ 阅读量：<span th:text="${article.viewCount != null ? article.viewCount : 0}">0</span></span>
+                        <span>✍️ 作者：<strong class="author-name" th:text="${article.authorName != null ? article.authorName : '未知'}">作者名</strong></span>
+                        <span>📁 分类：<strong class="category-name" th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类名</strong></span>
+                        <span th:if="${article.allowComment == 1}">💬 允许评论</span>
+                        <span th:if="${article.allowComment == 0}" style="color: #ccc;">🔇 禁止评论</span>
+                        <!-- 取消收藏按钮 - 使用 data-* 属性 -->
+                        <button class="unfavorite-btn" th:data-article-id="${article.id}">取消收藏</button>
+                    </div>
+                    <div class="article-summary" th:text="${article.content != null ? #strings.abbreviate(article.content, 150) : '暂无描述'}">商品描述...</div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 页面加载完成后绑定取消收藏事件
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取所有取消收藏按钮
+        var buttons = document.querySelectorAll('.unfavorite-btn');
+        console.log('找到取消收藏按钮数量：', buttons.length);
+
+        buttons.forEach(function(btn) {
+            var articleId = btn.getAttribute('data-article-id');
+            console.log('绑定取消收藏事件，商品ID：', articleId);
+
+            btn.addEventListener('click', function() {
+                // 获取正确的 articleId
+                var id = this.getAttribute('data-article-id');
+                unfavorite(id, this);
+            });
+        });
+    });
+
+    function unfavorite(articleId, btn) {
+        console.log('点击取消收藏，商品ID：', articleId);
+
+        if (!articleId || articleId === 'null' || articleId === '') {
+            alert('商品ID不存在，请刷新页面重试');
+            return;
+        }
+
+        if (!confirm('确定要取消收藏该商品吗？')) {
+            return;
+        }
+
+        // 显示加载状态
+        btn.classList.add('loading');
+        var originalText = btn.textContent;
+
+        fetch('/favorites/toggle?articleId=' + articleId, {
+            method: 'POST'
+        })
+            .then(function(res) {
+                console.log('响应状态：', res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                console.log('返回数据：', data);
+                btn.classList.remove('loading');
+
+                if (data.needLogin) {
+                    alert('请先登录');
+                    window.location.href = '/toLoginPage';
+                    return;
+                }
+
+                if (data.success) {
+                    alert('已取消收藏');
+                    // 刷新页面更新收藏列表
+                    location.reload();
+                } else {
+                    alert(data.message || '操作失败，请重试');
+                    btn.textContent = originalText;
+                }
+            })
+            .catch(function(err) {
+                console.error('错误：', err);
+                btn.classList.remove('loading');
+                btn.textContent = originalText;
+                alert('网络错误，请检查网络连接后重试');
+            });
+    }
+</script>
+
+</body>
+</html>

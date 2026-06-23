@@ -1,10 +1,8 @@
 package com.campus.trade.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 文章扩展实体类（用于多表查询）
- */
 public class ArticleVO {
 
     private Integer id;
@@ -21,14 +19,26 @@ public class ArticleVO {
     private Integer sendEmail;
     private Integer categoryId;
 
-    // 扩展字段（关联查询）
-    private String authorName;      // 作者昵称
-    private String authorAvatar;    // 作者头像
-    private String categoryName;    // 分类名称
-    private String categorySlug;    // 分类别名
+    // ========== 扩展字段 ==========
+    private String authorName;
+    private String authorAvatar;
+    private String categoryName;
+    private String categorySlug;
+
+    // ========== 商品字段 ==========
+    private BigDecimal price;
+    private Integer stock;
+    private Integer schoolId;
+    private String location;
+    private String coverImage;
+    private Integer productStatus;   // 0:在售 1:已售 2:已下架
+
+    // ========== 联系方式 ==========
+    private String wechat;
+    private String qq;
+    private String phone;
 
     // ========== Getters and Setters ==========
-
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -68,7 +78,23 @@ public class ArticleVO {
     public Integer getCategoryId() { return categoryId; }
     public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
 
-    // ========== 扩展字段的 Getters and Setters ==========
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+
+    public Integer getStock() { return stock; }
+    public void setStock(Integer stock) { this.stock = stock; }
+
+    public Integer getSchoolId() { return schoolId; }
+    public void setSchoolId(Integer schoolId) { this.schoolId = schoolId; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public String getCoverImage() { return coverImage; }
+    public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
+
+    public Integer getProductStatus() { return productStatus; }
+    public void setProductStatus(Integer productStatus) { this.productStatus = productStatus; }
 
     public String getAuthorName() { return authorName; }
     public void setAuthorName(String authorName) { this.authorName = authorName; }
@@ -81,4 +107,13 @@ public class ArticleVO {
 
     public String getCategorySlug() { return categorySlug; }
     public void setCategorySlug(String categorySlug) { this.categorySlug = categorySlug; }
+
+    public String getWechat() { return wechat; }
+    public void setWechat(String wechat) { this.wechat = wechat; }
+
+    public String getQq() { return qq; }
+    public void setQq(String qq) { this.qq = qq; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 }

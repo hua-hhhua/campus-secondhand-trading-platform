@@ -1,11 +1,13 @@
 package com.campus.trade.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @TableName("article")
 public class Article {
@@ -30,9 +32,17 @@ public class Article {
     private Integer stock;
     private Integer schoolId;
     private String location;
-    private String contactInfo;
     private String coverImage;
     private Integer productStatus;
+
+    // ========== 联系方式 ==========
+    private String wechat;
+    private String qq;
+    private String phone;
+
+    // ========== 标签ID列表（不存数据库） ==========
+    @TableField(exist = false)
+    private List<Integer> tagIds;
 
     // ========== Getters and Setters ==========
     public Integer getId() { return id; }
@@ -86,12 +96,21 @@ public class Article {
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
 
-    public String getContactInfo() { return contactInfo; }
-    public void setContactInfo(String contactInfo) { this.contactInfo = contactInfo; }
-
     public String getCoverImage() { return coverImage; }
     public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
 
     public Integer getProductStatus() { return productStatus; }
     public void setProductStatus(Integer productStatus) { this.productStatus = productStatus; }
+
+    public String getWechat() { return wechat; }
+    public void setWechat(String wechat) { this.wechat = wechat; }
+
+    public String getQq() { return qq; }
+    public void setQq(String qq) { this.qq = qq; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public List<Integer> getTagIds() { return tagIds; }
+    public void setTagIds(List<Integer> tagIds) { this.tagIds = tagIds; }
 }

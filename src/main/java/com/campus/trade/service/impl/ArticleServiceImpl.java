@@ -8,17 +8,27 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.campus.trade.constant.ArticleStatus;
 import com.campus.trade.entity.Article;
 import com.campus.trade.entity.ArticleResultMapVO;
+import com.campus.trade.entity.ArticleTag;
 import com.campus.trade.entity.ArticleVO;
 import com.campus.trade.mapper.ArticleMapper;
+import com.campus.trade.mapper.ArticleTagMapper;
 import com.campus.trade.service.ArticleNotificationProducer;
 import com.campus.trade.service.ArticleService;
 import com.campus.trade.service.AsyncService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import cn.hutool.core.util.StrUtil;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements ArticleService {
@@ -28,6 +38,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Autowired
     private AsyncService asyncService;
+
+    @Autowired
+    private ArticleTagMapper articleTagMapper;
+
+    @Value("${file.upload.path:./uploads}")
+    private String uploadPath;
 
     @Override
     public IPage<Article> findAllPage(Integer page, Integer size, String keyword) {
@@ -160,6 +176,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     // ========== 新增方法 ==========
 
     @Override
+    @Transactional
     public boolean saveOrUpdateArticle(Article article, Integer currentUserId) {
         article.setUserId(currentUserId);
 
@@ -184,11 +201,19 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             return false;
         }
 
+        boolean result;
         if (article.getId() == null) {
-            return doCreateArticle(article);
+            result = doCreateArticle(article);
         } else {
-            return doUpdateArticle(article);
+            result = doUpdateArticle(article);
         }
+
+        // ========== 保存标签关联 ==========
+        if (result && article.getId() != null) {
+            saveArticleTags(article.getId(), article.getTagIds());
+        }
+
+        return result;
     }
 
     private boolean doCreateArticle(Article article) {
@@ -326,13 +351,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public List<ArticleVO> getPublishedArticleVOsForHome(String keyword) {
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
-        // 只查询已发布的文章 - 加表别名 a.
+        // 只查询已发布的文章
         wrapper.eq("a.status", ArticleStatus.PUBLISHED);
 
-        // 发布时间不超过当前时间 - 加表别名 a.
+        // ========== 只查询在售商品 ==========
+        wrapper.eq("a.product_status", 0);  // 0=在售
+
+        // 发布时间不超过当前时间
         wrapper.le("a.published_at", LocalDateTime.now());
 
-        // 关键字搜索 - 加表别名 a.
+        // 关键字搜索
         if (StrUtil.isNotBlank(keyword)) {
             wrapper.and(w -> w.like("a.title", keyword)
                     .or()
@@ -341,11 +369,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                     .like("a.summary", keyword));
         }
 
-        // 排序：置顶降序、发布时间降序 - 加表别名 a.
+        // 排序：置顶降序、发布时间降序
         wrapper.orderByDesc("a.is_top")
                 .orderByDesc("a.published_at");
 
-        // 使用JOIN查询，直接返回ArticleVO列表
         Page<ArticleVO> page = new Page<>(1, 100);
         IPage<ArticleVO> result = baseMapper.selectArticleVOPage(page, wrapper);
 
@@ -384,6 +411,64 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return baseMapper.selectArticleResultMapVOs(pageParam, queryWrapper);
     }
 
+    // ========== 标签关联方法 ==========
+
+    @Override
+    public List<Integer> getTagIdsByArticleId(Integer articleId) {
+        return articleTagMapper.selectTagIdsByArticleId(articleId);
+    }
+
+    @Override
+    @Transactional
+    public void saveArticleTags(Integer articleId, List<Integer> tagIds) {
+        // 先删除旧的关联
+        LambdaQueryWrapper<ArticleTag> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ArticleTag::getArticleId, articleId);
+        articleTagMapper.delete(wrapper);
+
+        // 插入新的关联
+        if (tagIds != null && !tagIds.isEmpty()) {
+            for (Integer tagId : tagIds) {
+                ArticleTag articleTag = new ArticleTag();
+                articleTag.setArticleId(articleId);
+                articleTag.setTagId(tagId);
+                articleTagMapper.insert(articleTag);
+            }
+        }
+    }
+
+    // ========== 图片上传方法 ==========
+
+    @Override
+    public String uploadCoverImage(MultipartFile file, Integer userId) {
+        try {
+            // 创建目录
+            Path uploadDir = Paths.get(uploadPath, "articles");
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+
+            // 生成文件名
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String filename = UUID.randomUUID().toString() + extension;
+            Path filePath = uploadDir.resolve(filename);
+
+            // 保存文件
+            Files.write(filePath, file.getBytes());
+
+            // 返回访问路径
+            String imagePath = "/uploads/articles/" + filename;
+
+            return imagePath;
+        } catch (IOException e) {
+            throw new RuntimeException("图片上传失败: " + e.getMessage());
+        }
+    }
+
     // ========== 私有辅助方法 ==========
 
     private String getSummary(String content) {
@@ -402,5 +487,45 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             // 忽略
         }
         return "system";
+    }
+
+    // ========== 多条件查询（关键词 + 学校 + 分类） ==========
+
+    @Override
+    public List<ArticleVO> getArticlesByConditions(String keyword, Integer schoolId, Integer categoryId) {
+        QueryWrapper<Article> wrapper = new QueryWrapper<>();
+
+        // 只查询已发布且在售的商品
+        wrapper.eq("a.status", ArticleStatus.PUBLISHED);
+        wrapper.eq("a.product_status", 0);
+
+        // 发布时间不超过当前时间
+        wrapper.le("a.published_at", LocalDateTime.now());
+
+        // 关键词搜索（标题、内容）
+        if (StrUtil.isNotBlank(keyword)) {
+            wrapper.and(w -> w.like("a.title", keyword)
+                    .or()
+                    .like("a.content", keyword));
+        }
+
+        // 学校筛选
+        if (schoolId != null && schoolId > 0) {
+            wrapper.eq("a.school_id", schoolId);
+        }
+
+        // 分类筛选
+        if (categoryId != null && categoryId > 0) {
+            wrapper.eq("a.category_id", categoryId);
+        }
+
+        // 排序：置顶降序、发布时间降序
+        wrapper.orderByDesc("a.is_top")
+                .orderByDesc("a.published_at");
+
+        Page<ArticleVO> page = new Page<>(1, 100);
+        IPage<ArticleVO> result = baseMapper.selectArticleVOPage(page, wrapper);
+
+        return result.getRecords();
     }
 }

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.campus.trade.entity.Article;
 import com.campus.trade.entity.ArticleResultMapVO;
 import com.campus.trade.entity.ArticleVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -100,4 +101,29 @@ public interface ArticleService extends IService<Article> {
     IPage<ArticleResultMapVO> getArticleResultMapVOsByPage(Integer page, Integer size, String keyword,
                                                            Integer statusFilter, LocalDateTime startTime,
                                                            LocalDateTime endTime);
+
+    // ========== 标签关联方法 ==========
+
+    /**
+     * 获取文章关联的标签ID列表
+     */
+    List<Integer> getTagIdsByArticleId(Integer articleId);
+
+    /**
+     * 保存文章标签关联
+     */
+    void saveArticleTags(Integer articleId, List<Integer> tagIds);
+
+    // ========== 图片上传方法 ==========
+
+    /**
+     * 上传商品封面图
+     */
+    String uploadCoverImage(MultipartFile file, Integer userId);
+
+    // 在接口中添加
+    /**
+     * 多条件查询商品（关键词 + 学校 + 分类）
+     */
+    List<ArticleVO> getArticlesByConditions(String keyword, Integer schoolId, Integer categoryId);
 }

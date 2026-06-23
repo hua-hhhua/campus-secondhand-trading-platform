@@ -1,10 +1,15 @@
 package com.campus.trade.controller;
 
 import com.campus.trade.entity.Article;
+import com.campus.trade.entity.Category;
 import com.campus.trade.entity.Comment;
+import com.campus.trade.entity.School;
 import com.campus.trade.entity.User;
 import com.campus.trade.service.ArticleService;
+import com.campus.trade.service.CategoryService;
 import com.campus.trade.service.CommentService;
+import com.campus.trade.service.FavoriteService;
+import com.campus.trade.service.SchoolService;
 import com.campus.trade.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -13,7 +18,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
@@ -28,12 +32,21 @@ public class ArticleDetailController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private SchoolService schoolService;
+
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private FavoriteService favoriteService;
+
     /**
-     * 文章详情页
+     * 商品详情页
      */
     @GetMapping("/article/{id}")
     public String articleDetail(@PathVariable Integer id, Model model) {
-        // 获取文章信息
+        // 获取商品信息
         Article article = articleService.getById(id);
         if (article == null) {
             return "redirect:/";
@@ -50,19 +63,23 @@ public class ArticleDetailController {
             User currentUser = userService.getUserByUsername(currentUsername);
             if (currentUser != null) {
                 currentUserId = currentUser.getId();
-                isAdmin = currentUser.getRole() == 1; // role=1 是管理员
+                isAdmin = currentUser.getRole() == 1;
                 model.addAttribute("currentUser", currentUser);
             }
         }
 
-        // ========== 草稿权限控制 ==========
-        // 状态 0 表示草稿
+        System.out.println("========== 商品详情页调试信息 ==========");
+        System.out.println("商品ID: " + id);
+        System.out.println("商品标题: " + article.getTitle());
+        System.out.println("商品作者ID: " + article.getUserId());
+        System.out.println("当前用户ID: " + currentUserId);
+        System.out.println("是否管理员: " + isAdmin);
+
+        // 草稿权限控制
         if (article.getStatus() == 0) {
-            // 未登录用户不能查看草稿
             if (currentUserId == null) {
                 return "redirect:/";
             }
-            // 只有作者本人或管理员可以查看草稿
             if (!isAdmin && !article.getUserId().equals(currentUserId)) {
                 return "redirect:/";
             }
@@ -76,6 +93,24 @@ public class ArticleDetailController {
         // 获取文章作者信息
         User author = userService.getById(article.getUserId());
 
+        // 获取学校名称
+        String schoolName = null;
+        if (article.getSchoolId() != null) {
+            School school = schoolService.getById(article.getSchoolId());
+            if (school != null) {
+                schoolName = school.getName();
+            }
+        }
+
+        // 获取分类名称
+        String categoryName = null;
+        if (article.getCategoryId() != null) {
+            Category category = categoryService.getById(article.getCategoryId());
+            if (category != null) {
+                categoryName = category.getName();
+            }
+        }
+
         // 获取评论列表（草稿不显示评论）
         List<Comment> comments = null;
         if (article.getStatus() != 0) {
@@ -83,28 +118,42 @@ public class ArticleDetailController {
         }
 
         // ========== 判断当前用户是否可以评论 ==========
-        // 规则：用户不能评论自己发布的文章，但可以查看自己文章的评论
-        // 条件：已登录 + 不是管理员 + 不是文章作者 → 可以评论
         boolean canComment = false;
         if (currentUserId != null && article.getStatus() != 0) {
-            // 非管理员且不是文章作者才能评论
             if (!isAdmin && !currentUserId.equals(article.getUserId())) {
                 canComment = true;
             }
         }
+
+        // ========== 判断是否已收藏 ==========
+        boolean isFavorited = false;
+        if (currentUserId != null) {
+            try {
+                isFavorited = favoriteService.isFavorited(currentUserId, id);
+            } catch (Exception e) {
+                isFavorited = false;
+            }
+        }
+
+        System.out.println("canComment: " + canComment);
+        System.out.println("isFavorited: " + isFavorited);
+        System.out.println("==========================================");
 
         model.addAttribute("article", article);
         model.addAttribute("author", author);
         model.addAttribute("comments", comments);
         model.addAttribute("currentUserId", currentUserId);
         model.addAttribute("canComment", canComment);
+        model.addAttribute("authorName", author != null ? author.getNickname() : "未知");
+        model.addAttribute("schoolName", schoolName);
+        model.addAttribute("categoryName", categoryName);
+        model.addAttribute("isFavorited", isFavorited);
 
         return "article-detail";
     }
 
     /**
      * 发表评论
-     * 增加校验：用户不能评论自己发布的文章
      */
     @PostMapping("/article/{id}/comment")
     public String addComment(@PathVariable Integer id,
@@ -121,20 +170,24 @@ public class ArticleDetailController {
             return "redirect:/toLoginPage";
         }
 
-        // ========== 获取文章信息，检查是否是作者自己评论 ==========
         Article article = articleService.getById(id);
         if (article == null) {
             return "redirect:/";
         }
 
-        // 判断是否为管理员
+        if (article.getAllowComment() == 0) {
+            return "redirect:/article/" + id + "?error=commentDisabled";
+        }
+
         boolean isAdmin = currentUser.getRole() != null && currentUser.getRole() == 1;
 
-        // ========== 用户不能评论自己发布的文章（管理员除外） ==========
         if (!isAdmin && currentUser.getId().equals(article.getUserId())) {
-            // 不能评论自己的文章，重定向回详情页，不保存评论
             System.out.println("【评论拦截】用户不能评论自己发布的文章 - 用户: " + username + ", 文章作者ID: " + article.getUserId());
             return "redirect:/article/" + id + "?error=selfComment";
+        }
+
+        if (article.getProductStatus() != 0) {
+            return "redirect:/article/" + id + "?error=notForSale";
         }
 
         Comment comment = new Comment();

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文章管理</title>
+    <title>商品管理</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
@@ -26,7 +26,7 @@
         .status-filter { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 
         .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
         th { background-color: #f5f7fa; font-weight: 600; white-space: nowrap; }
         tr:hover { background-color: #f5f7fa; }
@@ -51,12 +51,13 @@
         .pagination .active { background-color: #409EFF; color: white; border-color: #409EFF; }
 
         .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .price-tag { color: #f56c6c; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>📝 文章管理</h1>
+        <h1>📦 商品管理</h1>
         <a href="/" class="home-link">🏠 返回首页</a>
     </div>
 
@@ -77,7 +78,7 @@
                 <a href="/admin/articles" class="btn" style="background: #909399; color: white;">重置</a>
             </form>
         </div>
-        <a href="/admin/articles/form" class="btn btn-add">+ 发布文章</a>
+        <a href="/admin/articles/form" class="btn btn-add">+ 发布商品</a>
     </div>
 
     <div class="table-container">
@@ -89,6 +90,8 @@
                 <th>内容摘要</th>
                 <th>作者</th>
                 <th>分类</th>
+                <th>价格</th>
+                <th>库存</th>
                 <th>浏览量</th>
                 <th>状态</th>
                 <th>发布时间</th>
@@ -99,12 +102,14 @@
             <tr th:each="article : ${articlePage.records}">
                 <td th:text="${article.id}">?</td>
                 <td class="title-cell">
-                    <a th:href="@{/article/{id}(id=${article.id})}" class="title-link" target="_blank" th:text="${article.title}">文章标题</a>
+                    <a th:href="@{/article/{id}(id=${article.id})}" class="title-link" target="_blank" th:text="${article.title}">商品标题</a>
                     <span th:if="${article.isTop == 1}" class="top-badge">置顶</span>
                 </td>
                 <td class="summary-cell" th:text="${#strings.abbreviate(article.content, 60)}">...</td>
                 <td th:text="${article.authorName != null ? article.authorName : '未知'}">作者</td>
                 <td th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类</td>
+                <td class="price-tag" th:text="'¥' + ${article.price != null ? article.price : '0.00'}">¥0.00</td>
+                <td th:text="${article.stock != null ? article.stock : '0'}">0</td>
                 <td th:text="${article.viewCount}">0</td>
                 <td style="white-space: nowrap;">
                     <span th:if="${article.status == 1}" class="status-published">✅ 已发布</span>
@@ -118,7 +123,7 @@
                 </td>
             </tr>
             <tr th:if="${articlePage == null or articlePage.records.isEmpty()}">
-                <td colspan="9" style="text-align: center; color: #999; padding: 40px;">暂无文章数据</td>
+                <td colspan="11" style="text-align: center; color: #999; padding: 40px;">暂无商品数据</td>
             </tr>
             </tbody>
         </table>
