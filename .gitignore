@@ -31,3 +31,21 @@ build/
 
 ### VS Code ###
 .vscode/
+# 核心：忽略整个.idea文件夹（解决所有IDEA配置冲突）
+.idea/
+
+# 忽略Maven编译产物
+target/
+out/
+
+# 忽略IDEA相关的其他配置文件
+*.iml
+*.iws
+*.ipr
+
+# 保留原有有用的规则（可选）
+/shelf/
+/workspace.xml
+/httpRequests/
+/dataSources/
+/dataSources.local.xml
