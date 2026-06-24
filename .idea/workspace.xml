@@ -4,7 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8799836d-c57b-43dd-a1da-c3e1cb8e813e" name="Changes" comment="" />
+    <list default="true" id="8799836d-c57b-43dd-a1da-c3e1cb8e813e" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/BrowseHistoryController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/BrowseHistory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/mapper/BrowseHistoryMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/BrowseHistoryService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/impl/BrowseHistoryServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/browse-history.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/c508a709-c813-48ca-af34-aeabe31a95da.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/c508a709-c813-48ca-af34-aeabe31a95da.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/c508a709-c813-48ca-af34-aeabe31a95da/storage_v2/_src_/schema/campus_trade.BN6aKw.meta" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/c508a709-c813-48ca-af34-aeabe31a95da/storage_v2/_src_/schema/campus_trade.BN6aKw.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/ArticleDetailController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/ArticleDetailController.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -13,8 +24,9 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="HTML File" />
+        <option value="Interface" />
         <option value="Class" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -52,38 +64,17 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "F:/Springboot/b67Y6rerXpQd1",
+    "git-widget-placeholder": "商品模块",
+    "last_opened_file_path": "D:/viours apps/app files/Tencent Files/1538292542/FileRecv/23软件3/第七章/campus-trade/campus-trade",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.keymap",
     "vue.rearranger.settings.migration": "true"
-  },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql"
-    ]
   }
 }]]></component>
-  <component name="RunManager" selected="Spring Boot.CampusTradeApplication">
-    <configuration name="test-orders-complete | 10. 获取订单详情（使用上一步返回的实际订单ID替换下面的1）" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="10" requestIdentifier="10. 获取订单详情（使用上一步返回的实际订单ID替换下面的1）" runType="Run single request">
-      <method v="2" />
-    </configuration>
-    <configuration name="test-orders-complete | 12. 查看卖家的订单" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="12" requestIdentifier="12. 查看卖家的订单" runType="Run single request">
-      <method v="2" />
-    </configuration>
-    <configuration name="test-orders-complete | 13. 卖家发货（使用实际的订单ID替换下面的1）" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="13" requestIdentifier="13. 卖家发货（使用实际的订单ID替换下面的1）" runType="Run single request">
-      <method v="2" />
-    </configuration>
-    <configuration name="test-orders-complete | 9. 获取我的订单（买家视角）" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="9" requestIdentifier="9. 获取我的订单（买家视角）" runType="Run single request">
-      <method v="2" />
-    </configuration>
-    <configuration name="test-orders-complete | ============================================#4" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="11" requestIdentifier="============================================#4" runType="Run single request">
-      <method v="2" />
-    </configuration>
+  <component name="RunManager">
     <configuration name="CampusTradeApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="xiehh_campus_trade" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.campus.trade.CampusTradeApplication" />
@@ -91,15 +82,6 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="HTTP Request.test-orders-complete | 13. 卖家发货（使用实际的订单ID替换下面的1）" />
-        <item itemvalue="HTTP Request.test-orders-complete | ============================================#4" />
-        <item itemvalue="HTTP Request.test-orders-complete | 12. 查看卖家的订单" />
-        <item itemvalue="HTTP Request.test-orders-complete | 10. 获取订单详情（使用上一步返回的实际订单ID替换下面的1）" />
-        <item itemvalue="HTTP Request.test-orders-complete | 9. 获取我的订单（买家视角）" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -111,16 +93,12 @@
       <updated>1782213379683</updated>
       <workItem from="1782213380896" duration="1415000" />
       <workItem from="1782214825727" duration="13082000" />
-      <workItem from="1782312469341" duration="46000" />
-      <workItem from="1782312518263" duration="10963000" />
+      <workItem from="1782232746940" duration="1384000" />
+      <workItem from="1782304687859" duration="5759000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="XSLT-Support.FileAssociations.UIState">
-    <expand />
-    <select />
   </component>
 </project>
