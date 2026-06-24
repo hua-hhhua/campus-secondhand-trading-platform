@@ -11,6 +11,7 @@ import com.campus.trade.service.CommentService;
 import com.campus.trade.service.FavoriteService;
 import com.campus.trade.service.SchoolService;
 import com.campus.trade.service.UserService;
+import com.campus.trade.service.BrowseHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,6 +41,9 @@ public class ArticleDetailController {
 
     @Autowired
     private FavoriteService favoriteService;
+
+    @Autowired
+    private BrowseHistoryService browseHistoryService;
 
     /**
      * 商品详情页
@@ -88,6 +92,17 @@ public class ArticleDetailController {
         // 增加浏览量（草稿不增加浏览量）
         if (article.getStatus() != 0) {
             articleService.incrementViewCount(id);
+        }
+
+        // ========== 记录浏览历史（已登录用户 + 已发布的商品） ==========
+        if (currentUserId != null && article.getStatus() == 1) {
+            try {
+                browseHistoryService.recordBrowse(currentUserId, id);
+                System.out.println("【浏览历史】记录成功 - 用户: " + currentUserId + ", 商品: " + id);
+            } catch (Exception e) {
+                // 记录失败不影响页面展示
+                System.out.println("【浏览历史】记录失败: " + e.getMessage());
+            }
         }
 
         // 获取文章作者信息
