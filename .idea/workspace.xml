@@ -5,41 +5,30 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8799836d-c57b-43dd-a1da-c3e1cb8e813e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/FavoriteController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/ArticleTag.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/Favorite.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/mapper/ArticleTagMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/mapper/FavoriteMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/FavoriteService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/impl/FavoriteServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/my-favorites.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/http-client.env.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/OrderController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/Order.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/OrderReview.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/mapper/OrderMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/mapper/OrderReviewMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/OrderService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/impl/OrderServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test-orders.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/c508a709-c813-48ca-af34-aeabe31a95da.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/c508a709-c813-48ca-af34-aeabe31a95da.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-requests-log.http" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-requests-log.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/config/WebConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/config/WebConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/ArticleController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/ArticleController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/ArticleDetailController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/ArticleDetailController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/HomeController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/HomeController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/Article.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/Article.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/ArticleVO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/ArticleVO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/ArticleService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/ArticleService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/impl/ArticleServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/impl/ArticleServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/admin/article-form.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/admin/article-form.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/admin/article-manage.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/admin/article-manage.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/admin/my-articles.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/admin/my-articles.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/article-detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/article-detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/config/WebConfig.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/config/WebConfig.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/controller/ArticleController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/controller/ArticleController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/controller/ArticleDetailController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/controller/ArticleDetailController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/controller/HomeController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/controller/HomeController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/Article.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/Article.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/ArticleVO.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/ArticleVO.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleService.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sql/campus_trade.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql/campus_trade.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/ArticleNotificationMessage.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/ArticleNotificationMessage.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/User.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/User.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleNotificationConsumer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleNotificationConsumer.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleNotificationProducer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleNotificationProducer.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/service/impl/ArticleServiceImpl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/service/impl/ArticleServiceImpl.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/templates/admin/article-form.html" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/templates/admin/article-form.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/templates/admin/article-manage.html" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/templates/admin/article-manage.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/templates/admin/my-articles.html" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/templates/admin/my-articles.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/templates/article-detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/templates/article-detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,8 +38,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Class" />
         <option value="HTML File" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -89,16 +78,37 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "D:/viours apps/app files/Tencent Files/1538292542/FileRecv/23软件3/第七章/campus-trade/campus-trade",
+    "last_opened_file_path": "F:/Springboot/b67Y6rerXpQd1",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.keymap",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
+    ]
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Spring Boot.CampusTradeApplication">
+    <configuration name="test-orders-complete | 10. 获取订单详情（使用上一步返回的实际订单ID替换下面的1）" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="10" requestIdentifier="10. 获取订单详情（使用上一步返回的实际订单ID替换下面的1）" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="test-orders-complete | 12. 查看卖家的订单" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="12" requestIdentifier="12. 查看卖家的订单" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="test-orders-complete | 13. 卖家发货（使用实际的订单ID替换下面的1）" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="13" requestIdentifier="13. 卖家发货（使用实际的订单ID替换下面的1）" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="test-orders-complete | 9. 获取我的订单（买家视角）" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="9" requestIdentifier="9. 获取我的订单（买家视角）" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="test-orders-complete | ============================================#4" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/test-orders-complete.http" index="11" requestIdentifier="============================================#4" runType="Run single request">
+      <method v="2" />
+    </configuration>
     <configuration name="CampusTradeApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="xiehh_campus_trade" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.campus.trade.CampusTradeApplication" />
@@ -106,6 +116,15 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="HTTP Request.test-orders-complete | 13. 卖家发货（使用实际的订单ID替换下面的1）" />
+        <item itemvalue="HTTP Request.test-orders-complete | ============================================#4" />
+        <item itemvalue="HTTP Request.test-orders-complete | 12. 查看卖家的订单" />
+        <item itemvalue="HTTP Request.test-orders-complete | 10. 获取订单详情（使用上一步返回的实际订单ID替换下面的1）" />
+        <item itemvalue="HTTP Request.test-orders-complete | 9. 获取我的订单（买家视角）" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -117,10 +136,16 @@
       <updated>1782213379683</updated>
       <workItem from="1782213380896" duration="1415000" />
       <workItem from="1782214825727" duration="13082000" />
+      <workItem from="1782312469341" duration="46000" />
+      <workItem from="1782312518263" duration="10571000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

@@ -1,0 +1,143 @@
+### ============================================
+### 校园二手交易平台 - 完整测试案例
+### ============================================
+
+### 0. 注册买家账号
+POST http://localhost:8080/api/users/register
+Content-Type: application/json
+
+{
+  "username": "buyer001",
+  "password": "123456",
+  "nickname": "测试买家",
+  "email": "buyer@test.com",
+  "phone": "13800000001"
+}
+
+### 1. 注册卖家账号
+POST http://localhost:8080/api/users/register
+Content-Type: application/json
+
+{
+  "username": "seller001",
+  "password": "123456",
+  "nickname": "测试卖家",
+  "email": "seller@test.com",
+  "phone": "13800000002"
+}
+
+### ============================================
+### 卖家操作流程
+### ============================================
+
+### 2. 卖家登录
+POST http://localhost:8080/login
+Content-Type: application/x-www-form-urlencoded
+
+username=seller001&password=123456
+
+### 3. 卖家发布商品（需要先手动在数据库插入一个商品，或使用现有商品）
+# 注意：如果 /api/articles/create 接口存在，可以使用以下请求
+# POST http://localhost:8080/api/articles/create
+# Content-Type: application/json
+# 
+# {
+#   "title": "测试商品-二手手机",
+#   "description": "九成新iPhone 12，功能完好",
+#   "price": 3999.00,
+#   "categoryId": 1,
+#   "images": "/uploads/test.jpg"
+# }
+
+### 4. 查看卖家发布的商品
+GET http://localhost:8080/api/articles/my
+
+### ============================================
+### 买家操作流程
+### ============================================
+
+### 5. 买家登录
+POST http://localhost:8080/login
+Content-Type: application/x-www-form-urlencoded
+
+username=buyer001&password=123456
+
+### 6. 浏览商品列表
+GET http://localhost:8080/api/articles/list?pageNum=1&pageSize=10
+
+### 7. 查看商品详情（假设商品ID=1）
+GET http://localhost:8080/api/articles/1
+
+### 8. 创建订单（购买商品ID=1）
+POST http://localhost:8080/api/orders/create?articleId=1&quantity=1&address=武汉市洪山区南湖大道&remark=请尽快发货
+
+### 9. 获取我的订单（买家视角）
+GET http://localhost:8080/api/orders/my
+
+### 10. 获取订单详情（使用上一步返回的实际订单ID替换下面的1）
+GET http://localhost:8080/api/orders/1
+
+### ============================================
+### 卖家处理订单流程
+### ============================================
+
+### 11. 卖家重新登录（如果Session过期）
+# 注意：订单ID=1的卖家是ksbird，不是seller001！
+POST http://localhost:8080/login
+Content-Type: application/x-www-form-urlencoded
+
+username=ksbird&password=123456
+
+### 12. 查看卖家的订单
+GET http://localhost:8080/api/orders/seller
+
+### 13. 卖家发货（使用实际的订单ID替换下面的1）
+POST http://localhost:8080/api/orders/1/ship
+
+### ============================================
+### 买家确认收货流程
+### ============================================
+
+### 14. 买家重新登录（如果Session过期）
+POST http://localhost:8080/login
+Content-Type: application/x-www-form-urlencoded
+
+username=buyer001&password=123456
+
+### 15. 确认收货（使用实际的订单ID替换下面的1）
+POST http://localhost:8080/api/orders/1/confirm
+
+### 16. 评价订单
+POST http://localhost:8080/api/orders/review
+Content-Type: application/json
+
+{
+  "orderId": 1,
+  "articleId": 1,
+  "rating": 5,
+  "content": "商品很好，非常满意！卖家发货速度快，包装仔细。"
+}
+
+### 17. 查看订单评价
+GET http://localhost:8080/api/orders/1/review
+
+### ============================================
+### 其他测试场景
+### ============================================
+
+### 18. 取消订单（在卖家发货前，使用实际订单ID）
+# POST http://localhost:8080/api/orders/1/cancel?reason=不想要了
+
+### 19. 测试错误场景 - 未登录访问受保护接口
+GET http://localhost:8080/api/orders/my
+
+### 20. 测试错误场景 - 无权操作他人订单
+# 先用买家登录创建一个订单，然后用卖家账号尝试取消该订单
+# POST http://localhost:8080/api/orders/1/cancel?reason=测试权限
+
+### ============================================
+### 数据清理（可选）
+### ============================================
+
+### 21. 退出登录
+POST http://localhost:8080/logout
