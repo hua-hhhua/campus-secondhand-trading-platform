@@ -4,32 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8799836d-c57b-43dd-a1da-c3e1cb8e813e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/http-client.env.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/controller/OrderController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/Order.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/entity/OrderReview.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/mapper/OrderMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/mapper/OrderReviewMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/OrderService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/campus/trade/service/impl/OrderServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test-orders.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/c508a709-c813-48ca-af34-aeabe31a95da.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/c508a709-c813-48ca-af34-aeabe31a95da.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-requests-log.http" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-requests-log.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sql/campus_trade.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql/campus_trade.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/ArticleNotificationMessage.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/ArticleNotificationMessage.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/User.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/entity/User.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleNotificationConsumer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleNotificationConsumer.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleNotificationProducer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/service/ArticleNotificationProducer.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/campus/trade/service/impl/ArticleServiceImpl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/campus/trade/service/impl/ArticleServiceImpl.class" afterDir="false" />
-    </list>
+    <list default="true" id="8799836d-c57b-43dd-a1da-c3e1cb8e813e" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -137,7 +112,7 @@
       <workItem from="1782213380896" duration="1415000" />
       <workItem from="1782214825727" duration="13082000" />
       <workItem from="1782312469341" duration="46000" />
-      <workItem from="1782312518263" duration="10571000" />
+      <workItem from="1782312518263" duration="10963000" />
     </task>
     <servers />
   </component>
