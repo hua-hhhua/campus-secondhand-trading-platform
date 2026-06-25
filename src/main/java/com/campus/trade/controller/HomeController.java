@@ -5,8 +5,13 @@ import com.campus.trade.entity.Category;
 import com.campus.trade.entity.School;
 import com.campus.trade.service.ArticleService;
 import com.campus.trade.service.CategoryService;
+import com.campus.trade.service.FavoriteService;
 import com.campus.trade.service.SchoolService;
+import com.campus.trade.service.ShoppingCartService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +31,12 @@ public class HomeController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private ShoppingCartService shoppingCartService;
+
+    @Autowired
+    private FavoriteService favoriteService;
 
     /**
      * 首页 - 多条件查询（关键词 + 学校 + 分类）
@@ -67,5 +78,68 @@ public class HomeController {
         }
 
         return "index";
+    }
+
+    /**
+     * 处理 favicon.ico 请求，返回空响应避免报错
+     */
+    @GetMapping("/favicon.ico")
+    public ResponseEntity<Void> favicon() {
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * 个人中心页面
+     */
+    @GetMapping("/profile")
+    public String profile(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (auth == null || "anonymousUser".equals(auth.getPrincipal())) {
+            return "redirect:/toLoginPage";
+        }
+
+        try {
+            // 获取用户ID（这里从认证信息中获取用户名，然后查询用户）
+            String username = auth.getName();
+            
+            // 这里需要通过用户名查询用户对象，暂时使用 userService
+            // 如果 UserService 没有这个方法，可以使用其他方式
+            com.campus.trade.entity.User user = getUserFromAuth(auth);
+            
+            if (user != null) {
+                // 获取购物车商品数量
+                int cartCount = shoppingCartService.getCartCount(user.getId());
+                model.addAttribute("cartCount", cartCount);
+                
+                // 获取收藏数量（需要添加这个方法到 FavoriteService）
+                // 暂时传 0，后续可以优化
+                model.addAttribute("favoriteCount", 0);
+            }
+        } catch (Exception e) {
+            System.out.println("个人中心加载失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return "personal-center";
+    }
+
+    /**
+     * 从认证信息中获取用户对象
+     */
+    private com.campus.trade.entity.User getUserFromAuth(Authentication auth) {
+        try {
+            Object principal = auth.getPrincipal();
+            com.campus.trade.entity.User user = null;
+            
+            if (principal instanceof com.campus.trade.entity.User) {
+                user = (com.campus.trade.entity.User) principal;
+            }
+            
+            return user;
+        } catch (Exception e) {
+            System.out.println("获取用户信息失败: " + e.getMessage());
+            return null;
+        }
     }
 }
