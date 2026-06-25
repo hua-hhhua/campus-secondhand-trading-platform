@@ -30,6 +30,15 @@ public class AdminController {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private ArticleService articleService;
+
+    @Autowired
+    private SchoolService schoolService;
+
+    @Autowired
+    private OrderService orderService;
+
     /**
      * 管理员后台首页
      */
@@ -212,4 +221,143 @@ public class AdminController {
     public boolean deleteComments(@RequestBody List<Integer> ids) {
         return commentService.deleteComments(ids);
     }
+
+    // ========== 商品管理 ==========
+
+    @GetMapping("/articles")
+    public String articleManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                                @RequestParam(defaultValue = "10") Integer pageSize,
+                                @RequestParam(required = false) String keyword,
+                                @RequestParam(required = false) Integer statusFilter,
+                                Model model) {
+        IPage<Article> articlePage = articleService.findAllPage(pageNum, pageSize, keyword);
+        model.addAttribute("articlePage", articlePage);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("statusFilter", statusFilter);
+        return "admin/article-manage";
+    }
+
+    @PostMapping("/articles/update-status")
+    @ResponseBody
+    public boolean updateArticleStatus(@RequestParam Integer id, @RequestParam Integer status) {
+        Article article = articleService.getById(id);
+        if (article != null) {
+            article.setStatus(status);
+            article.setUpdateTime(LocalDateTime.now());
+            return articleService.updateById(article);
+        }
+        return false;
+    }
+
+    @PostMapping("/articles/delete/{id}")
+    @ResponseBody
+    public boolean deleteArticle(@PathVariable Integer id) {
+        return articleService.deleteArticle(id);
+    }
+
+    @PostMapping("/articles/delete-batch")
+    @ResponseBody
+    public boolean deleteArticles(@RequestBody List<Integer> ids) {
+        return articleService.removeByIds(ids);
+    }
+
+    // ========== 学校管理 ==========
+
+    @GetMapping("/schools")
+    public String schoolManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                               @RequestParam(defaultValue = "10") Integer pageSize,
+                               @RequestParam(required = false) String keyword,
+                               Model model) {
+        IPage<School> schoolPage = schoolService.page(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(pageNum, pageSize),
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<School>()
+                        .like(keyword != null && !keyword.isEmpty(), "name", keyword)
+                        .or()
+                        .like(keyword != null && !keyword.isEmpty(), "city", keyword));
+        model.addAttribute("schoolPage", schoolPage);
+        model.addAttribute("keyword", keyword);
+        return "admin/school-manage";
+    }
+
+    @PostMapping("/schools/add")
+    @ResponseBody
+    public boolean addSchool(@RequestBody School school) {
+        school.setCreateTime(LocalDateTime.now());
+        school.setUpdateTime(LocalDateTime.now());
+        return schoolService.save(school);
+    }
+
+    @PostMapping("/schools/update")
+    @ResponseBody
+    public boolean updateSchool(@RequestBody School school) {
+        school.setUpdateTime(LocalDateTime.now());
+        return schoolService.updateById(school);
+    }
+
+    @PostMapping("/schools/delete/{id}")
+    @ResponseBody
+    public boolean deleteSchool(@PathVariable Integer id) {
+        return schoolService.removeById(id);
+    }
+
+    @PostMapping("/schools/delete-batch")
+    @ResponseBody
+    public boolean deleteSchools(@RequestBody List<Integer> ids) {
+        return schoolService.removeByIds(ids);
+    }
+
+    // ========== 订单管理 ==========
+
+    @GetMapping("/orders")
+    public String orderManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                              @RequestParam(defaultValue = "10") Integer pageSize,
+                              @RequestParam(required = false) String keyword,
+                              @RequestParam(required = false) Integer statusFilter,
+                              Model model) {
+        IPage<Order> orderPage = orderService.page(
+                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(pageNum, pageSize),
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Order>()
+                        .like(keyword != null && !keyword.isEmpty(), "order_no", keyword)
+                        .or()
+                        .like(keyword != null && !keyword.isEmpty(), "buyer_name", keyword)
+                        .or()
+                        .like(keyword != null && !keyword.isEmpty(), "seller_name", keyword)
+                        .eq(statusFilter != null, "status", statusFilter)
+                        .orderByDesc("created_at")
+        );
+        model.addAttribute("orderPage", orderPage);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("statusFilter", statusFilter);
+        return "admin/order-manage";
+    }
+
+    @GetMapping("/orders/{id}")
+    @ResponseBody
+    public Order getOrderDetail(@PathVariable Long id) {
+        return orderService.getById(id);
+    }
+
+    @PostMapping("/orders/update-status")
+    @ResponseBody
+    public boolean updateOrderStatus(@RequestParam Long id, @RequestParam Integer status) {
+        Order order = orderService.getById(id);
+        if (order != null) {
+            order.setStatus(status);
+            order.setUpdatedAt(LocalDateTime.now());
+            return orderService.updateById(order);
+        }
+        return false;
+    }
+
+    @PostMapping("/orders/delete/{id}")
+    @ResponseBody
+    public boolean deleteOrder(@PathVariable Long id) {
+        return orderService.removeById(id);
+    }
+
+    @PostMapping("/orders/delete-batch")
+    @ResponseBody
+    public boolean deleteOrders(@RequestBody List<Long> ids) {
+        return orderService.removeByIds(ids);
+    }
+
 }
