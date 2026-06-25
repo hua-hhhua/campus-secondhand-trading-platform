@@ -38,6 +38,11 @@ public class ArticleVO {
     private String qq;
     private String phone;
 
+    // ========== 购物车字段（用于购物车页面）==========
+    private Integer cartId;      // 购物车记录ID
+    private Integer checked;     // 是否选中：0-未选中，1-选中
+    private Integer quantity;    // 购买数量
+
     // ========== Getters and Setters ==========
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -116,4 +121,13 @@ public class ArticleVO {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public Integer getCartId() { return cartId; }
+    public void setCartId(Integer cartId) { this.cartId = cartId; }
+
+    public Integer getChecked() { return checked; }
+    public void setChecked(Integer checked) { this.checked = checked; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 }

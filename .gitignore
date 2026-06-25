@@ -1,10 +1,14 @@
+# 项目说明文档
 HELP.md
+
+# Maven 编译输出
 target/
+out/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# STS 工具文件
 .apt_generated
 .classpath
 .factorypath
@@ -13,13 +17,13 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
-.idea
+# IntelliJ IDEA 全部配置（一次性屏蔽所有idea文件，根治之前xml冲突）
+.idea/
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -29,23 +33,5 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+# VS Code
 .vscode/
-# 核心：忽略整个.idea文件夹（解决所有IDEA配置冲突）
-.idea/
-
-# 忽略Maven编译产物
-target/
-out/
-
-# 忽略IDEA相关的其他配置文件
-*.iml
-*.iws
-*.ipr
-
-# 保留原有有用的规则（可选）
-/shelf/
-/workspace.xml
-/httpRequests/
-/dataSources/
-/dataSources.local.xml
