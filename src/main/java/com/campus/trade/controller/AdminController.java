@@ -30,6 +30,12 @@ public class AdminController {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private ArticleService articleService;
+
+    @Autowired
+    private SchoolService schoolService
+
     /**
      * 管理员后台首页
      */
@@ -212,4 +218,88 @@ public class AdminController {
     public boolean deleteComments(@RequestBody List<Integer> ids) {
         return commentService.deleteComments(ids);
     }
+
+    // ========== 商品管理 ==========
+
+    @GetMapping("/articles")
+    public String articleManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                                @RequestParam(defaultValue = "10") Integer pageSize,
+                                @RequestParam(required = false) String keyword,
+                                @RequestParam(required = false) Integer statusFilter,
+                                Model model) {
+        IPage<Article> articlePage = articleService.findAllPage(pageNum, pageSize, keyword);
+        model.addAttribute("articlePage", articlePage);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("statusFilter", statusFilter);
+        return "admin/article-manage";
+    }
+
+    @PostMapping("/articles/update-status")
+    @ResponseBody
+    public boolean updateArticleStatus(@RequestParam Integer id, @RequestParam Integer status) {
+        Article article = articleService.getById(id);
+        if (article != null) {
+            article.setStatus(status);
+            article.setUpdateTime(LocalDateTime.now());
+            return articleService.updateById(article);
+        }
+        return false;
+    }
+
+    @PostMapping("/articles/delete/{id}")
+    @ResponseBody
+    public boolean deleteArticle(@PathVariable Integer id) {
+        return articleService.deleteArticle(id);
+    }
+
+    @PostMapping("/articles/delete-batch")
+    @ResponseBody
+    public boolean deleteArticles(@RequestBody List<Integer> ids) {
+        return articleService.removeByIds(ids);
+    }
+
+    // ========== 学校管理 ==========
+
+    @GetMapping("/schools")
+    public String schoolManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                               @RequestParam(defaultValue = "10") Integer pageSize,
+                               @RequestParam(required = false) String keyword,
+                               Model model) {
+        IPage<School> schoolPage = schoolService.page(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(pageNum, pageSize),
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<School>()
+                        .like(keyword != null && !keyword.isEmpty(), "name", keyword)
+                        .or()
+                        .like(keyword != null && !keyword.isEmpty(), "city", keyword));
+        model.addAttribute("schoolPage", schoolPage);
+        model.addAttribute("keyword", keyword);
+        return "admin/school-manage";
+    }
+
+    @PostMapping("/schools/add")
+    @ResponseBody
+    public boolean addSchool(@RequestBody School school) {
+        school.setCreateTime(LocalDateTime.now());
+        school.setUpdateTime(LocalDateTime.now());
+        return schoolService.save(school);
+    }
+
+    @PostMapping("/schools/update")
+    @ResponseBody
+    public boolean updateSchool(@RequestBody School school) {
+        school.setUpdateTime(LocalDateTime.now());
+        return schoolService.updateById(school);
+    }
+
+    @PostMapping("/schools/delete/{id}")
+    @ResponseBody
+    public boolean deleteSchool(@PathVariable Integer id) {
+        return schoolService.removeById(id);
+    }
+
+    @PostMapping("/schools/delete-batch")
+    @ResponseBody
+    public boolean deleteSchools(@RequestBody List<Integer> ids) {
+        return schoolService.removeByIds(ids);
+    }
+
 }
