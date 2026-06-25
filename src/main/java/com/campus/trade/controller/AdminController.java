@@ -34,7 +34,10 @@ public class AdminController {
     private ArticleService articleService;
 
     @Autowired
-    private SchoolService schoolService
+    private SchoolService schoolService;
+
+    @Autowired
+    private OrderService orderService;
 
     /**
      * 管理员后台首页
@@ -300,6 +303,61 @@ public class AdminController {
     @ResponseBody
     public boolean deleteSchools(@RequestBody List<Integer> ids) {
         return schoolService.removeByIds(ids);
+    }
+
+    // ========== 订单管理 ==========
+
+    @GetMapping("/orders")
+    public String orderManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                              @RequestParam(defaultValue = "10") Integer pageSize,
+                              @RequestParam(required = false) String keyword,
+                              @RequestParam(required = false) Integer statusFilter,
+                              Model model) {
+        IPage<Order> orderPage = orderService.page(
+                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(pageNum, pageSize),
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Order>()
+                        .like(keyword != null && !keyword.isEmpty(), "order_no", keyword)
+                        .or()
+                        .like(keyword != null && !keyword.isEmpty(), "buyer_name", keyword)
+                        .or()
+                        .like(keyword != null && !keyword.isEmpty(), "seller_name", keyword)
+                        .eq(statusFilter != null, "status", statusFilter)
+                        .orderByDesc("created_at")
+        );
+        model.addAttribute("orderPage", orderPage);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("statusFilter", statusFilter);
+        return "admin/order-manage";
+    }
+
+    @GetMapping("/orders/{id}")
+    @ResponseBody
+    public Order getOrderDetail(@PathVariable Long id) {
+        return orderService.getById(id);
+    }
+
+    @PostMapping("/orders/update-status")
+    @ResponseBody
+    public boolean updateOrderStatus(@RequestParam Long id, @RequestParam Integer status) {
+        Order order = orderService.getById(id);
+        if (order != null) {
+            order.setStatus(status);
+            order.setUpdatedAt(LocalDateTime.now());
+            return orderService.updateById(order);
+        }
+        return false;
+    }
+
+    @PostMapping("/orders/delete/{id}")
+    @ResponseBody
+    public boolean deleteOrder(@PathVariable Long id) {
+        return orderService.removeById(id);
+    }
+
+    @PostMapping("/orders/delete-batch")
+    @ResponseBody
+    public boolean deleteOrders(@RequestBody List<Long> ids) {
+        return orderService.removeByIds(ids);
     }
 
 }
