@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 校园交易平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 { font-size: 24px; }
+        .navbar a { color: white; text-decoration: none; }
+
+        .user-info { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .login-btn, .logout-btn {
+            padding: 8px 20px;
+            background-color: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .login-btn:hover, .logout-btn:hover { background-color: rgba(255,255,255,0.3); }
+
+        .role-badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .role-admin { background-color: #e74c3c; color: white; }
+        .role-user { background-color: #95a5a6; color: white; }
+        .admin-link { color: #f1c40f !important; text-decoration: none; margin-left: 10px; }
+        .admin-link:hover { text-decoration: underline; }
+        .article-link { color: #3498db !important; text-decoration: none; margin-left: 10px; }
+        .article-link:hover { text-decoration: underline; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header-section h2 {
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        .header-section a {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .header-section a:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .profile-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+        .profile-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .profile-card-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .profile-card-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .profile-card-desc {
+            font-size: 14px;
+            color: #999;
+            line-height: 1.6;
+        }
+
+        .profile-card-count {
+            margin-top: 15px;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<div class="navbar">
+    <h1>🏫 校园交易平台</h1>
+    <div class="user-info">
+        <div th:if="${username == null and session.username == null}">
+            <a href="/toLoginPage" class="login-btn">登录</a>
+        </div>
+        <div th:unless="${username == null and session.username == null}">
+            <img th:src="${userAvatar != null ? userAvatar : (session.userAvatar != null ? session.userAvatar : '/avatars/default.png')}" alt="头像" class="user-avatar">
+            <span th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>
+            <span th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="role-badge role-admin">管理员</span>
+            <span th:if="${userRole == 'USER' or session.userRole == 'USER'}" class="role-badge role-user">普通用户</span>
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/users" class="admin-link">👑 用户管理</a>
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/articles" class="admin-link">📝 商品管理</a>
+            <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/admin/articles" class="article-link">✏️ 发布商品</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">退出</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 主要内容 -->
+<div class="container">
+    <div class="header-section">
+        <h2>👤 个人中心</h2>
+        <a href="/">← 返回首页</a>
+    </div>
+
+    <div class="profile-cards">
+        <!-- 购物车卡片 -->
+        <a href="/cart" class="profile-card">
+            <div class="profile-card-icon">🛒</div>
+            <div class="profile-card-title">我的购物车</div>
+            <div class="profile-card-desc">查看已添加的商品，管理数量和结算</div>
+            <div class="profile-card-count" th:if="${cartCount != null}">共 <span th:text="${cartCount}">0</span> 件商品</div>
+        </a>
+
+        <!-- 我的收藏卡片 -->
+        <a href="/favorites/my" class="profile-card">
+            <div class="profile-card-icon">❤️</div>
+            <div class="profile-card-title">我的收藏</div>
+            <div class="profile-card-desc">查看已收藏的商品，快速找到心仪好物</div>
+            <div class="profile-card-count" th:if="${favoriteCount != null}">共 <span th:text="${favoriteCount}">0</span> 件收藏</div>
+        </a>
+    </div>
+</div>
+
+</body>
+</html>
