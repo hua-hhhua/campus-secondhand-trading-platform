@@ -3,16 +3,19 @@ package com.campus.trade.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.campus.trade.entity.Result;
 import com.campus.trade.entity.User;
 import com.campus.trade.service.AsyncService;
 import com.campus.trade.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.security.core.Authentication;
+import com.campus.trade.dto.UserUpdateDTO;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -27,6 +30,56 @@ public class UserController {
 
     @Autowired
     private AsyncService asyncService;
+    /**
+     * 个人信息页面
+     */
+    @GetMapping("/user/profile")
+    public String profile(Model model, Authentication authentication) {
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        model.addAttribute("user", user);
+        return "user/profile";
+    }
+
+    /**
+     * 更新个人信息
+     */
+    @PostMapping("/user/update")
+    @ResponseBody
+    public Result updateProfile(@RequestBody UserUpdateDTO dto, Authentication authentication) {
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        // 更新昵称
+        if (dto.getNickname() != null && !dto.getNickname().isEmpty()) {
+            user.setNickname(dto.getNickname());
+        }
+
+        // 更新手机号
+        if (dto.getPhone() != null && !dto.getPhone().isEmpty()) {
+            user.setPhone(dto.getPhone());
+        }
+
+        // 修改密码（需要验证旧密码）
+        if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+            // 验证旧密码
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+            if (!encoder.matches(dto.getPassword(), user.getPassword())) {
+                return Result.error("原密码错误");
+            }
+            if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+                return Result.error("两次密码输入不一致");
+            }
+            user.setPassword(encoder.encode(dto.getNewPassword()));
+        }
+
+        userService.updateById(user);
+        return Result.success("个人信息更新成功");
+    }
 
     /**
      * 用户列表页（普通页面）

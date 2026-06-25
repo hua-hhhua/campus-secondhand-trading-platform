@@ -115,6 +115,11 @@
             display: inline-block;
             font-size: 14px;
         }
+
+        /* 个人信息卡片特殊样式 - 新增 */
+        .profile-card-profile .profile-card-icon {
+            font-size: 60px;
+        }
     </style>
 </head>
 <body>
@@ -149,6 +154,14 @@
     </div>
 
     <div class="profile-cards">
+        <!-- ⭐ 个人信息卡片（新增 - 放在最前面） -->
+        <a href="/user/profile" class="profile-card profile-card-profile">
+            <div class="profile-card-icon">⚙️</div>
+            <div class="profile-card-title">个人信息</div>
+            <div class="profile-card-desc">修改昵称、手机号、密码等个人信息</div>
+            <div class="profile-card-count">✏️ 点击编辑</div>
+        </a>
+
         <!-- 购物车卡片 -->
         <a href="/cart" class="profile-card">
             <div class="profile-card-icon">🛒</div>
