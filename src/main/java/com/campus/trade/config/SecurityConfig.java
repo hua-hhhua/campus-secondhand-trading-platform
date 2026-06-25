@@ -1,7 +1,11 @@
 package com.campus.trade.config;
 
+import com.campus.trade.entity.User;
 import com.campus.trade.service.UserService;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,15 +14,18 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.util.UUID;
 
 @Configuration
@@ -79,6 +86,43 @@ public class SecurityConfig {
         return rememberMeServices;
     }
 
+    /**
+     * 自定义登录失败处理器
+     * - 保存登录失败的用户名到 session
+     * - 重定向到登录页并携带 error 参数
+     */
+    @Bean
+    public AuthenticationFailureHandler authenticationFailureHandler() {
+        return new AuthenticationFailureHandler() {
+            @Override
+            public void onAuthenticationFailure(HttpServletRequest request,
+                                                HttpServletResponse response,
+                                                AuthenticationException exception)
+                    throws IOException, ServletException {
+                // 保存登录失败的用户名到 session
+                String username = request.getParameter("username");
+                if (username != null && !username.isEmpty()) {
+                    // 存入 session，供 LoginController 使用
+                    HttpSession session = request.getSession();
+                    session.setAttribute("loginErrorUsername", username);
+                    // 如果用户存在但被禁用，额外标记
+                    try {
+                        User user = userService.findByUsername(username);
+                        if (user != null && user.getStatus() == 0) {
+                            session.setAttribute("loginErrorDisabled", true);
+                        } else {
+                            session.removeAttribute("loginErrorDisabled");
+                        }
+                    } catch (Exception e) {
+                        // 查询失败，忽略
+                    }
+                }
+                // 重定向到登录页
+                response.sendRedirect("/toLoginPage?error=true");
+            }
+        };
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -107,7 +151,7 @@ public class SecurityConfig {
                         .loginPage("/toLoginPage")
                         .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/", true)
-                        .failureUrl("/toLoginPage?error=true")  // 改回原来的方式
+                        .failureHandler(authenticationFailureHandler())  // 使用自定义失败处理器
                         .permitAll()
                 )
                 // === 记住我配置 ===

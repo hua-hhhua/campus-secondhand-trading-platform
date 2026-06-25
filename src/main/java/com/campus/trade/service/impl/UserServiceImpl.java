@@ -61,6 +61,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return this.getOne(wrapper);
     }
 
+    /**
+     * 根据用户名查询用户（别名方法）
+     */
+    @Override
+    public User findByUsername(String username) {
+        return getUserByUsername(username);
+    }
+
     @Override
     public IPage<User> searchUsers(Integer page, Integer size, String keyword, LocalDateTime startTime, LocalDateTime endTime) {
         Page<User> pageParam = new Page<>(page, size);

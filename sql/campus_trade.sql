@@ -1,8 +1,8 @@
-CREATE DATABASE  IF NOT EXISTS `666_campus` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `666_campus`;
+CREATE DATABASE  IF NOT EXISTS `campus_trade` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `campus_trade`;
 -- MySQL dump 10.13  Distrib 8.0.42, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: 666_campus
+-- Host: 127.0.0.1    Database: campus_trade
 -- ------------------------------------------------------
 -- Server version	8.0.42
 
@@ -324,6 +324,90 @@ CREATE TABLE `users` (
 --
 -- Dumping data for table `users`
 --
+
+--
+-- Table structure for table `orders`
+--
+
+DROP TABLE IF EXISTS `orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `orders` (
+                          `id` bigint NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+                          `order_no` varchar(32) NOT NULL COMMENT '订单编号',
+                          `buyer_id` int NOT NULL COMMENT '买家ID',
+                          `seller_id` int NOT NULL COMMENT '卖家ID',
+                          `article_id` int NOT NULL COMMENT '商品ID',
+                          `article_title` varchar(255) NOT NULL COMMENT '商品标题',
+                          `article_cover` varchar(255) DEFAULT NULL COMMENT '商品封面图',
+                          `price` decimal(10,2) NOT NULL COMMENT '购买单价',
+                          `quantity` int NOT NULL DEFAULT '1' COMMENT '购买数量',
+                          `total_amount` decimal(10,2) NOT NULL COMMENT '订单总金额',
+                          `status` tinyint NOT NULL DEFAULT '0' COMMENT '订单状态: 0-待付款, 1-待发货, 2-已发货, 3-已收货, 4-已取消, 5-已完成',
+                          `buyer_name` varchar(64) DEFAULT NULL COMMENT '买家昵称',
+                          `buyer_phone` varchar(20) DEFAULT NULL COMMENT '买家电话',
+                          `buyer_address` varchar(255) DEFAULT NULL COMMENT '收货地址',
+                          `seller_name` varchar(64) DEFAULT NULL COMMENT '卖家昵称',
+                          `seller_phone` varchar(20) DEFAULT NULL COMMENT '卖家电话',
+                          `remark` varchar(255) DEFAULT NULL COMMENT '买家备注',
+                          `cancel_reason` varchar(255) DEFAULT NULL COMMENT '取消原因',
+                          `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                          `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                          PRIMARY KEY (`id`),
+                          UNIQUE KEY `uk_order_no` (`order_no`),
+                          KEY `idx_buyer_id` (`buyer_id`),
+                          KEY `idx_seller_id` (`seller_id`),
+                          KEY `idx_article_id` (`article_id`),
+                          KEY `idx_status` (`status`),
+                          KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `orders`
+--
+
+LOCK TABLES `orders` WRITE;
+/*!40000 ALTER TABLE `orders` DISABLE KEYS */;
+/*!40000 ALTER TABLE `orders` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_reviews`
+--
+
+DROP TABLE IF EXISTS `order_reviews`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_reviews` (
+                                 `id` bigint NOT NULL AUTO_INCREMENT COMMENT '评价ID',
+                                 `order_id` bigint NOT NULL COMMENT '订单ID',
+                                 `article_id` int NOT NULL COMMENT '商品ID',
+                                 `buyer_id` int NOT NULL COMMENT '买家ID',
+                                 `seller_id` int NOT NULL COMMENT '卖家ID',
+                                 `rating` tinyint NOT NULL DEFAULT '5' COMMENT '评分: 1-5',
+                                 `content` varchar(500) DEFAULT NULL COMMENT '评价内容',
+                                 `images` varchar(1000) DEFAULT NULL COMMENT '评价图片（多个用逗号分隔）',
+                                 `reply` varchar(500) DEFAULT NULL COMMENT '卖家回复',
+                                 `reply_time` datetime DEFAULT NULL COMMENT '回复时间',
+                                 `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                 PRIMARY KEY (`id`),
+                                 KEY `idx_order_id` (`order_id`),
+                                 KEY `idx_article_id` (`article_id`),
+                                 KEY `idx_buyer_id` (`buyer_id`),
+                                 KEY `idx_seller_id` (`seller_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单评价表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_reviews`
+--
+
+LOCK TABLES `order_reviews` WRITE;
+/*!40000 ALTER TABLE `order_reviews` DISABLE KEYS */;
+/*!40000 ALTER TABLE `order_reviews` ENABLE KEYS */;
+UNLOCK TABLES;
+
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
