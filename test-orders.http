@@ -1,0 +1,49 @@
+### 0. 注册用户（如果登录失败，先执行此步骤）
+POST http://localhost:8080/api/users/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "123456",
+  "nickname": "测试用户",
+  "email": "test@campus.com",
+  "phone": "13800138000"
+}
+
+### 1. 先登录（获取 Session）
+POST http://localhost:8080/login
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser&password=123456
+
+### 2. 创建订单（立即购买）
+POST http://localhost:8080/api/orders/create?articleId=1&quantity=1&address=武汉市洪山区
+
+### 3. 获取我的订单（买家）
+GET http://localhost:8080/api/orders/my
+
+### 4. 获取卖家订单
+GET http://localhost:8080/api/orders/seller
+
+### 5. 获取订单详情（把 {id} 换成实际订单号）
+GET http://localhost:8080/api/orders/1
+
+### 6. 取消订单（把 {id} 换成实际订单号）
+POST http://localhost:8080/api/orders/1/cancel?reason=不想要了
+
+### 7. 确认收货（把 {id} 换成实际订单号）
+POST http://localhost:8080/api/orders/1/confirm
+
+### 8. 卖家发货（把 {id} 换成实际订单号）
+POST http://localhost:8080/api/orders/1/ship
+
+### 9. 评价订单
+POST http://localhost:8080/api/orders/review
+Content-Type: application/json
+
+{
+  "orderId": 1,
+  "articleId": 1,
+  "rating": 5,
+  "content": "商品很好，非常满意！"
+}
