@@ -298,30 +298,41 @@ public class AdminController {
     //  4. 分类管理
     // ============================================================
 
-    @GetMapping("/category-manage")
-    public String categoryManage(Model model) {
-        List<Category> categories = categoryService.list();
-        model.addAttribute("categories", categories);
+    @GetMapping("/categories")
+    public String categoryManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                                 @RequestParam(defaultValue = "10") Integer pageSize,
+                                 @RequestParam(required = false) String keyword,
+                                 Model model) {
+        IPage<Category> categoryPage = categoryService.getCategoriesByPage(pageNum, pageSize, keyword);
+        List<Category> allCategories = categoryService.getAllCategories();
+        model.addAttribute("categoryPage", categoryPage);
+        model.addAttribute("allCategories", allCategories);
+        model.addAttribute("keyword", keyword);
         return "admin/category-manage";
     }
 
-    @PostMapping("/category/save")
+    @PostMapping("/categories/add")
     @ResponseBody
-    public boolean saveCategory(@RequestBody Category category) {
-        if (category.getId() == null) {
-            category.setCreateTime(LocalDateTime.now());
-            category.setUpdateTime(LocalDateTime.now());
-            return categoryService.save(category);
-        } else {
-            category.setUpdateTime(LocalDateTime.now());
-            return categoryService.updateById(category);
-        }
+    public boolean addCategory(@RequestBody Category category) {
+        return categoryService.addCategory(category);
     }
 
-    @GetMapping("/category/delete/{id}")
+    @PostMapping("/categories/update")
+    @ResponseBody
+    public boolean updateCategory(@RequestBody Category category) {
+        return categoryService.updateCategory(category);
+    }
+
+    @PostMapping("/categories/delete/{id}")
     @ResponseBody
     public boolean deleteCategory(@PathVariable Integer id) {
-        return categoryService.removeById(id);
+        return categoryService.deleteCategory(id);
+    }
+
+    @PostMapping("/categories/delete-batch")
+    @ResponseBody
+    public boolean deleteCategories(@RequestBody List<Integer> ids) {
+        return categoryService.deleteCategories(ids);
     }
 
     // ============================================================

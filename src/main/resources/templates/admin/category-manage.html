@@ -42,8 +42,9 @@
         .modal-close { font-size: 24px; cursor: pointer; color: #999; }
         .modal-body .form-item { margin-bottom: 15px; }
         .modal-body label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
-        .modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .modal-body input, .modal-body textarea, .modal-body select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
         .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .hint { font-size: 12px; color: #999; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -73,12 +74,9 @@
             <thead>
             <tr>
                 <th><input type="checkbox" id="selectAll"></th>
-                <th>ID</th>
                 <th>分类名称</th>
                 <th>URL别名</th>
                 <th>描述</th>
-                <th>父分类ID</th>
-                <th>排序</th>
                 <th>创建时间</th>
                 <th>操作</th>
             </tr>
@@ -86,15 +84,12 @@
             <tbody>
             <tr th:each="category : ${categoryPage.records}">
                 <td><input type="checkbox" class="itemCheckbox" th:value="${category.id}"></td>
-                <td th:text="${category.id}">?</td>
                 <td th:text="${category.name}" style="font-weight: 500;">?</td>
                 <td th:text="${category.slug}">?</td>
-                <td th:text="${category.description}">?</td>
-                <td th:text="${category.parentId}">?</td>
-                <td th:text="${category.sortOrder}">?</td>
+                <td th:text="${category.description != null ? category.description : '-'}">?</td>
                 <td th:text="${#temporals.format(category.createTime, 'yyyy-MM-dd HH:mm:ss')}">?</td>
                 <td class="action-buttons">
-                    <a href="#" class="btn-edit" th:attr="onclick='showEditModal(' + ${category.id} + ', \'' + ${category.name} + '\', \'' + ${category.slug} + '\', \'' + ${category.description} + '\', ' + ${category.parentId} + ', ' + ${category.sortOrder} + ')'">编辑</a>
+                    <a href="#" class="btn-edit" th:attr="onclick='showEditModal(' + ${category.id} + ', \'' + ${category.name} + '\', \'' + ${category.slug} + '\', \'' + (category.description != null ? category.description : '') + '\', ' + (category.parentId != null ? category.parentId : 0) + ', ' + ${category.sortOrder} + ')'">编辑</a>
                     <a href="#" class="btn-delete" th:attr="onclick='deleteCategory(' + ${category.id} + ')'">删除</a>
                 </td>
             </tr>
@@ -123,23 +118,30 @@
             <input type="hidden" id="categoryId">
             <div class="form-item">
                 <label>分类名称 *</label>
-                <input type="text" id="categoryName" required>
+                <input type="text" id="categoryName" required placeholder="例如：电子产品、图书教材">
+                <div class="hint">请输入分类的中文名称</div>
             </div>
             <div class="form-item">
                 <label>URL别名 *</label>
-                <input type="text" id="categorySlug" required>
+                <input type="text" id="categorySlug" required placeholder="例如：electronics、books">
+                <div class="hint">用于URL的英文标识，建议使用小写字母和连字符</div>
             </div>
             <div class="form-item">
                 <label>描述</label>
-                <textarea id="categoryDescription" rows="3"></textarea>
+                <textarea id="categoryDescription" rows="3" placeholder="请输入分类描述（可选）"></textarea>
             </div>
             <div class="form-item">
-                <label>父分类ID</label>
-                <input type="number" id="categoryParentId" value="0">
+                <label>父分类</label>
+                <select id="categoryParentId">
+                    <option value="0">无（作为顶级分类）</option>
+                    <option th:each="cat : ${allCategories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                </select>
+                <div class="hint">选择该分类的上级分类，不选择则作为顶级分类</div>
             </div>
             <div class="form-item">
                 <label>排序</label>
-                <input type="number" id="categorySortOrder" value="0">
+                <input type="number" id="categorySortOrder" value="0" min="0">
+                <div class="hint">数字越小越靠前，默认为0</div>
             </div>
         </div>
         <div class="modal-footer">
@@ -149,7 +151,9 @@
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
+    var allCategories = [[${allCategories}]];
+
     function resetForm() {
         document.getElementById('keyword').value = '';
         window.location.href = '/admin/categories';
@@ -170,7 +174,7 @@
             if (checkboxes.length === 0) { alert('请至少选择一条数据'); return; }
             var ids = [];
             checkboxes.forEach(function(cb) { ids.push(cb.value); });
-            if (confirm('确定要删除选中的 ' + ids.length + ' 个分类吗？')) {
+            if (confirm('确定要删除选中的 ' + ids.length + ' 个分类吗？删除后不可恢复！')) {
                 fetch('/admin/categories/delete-batch', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -178,9 +182,17 @@
                 }).then(res => res.json()).then(success => {
                     if (success) { alert('删除成功'); location.reload(); }
                     else { alert('删除失败'); }
-                });
+                }).catch(err => { alert('操作失败：' + err); });
             }
         });
+    }
+
+    function generateSlug(name) {
+        var slug = name.toLowerCase()
+            .replace(/[\u4e00-\u9fa5]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        return slug || 'category-' + Date.now();
     }
 
     function showAddModal() {
@@ -191,7 +203,25 @@
         document.getElementById('categoryDescription').value = '';
         document.getElementById('categoryParentId').value = '0';
         document.getElementById('categorySortOrder').value = '0';
+
+        populateParentSelect();
         document.getElementById('categoryModal').style.display = 'block';
+    }
+
+    function populateParentSelect(excludeId) {
+        var select = document.getElementById('categoryParentId');
+        select.innerHTML = '<option value="0">无（作为顶级分类）</option>';
+
+        if (allCategories && allCategories.length > 0) {
+            allCategories.forEach(function(cat) {
+                if (cat.id !== excludeId) {
+                    var option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    select.appendChild(option);
+                }
+            });
+        }
     }
 
     function showEditModal(id, name, slug, description, parentId, sortOrder) {
@@ -200,8 +230,10 @@
         document.getElementById('categoryName').value = name;
         document.getElementById('categorySlug').value = slug;
         document.getElementById('categoryDescription').value = description || '';
-        document.getElementById('categoryParentId').value = parentId || '0';
         document.getElementById('categorySortOrder').value = sortOrder || '0';
+
+        populateParentSelect(id);
+        document.getElementById('categoryParentId').value = parentId || '0';
         document.getElementById('categoryModal').style.display = 'block';
     }
 
@@ -211,14 +243,25 @@
 
     function saveCategory() {
         var id = document.getElementById('categoryId').value;
+        var name = document.getElementById('categoryName').value.trim();
+        var slug = document.getElementById('categorySlug').value.trim();
+
+        if (!name) {
+            alert('请填写分类名称');
+            return;
+        }
+        if (!slug) {
+            alert('请填写URL别名');
+            return;
+        }
+
         var data = {
-            name: document.getElementById('categoryName').value,
-            slug: document.getElementById('categorySlug').value,
-            description: document.getElementById('categoryDescription').value,
+            name: name,
+            slug: slug,
+            description: document.getElementById('categoryDescription').value.trim(),
             parentId: parseInt(document.getElementById('categoryParentId').value) || 0,
             sortOrder: parseInt(document.getElementById('categorySortOrder').value) || 0
         };
-        if (!data.name || !data.slug) { alert('请填写必填项'); return; }
 
         var url = id ? '/admin/categories/update' : '/admin/categories/add';
         if (id) data.id = parseInt(id);
@@ -228,19 +271,53 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
         }).then(res => res.json()).then(success => {
-            if (success) { alert('保存成功'); location.reload(); }
-            else { alert('保存失败'); }
+            if (success) {
+                alert('保存成功');
+                location.reload();
+            } else {
+                alert('保存失败');
+            }
+        }).catch(err => {
+            alert('操作失败：' + err);
         });
     }
 
     function deleteCategory(id) {
-        if (confirm('确定要删除该分类吗？')) {
-            fetch('/admin/categories/delete/' + id, {method: 'POST'}).then(res => res.json()).then(success => {
-                if (success) { alert('删除成功'); location.reload(); }
-                else { alert('删除失败'); }
-            });
+        if (confirm('确定要删除该分类吗？删除后不可恢复！')) {
+            fetch('/admin/categories/delete/' + id, {method: 'POST'})
+                .then(res => res.json())
+                .then(success => {
+                    if (success) {
+                        alert('删除成功');
+                        location.reload();
+                    } else {
+                        alert('删除失败，可能该分类下还有子分类或关联商品');
+                    }
+                })
+                .catch(err => {
+                    alert('操作失败：' + err);
+                });
         }
     }
+
+    document.getElementById('categoryName').addEventListener('blur', function() {
+        var slugField = document.getElementById('categorySlug');
+        if (!slugField.value.trim() && this.value.trim()) {
+            slugField.value = generateSlug(this.value);
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    document.getElementById('categoryModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
 </script>
 </body>
 </html>

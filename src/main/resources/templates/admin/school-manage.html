@@ -73,7 +73,6 @@
             <thead>
             <tr>
                 <th><input type="checkbox" id="selectAll"></th>
-                <th>ID</th>
                 <th>学校名称</th>
                 <th>所在城市</th>
                 <th>创建时间</th>
@@ -84,7 +83,6 @@
             <tbody>
             <tr th:each="school : ${schoolPage.records}">
                 <td><input type="checkbox" class="itemCheckbox" th:value="${school.id}"></td>
-                <td th:text="${school.id}">?</td>
                 <td th:text="${school.name}" style="font-weight: 500;">?</td>
                 <td th:text="${school.city}">?</td>
                 <td th:text="${#temporals.format(school.createTime, 'yyyy-MM-dd HH:mm:ss')}">?</td>
