@@ -3,11 +3,7 @@ package com.campus.trade.controller;
 import com.campus.trade.entity.ArticleVO;
 import com.campus.trade.entity.Category;
 import com.campus.trade.entity.School;
-import com.campus.trade.service.ArticleService;
-import com.campus.trade.service.CategoryService;
-import com.campus.trade.service.FavoriteService;
-import com.campus.trade.service.SchoolService;
-import com.campus.trade.service.ShoppingCartService;
+import com.campus.trade.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,6 +33,16 @@ public class HomeController {
 
     @Autowired
     private FavoriteService favoriteService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private CommentService commentService;
+
 
     /**
      * 首页 - 多条件查询（关键词 + 学校 + 分类）
@@ -69,12 +75,29 @@ public class HomeController {
             model.addAttribute("schoolId", schoolId);
             model.addAttribute("categoryId", categoryId);
 
+            // 统计数据看板数据
+            long articleCount = articleService.count();
+            long userCount = userService.count();
+            long orderCount = orderService.count();
+            long commentCount = commentService.count();
+
+            model.addAttribute("articleCount", articleCount);
+            model.addAttribute("userCount", userCount);
+            model.addAttribute("orderCount", orderCount);
+            model.addAttribute("commentCount", commentCount);
+            model.addAttribute("reviewCount", 0);
+
         } catch (Exception e) {
             System.out.println("首页加载商品列表失败: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("articles", new ArrayList<>());
             model.addAttribute("schools", new ArrayList<>());
             model.addAttribute("categories", new ArrayList<>());
+            model.addAttribute("articleCount", 0);
+            model.addAttribute("userCount", 0);
+            model.addAttribute("orderCount", 0);
+            model.addAttribute("commentCount", 0);
+            model.addAttribute("reviewCount", 0);
         }
 
         return "index";

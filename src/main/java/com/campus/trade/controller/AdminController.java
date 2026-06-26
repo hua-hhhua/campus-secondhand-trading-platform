@@ -82,6 +82,12 @@ public class AdminController {
         return orderService.updateStatus(id, status);
     }
 
+    @PostMapping("/orders/update-status")
+    @ResponseBody
+    public boolean updateOrderStatusByParam(@RequestParam Long id, @RequestParam Integer status) {
+        return orderService.updateStatus(id, status);
+    }
+
     @PostMapping("/orders/delete/{id}")
     @ResponseBody
     public boolean deleteOrder(@PathVariable Long id) {
@@ -377,30 +383,39 @@ public class AdminController {
     //  6. 标签管理
     // ============================================================
 
-    @GetMapping("/tag-manage")
-    public String tagManage(Model model) {
-        List<Tag> tags = tagService.list();
-        model.addAttribute("tags", tags);
+    @GetMapping("/tags")
+    public String tagManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                            @RequestParam(defaultValue = "10") Integer pageSize,
+                            @RequestParam(required = false) String keyword,
+                            Model model) {
+        IPage<Tag> tagPage = tagService.getTagsByPage(pageNum, pageSize, keyword);
+        model.addAttribute("tagPage", tagPage);
+        model.addAttribute("keyword", keyword);
         return "admin/tag-manage";
     }
 
-    @PostMapping("/tag/save")
+    @PostMapping("/tags/add")
     @ResponseBody
-    public boolean saveTag(@RequestBody Tag tag) {
-        if (tag.getId() == null) {
-            tag.setCreateTime(LocalDateTime.now());
-            tag.setUpdateTime(LocalDateTime.now());
-            return tagService.save(tag);
-        } else {
-            tag.setUpdateTime(LocalDateTime.now());
-            return tagService.updateById(tag);
-        }
+    public boolean addTag(@RequestBody Tag tag) {
+        return tagService.addTag(tag);
     }
 
-    @GetMapping("/tag/delete/{id}")
+    @PostMapping("/tags/update")
+    @ResponseBody
+    public boolean updateTag(@RequestBody Tag tag) {
+        return tagService.updateTag(tag);
+    }
+
+    @PostMapping("/tags/delete/{id}")
     @ResponseBody
     public boolean deleteTag(@PathVariable Integer id) {
-        return tagService.removeById(id);
+        return tagService.deleteTag(id);
+    }
+
+    @PostMapping("/tags/delete-batch")
+    @ResponseBody
+    public boolean deleteTags(@RequestBody List<Integer> ids) {
+        return tagService.deleteTags(ids);
     }
 
     // ============================================================
