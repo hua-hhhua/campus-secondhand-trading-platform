@@ -3,11 +3,12 @@ package com.campus.trade.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 import java.time.LocalDateTime;
 
+@Data
 @TableName("order_reviews")
 public class OrderReview {
-
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long orderId;
@@ -20,13 +21,11 @@ public class OrderReview {
     private String reply;
     private LocalDateTime replyTime;
     private LocalDateTime createdAt;
-
-    // ========== 关联字段 ==========
     private String buyerName;
     private String sellerName;
     private String articleTitle;
 
-    // ========== Getters and Setters ==========
+    // Getter 和 Setter 方法
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

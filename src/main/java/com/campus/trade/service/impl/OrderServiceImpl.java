@@ -9,9 +9,12 @@ import com.campus.trade.entity.User;
 import com.campus.trade.mapper.ArticleMapper;
 import com.campus.trade.mapper.OrderMapper;
 import com.campus.trade.mapper.OrderReviewMapper;
+import com.campus.trade.mapper.OrderStatusHistoryMapper;
 import com.campus.trade.mapper.UserMapper;
 import com.campus.trade.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,18 +41,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Autowired
     private UserMapper userMapper;
 
-    /**
-     * 生成订单编号
-     */
+    @Autowired
+    private OrderStatusHistoryMapper orderStatusHistoryMapper;
+
     private String generateOrderNo() {
         return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) +
                 UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
+    // 买家功能实现
     @Override
     @Transactional
     public Order createOrder(Integer buyerId, Integer articleId, Integer quantity, String address, String remark) {
-        // 1. 查询商品信息
         Article article = articleMapper.selectById(articleId);
         if (article == null) {
             throw new RuntimeException("商品不存在");
@@ -58,14 +61,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new RuntimeException("库存不足，当前库存: " + article.getStock());
         }
 
-        // 2. 查询买家和卖家信息
         User buyer = userMapper.selectById(buyerId);
         User seller = userMapper.selectById(article.getUserId());
 
-        // 3. 计算总金额
         BigDecimal totalAmount = article.getPrice().multiply(new BigDecimal(quantity));
 
-        // 4. 创建订单
         Order order = new Order();
         order.setOrderNo(generateOrderNo());
         order.setBuyerId(buyerId);
@@ -76,7 +76,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setPrice(article.getPrice());
         order.setQuantity(quantity);
         order.setTotalAmount(totalAmount);
-        order.setStatus(0); // 待付款
+        order.setStatus(0);
         order.setBuyerName(buyer != null ? buyer.getNickname() : null);
         order.setBuyerPhone(buyer != null ? buyer.getPhone() : null);
         order.setBuyerAddress(address);
@@ -86,7 +86,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         orderMapper.insert(order);
 
-        // 5. 扣减库存（用乐观锁或直接扣减）
         article.setStock(article.getStock() - quantity);
         articleMapper.updateById(article);
 
@@ -96,11 +95,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     public List<Order> getBuyerOrders(Integer buyerId) {
         return orderMapper.selectByBuyerId(buyerId);
-    }
-
-    @Override
-    public List<Order> getSellerOrders(Integer sellerId) {
-        return orderMapper.selectBySellerId(sellerId);
     }
 
     @Override
@@ -121,7 +115,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         int result = orderMapper.cancelOrder(orderId, reason);
         if (result > 0) {
-            // 恢复库存
             Article article = articleMapper.selectById(order.getArticleId());
             if (article != null) {
                 article.setStock(article.getStock() + order.getQuantity());
@@ -135,17 +128,161 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     @Transactional
     public boolean confirmReceipt(Long orderId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null || order.getStatus() != 2) {
+            throw new RuntimeException("当前状态无法确认收货");
+        }
+
         int result = orderMapper.confirmReceipt(orderId);
-        return result > 0;
+        if (result > 0) {
+            // 记录状态变更历史
+            orderStatusHistoryMapper.insertHistory(
+                    orderId,
+                    order.getStatus(),
+                    3, // 已完成
+                    "买家确认收货",
+                    LocalDateTime.now()
+            );
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteOrder(Long orderId, Integer userId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null || !order.getBuyerId().equals(userId)) {
+            return false;
+        }
+        if (order.getStatus() != 4 && order.getStatus() != 5) {
+            return false;
+        }
+        return orderMapper.deleteById(orderId) > 0;
+    }
+
+    @Override
+    @Transactional
+    public boolean reviewOrder(OrderReview review) {
+        Order order = orderMapper.selectById(review.getOrderId());
+        if (order == null || order.getStatus() != 3) {
+            throw new RuntimeException("该订单不可评价");
+        }
+        if (!order.getBuyerId().equals(review.getBuyerId())) {
+            throw new RuntimeException("无权评价此订单");
+        }
+        OrderReview existingReview = orderReviewMapper.selectByOrderId(review.getOrderId());
+        if (existingReview != null) {
+            throw new RuntimeException("该订单已评价，不可重复评价");
+        }
+
+        review.setCreatedAt(LocalDateTime.now());
+        return orderReviewMapper.insert(review) > 0;
+    }
+
+    @Override
+    public OrderReview getOrderReview(Long orderId) {
+        return orderReviewMapper.selectByOrderId(orderId);
+    }
+
+    // 卖家功能实现
+    @Override
+    public List<Order> getSellerOrders(Integer sellerId) {
+        return orderMapper.selectBySellerId(sellerId);
     }
 
     @Override
     @Transactional
     public boolean shipOrder(Long orderId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null || order.getStatus() != 1) {
+            throw new RuntimeException("当前状态无法发货");
+        }
+
         int result = orderMapper.shipOrder(orderId);
-        return result > 0;
+        if (result > 0) {
+            // 记录状态变更历史
+            orderStatusHistoryMapper.insertHistory(
+                    orderId,
+                    order.getStatus(),
+                    2, // 已发货
+                    "卖家已发货",
+                    LocalDateTime.now()
+            );
+            return true;
+        }
+        return false;
     }
 
+    @Override
+    @Transactional
+    public boolean replyReview(Long reviewId, String reply, Integer sellerId) {
+        OrderReview review = orderReviewMapper.selectById(reviewId);
+        if (review == null) {
+            return false;
+        }
+
+        Order order = orderMapper.selectById(review.getOrderId());
+        if (order == null || !order.getSellerId().equals(sellerId)) {
+            throw new RuntimeException("无权回复此评价");
+        }
+
+        review.setReply(reply);
+        review.setReplyTime(LocalDateTime.now());
+        return orderReviewMapper.updateById(review) > 0;
+    }
+
+    // 管理员功能实现
+    @Override
+    public boolean updateStatus(Long id, Integer status) {
+        Order order = getById(id);
+        if (order == null) {
+            return false;
+        }
+
+        Integer oldStatus = order.getStatus();
+        order.setStatus(status);
+        boolean result = updateById(order);
+
+        if (result) {
+            // 记录状态变更历史
+            orderStatusHistoryMapper.insertHistory(
+                    id,
+                    oldStatus,
+                    status,
+                    "管理员修改状态",
+                    LocalDateTime.now()
+            );
+        }
+
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public boolean adminDeleteOrder(Long orderId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            return false;
+        }
+
+        // 删除相关评价
+        OrderReview review = orderReviewMapper.selectByOrderId(orderId);
+        if (review != null) {
+            orderReviewMapper.deleteById(review.getId());
+        }
+
+        // 恢复库存
+        Article article = articleMapper.selectById(order.getArticleId());
+        if (article != null) {
+            article.setStock(article.getStock() + order.getQuantity());
+            articleMapper.updateById(article);
+        }
+
+        return orderMapper.deleteById(orderId) > 0;
+    }
+
+    // 通用功能实现
     @Override
     public Map<String, Object> getOrderStats(Integer userId, String role) {
         Map<String, Object> stats = new HashMap<>();
@@ -177,32 +314,46 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     @Override
-    @Transactional
-    public boolean reviewOrder(OrderReview review) {
-        // 验证订单是否存在且已收货
-        Order order = orderMapper.selectById(review.getOrderId());
-        if (order == null || order.getStatus() != 3) {
-            throw new RuntimeException("该订单不可评价");
+    public List<Order> searchOrders(Integer userId, String role, String keyword, Integer status) {
+        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+        if ("buyer".equals(role)) {
+            wrapper.eq(Order::getBuyerId, userId);
+        } else if ("seller".equals(role)) {
+            wrapper.eq(Order::getSellerId, userId);
         }
 
-        review.setCreatedAt(LocalDateTime.now());
-        return orderReviewMapper.insert(review) > 0;
-    }
-
-    @Override
-    public OrderReview getOrderReview(Long orderId) {
-        return orderReviewMapper.selectByOrderId(orderId);
-    }
-
-    @Override
-    @Transactional
-    public boolean replyReview(Long reviewId, String reply) {
-        OrderReview review = orderReviewMapper.selectById(reviewId);
-        if (review == null) {
-            return false;
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.and(w -> w.like(Order::getOrderNo, keyword)
+                    .or()
+                    .like(Order::getArticleTitle, keyword));
         }
-        review.setReply(reply);
-        review.setReplyTime(LocalDateTime.now());
-        return orderReviewMapper.updateById(review) > 0;
+
+        if (status != null) {
+            wrapper.eq(Order::getStatus, status);
+        }
+
+        return list(wrapper);  // 使用 list(wrapper) 而不是 lambdaUpdate().list()
+    }
+
+
+    // 定时任务
+    @Scheduled(fixedRate = 60000)
+    @Transactional
+    public void checkTimeoutOrders() {
+        List<Order> timeoutOrders = lambdaQuery()
+                .eq(Order::getStatus, 0)
+                .lt(Order::getCreatedAt, LocalDateTime.now().minusMinutes(30))
+                .list();
+
+        timeoutOrders.forEach(order -> {
+            cancelOrder(order.getId(), "订单超时自动取消");
+        });
+    }
+
+
+    // 异步通知
+    @Async
+    public void sendOrderNotification(Order order, String type) {
+        // 实现发送邮件或站内信通知的逻辑
     }
 }
