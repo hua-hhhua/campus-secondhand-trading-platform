@@ -117,7 +117,8 @@ public class SecurityConfig {
                                 "/toLoginPage", "/login", "/logout",
                                 "/error", "/favicon.ico",
                                 "/css/**", "/js/**", "/images/**", "/avatars/**",
-                                "/api/**"
+                                "/api/**",
+                                "/register"
                         ).permitAll()
                         // 用户管理仅限管理员访问
                         .requestMatchers("/admin/users/**").hasRole("ADMIN")

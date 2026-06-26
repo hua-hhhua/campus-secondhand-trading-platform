@@ -283,18 +283,40 @@
       <span th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>
       <span th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="role-badge role-admin">管理员</span>
       <span th:if="${userRole == 'USER' or session.userRole == 'USER'}" class="role-badge role-user">普通用户</span>
-      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/users" class="admin-link">👑 用户管理</a>
-      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/articles" class="admin-link">📝 商品管理</a>
-      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/orders" class="admin-link">📦 订单管理</a>
-      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/categories" class="admin-link">📂 分类管理</a>
-      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/tags" class="admin-link">️🏷️ 标签管理</a>
-      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/schools" class="admin-link">🏫 学校管理</a>
-      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/comment-manage" class="admin-link">💬 评论管理</a>
-      <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/review-manage" class="admin-link">⭐ 评价管理</a>
+      <!-- 管理中心下拉菜单 -->
+      <div th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="dropdown" style="position:relative;display:inline-block;">
+        <button class="dropbtn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:white;padding:8px 18px;font-size:14px;cursor:pointer;transition:all 0.3s;">
+          ⚙️ 管理中心 ▾
+        </button>
+        <div class="dropdown-content" style="display:none;position:absolute;top:100%;left:0;background:white;min-width:160px;box-shadow:0 8px 16px rgba(0,0,0,0.15);border-radius:8px;z-index:1000;padding:8px 0;">
+          <a href="/admin/users" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">👑 用户管理</a>
+          <a href="/admin/articles" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">📝 商品管理</a>
+          <a href="/admin/orders" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">📦 订单管理</a>
+          <a href="/admin/categories" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">📂 分类管理</a>
+          <a href="/admin/tags" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">🏷️ 标签管理</a>
+          <a href="/admin/schools" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">🏫 学校管理</a>
+          <a href="/admin/comments" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">💬 评论管理</a>
+          <a href="/admin/reviews" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">⭐ 评价管理</a>
+        </div>
+      </div>
+
+      <script>
+        // 鼠标悬停显示/隐藏下拉菜单
+        document.addEventListener('DOMContentLoaded', function() {
+          var dropdown = document.querySelector('.dropdown');
+          if (dropdown) {
+            dropdown.addEventListener('mouseenter', function() {
+              this.querySelector('.dropdown-content').style.display = 'block';
+            });
+            dropdown.addEventListener('mouseleave', function() {
+              this.querySelector('.dropdown-content').style.display = 'none';
+            });
+          }
+        });
+      </script>
       <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/article/manage" class="article-link">✏️ 发布商品</a>
       <a href="/profile" class="article-link" style="color: #f1c40f !important;">👤 个人中心</a>
-      <!-- ========== 浏览历史入口 ========== -->
-      <a href="/browse/history" class="article-link" style="color: #4ecdc4 !important;">📖 浏览历史</a>
+
       <!-- ================================= -->
       <form th:action="@{/logout}" method="post" style="display: inline;">
         <button type="submit" class="logout-btn">退出</button>

@@ -172,6 +172,8 @@
                     <div class="history-title">
                         <a th:href="@{/article/{id}(id=${article.id})}" th:text="${article.title}">标题</a>
                         <span class="price-tag" th:text="'¥' + ${article.price}">¥0</span>
+                        <!-- 新增一行测试 -->
+                        <span style="color:red;font-size:12px;">浏览时间: <span th:text="${article.browseTime}"></span></span>
                     </div>
                     <div class="history-meta">
                         <span>✍️ 作者：<strong th:text="${article.authorName != null ? article.authorName : '未知'}">作者</strong></span>
