@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.campus.trade.config.WebConfig;
 import com.campus.trade.entity.User;
 import com.campus.trade.mapper.UserMapper;
 import com.campus.trade.service.UserService;
@@ -187,8 +188,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 保存文件
             Files.write(filePath, file.getBytes());
 
-            // 返回访问路径
-            String avatarPath = "/uploads/avatars/" + filename;
+           // 返回访问路径（修改为 /avatars/ 以匹配 WebConfig 配置）
+            String avatarPath = "/avatars/" + filename;
 
             // 更新用户头像
             User user = this.getById(userId);

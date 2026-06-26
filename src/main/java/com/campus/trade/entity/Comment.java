@@ -1,6 +1,7 @@
 package com.campus.trade.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.LocalDateTime;
@@ -20,7 +21,9 @@ public class Comment {
     private LocalDateTime updateTime;
 
     // 关联查询字段（不映射数据库）
+    @TableField(exist = false)
     private String username;
+    @TableField(exist = false)
     private String userAvatar;
 
     // Getters and Setters

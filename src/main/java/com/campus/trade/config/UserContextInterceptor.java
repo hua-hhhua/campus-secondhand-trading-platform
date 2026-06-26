@@ -36,6 +36,18 @@ public class UserContextInterceptor implements HandlerInterceptor {
             if (user == null || !username.equals(user.getUsername())) {
                 user = userService.getUserByUsername(username);
                 if (user != null) {
+                    // 确保头像路径包含 /avatars/ 前缀
+                    String avatar = user.getAvatar();
+                    if (avatar != null && !avatar.isEmpty() && !avatar.startsWith("/")) {
+                        // 如果只有文件名，添加 /avatars/ 前缀
+                        avatar = "/avatars/" + avatar;
+                        user.setAvatar(avatar);
+                    } else if (avatar != null && avatar.startsWith("/uploads/avatars/")) {
+                        // 如果是旧路径格式，转换为新格式
+                        avatar = avatar.replace("/uploads/avatars/", "/avatars/");
+                        user.setAvatar(avatar);
+                    }
+
                     session.setAttribute("currentUser", user);
                     session.setAttribute("username", user.getUsername());
                     session.setAttribute("userNickname", user.getNickname());
@@ -43,7 +55,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
                     String roleName = (user.getRole() != null && user.getRole() == 1) ? "ADMIN" : "USER";
                     session.setAttribute("userRole", roleName);
                     session.setAttribute("userId", user.getId());
-                    logger.info("拦截器 - 用户信息已存入Session: {}", username);
+                    logger.info("拦截器 - 用户信息已存入Session: {}, 头像: {}", username, user.getAvatar());
                 }
             } else {
                 logger.debug("拦截器 - 从Session获取用户信息: {}", username);
