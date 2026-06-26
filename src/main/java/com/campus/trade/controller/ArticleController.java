@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/admin/articles")
+@RequestMapping("/article")
 public class ArticleController {
 
     @Autowired
@@ -50,7 +50,7 @@ public class ArticleController {
     @Autowired
     private TagService tagService;
 
-    @GetMapping
+    @GetMapping("/manage")
     public String articlesEntry(
             Model model,
             @RequestParam(defaultValue = "1") Integer page,
@@ -123,8 +123,8 @@ public class ArticleController {
                 (article.getPhone() != null && !article.getPhone().trim().isEmpty());
 
         if (!hasContact) {
-            redirectAttributes.addFlashAttribute("errorMsg", "请至少填写一种联系方式（微信/QQ/手机号）");
-            return "redirect:/admin/articles/form";
+            redirectAttributes.addFlashAttribute("errorMsg", "请至少填写一种联系方式(微信/QQ/手机号)");
+            return "redirect:/article/form";
         }
 
         article.setSendEmail(0);
