@@ -3,9 +3,11 @@ package com.campus.trade.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.campus.trade.entity.Order;
 import com.campus.trade.entity.Result;
 import com.campus.trade.entity.User;
 import com.campus.trade.service.AsyncService;
+import com.campus.trade.service.OrderService;
 import com.campus.trade.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -30,6 +32,10 @@ public class UserController {
 
     @Autowired
     private AsyncService asyncService;
+
+    @Autowired
+    private OrderService orderService;
+
     /**
      * 个人信息页面
      */
@@ -298,5 +304,126 @@ public class UserController {
         public void setUsername(String username) { this.username = username; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
+    }
+
+    // ========== 订单管理 ==========
+
+    /**
+     * 我的订单列表页（买家）
+     */
+    @GetMapping("/user/my-orders")
+    public String myOrders(@RequestParam(defaultValue = "1") Integer pageNum,
+                           @RequestParam(defaultValue = "10") Integer pageSize,
+                           @RequestParam(required = false) Integer statusFilter,
+                           Model model, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        // 获取买家的订单列表
+        List<Order> allOrders = orderService.getBuyerOrders(user.getId());
+
+        // 按状态筛选
+        if (statusFilter != null) {
+            allOrders = allOrders.stream()
+                    .filter(order -> order.getStatus().equals(statusFilter))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        // 手动分页
+        int total = allOrders.size();
+        int start = (pageNum - 1) * pageSize;
+        int end = Math.min(start + pageSize, total);
+        
+        List<Order> orders = allOrders.subList(Math.max(0, start), Math.min(end, total));
+        
+        // 创建分页对象
+        IPage<Order> orderPage = new Page<>(pageNum, pageSize, total);
+        orderPage.setRecords(orders);
+
+        model.addAttribute("orderPage", orderPage);
+        model.addAttribute("statusFilter", statusFilter);
+        model.addAttribute("username", user.getUsername());
+        model.addAttribute("userNickname", user.getNickname());
+        model.addAttribute("userAvatar", user.getAvatar());
+        
+        return "user/my-orders";
+    }
+
+    /**
+     * 取消订单
+     */
+    @PostMapping("/user/orders/{id}/cancel")
+    @ResponseBody
+    public Result cancelOrder(@PathVariable Long id,
+                              @RequestParam(required = false) String reason,
+                              Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Result.error("请先登录");
+        }
+
+        try {
+            boolean success = orderService.cancelOrder(id, reason);
+            if (success) {
+                asyncService.asyncLogOperation(authentication.getName(), "取消订单", "订单ID: " + id);
+                return Result.success("订单已取消");
+            } else {
+                return Result.error("取消失败，订单可能不存在或状态不允许取消");
+            }
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 确认收货
+     */
+    @PostMapping("/user/orders/{id}/confirm")
+    @ResponseBody
+    public Result confirmReceipt(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Result.error("请先登录");
+        }
+
+        try {
+            boolean success = orderService.confirmReceipt(id);
+            if (success) {
+                asyncService.asyncLogOperation(authentication.getName(), "确认收货", "订单ID: " + id);
+                return Result.success("确认收货成功");
+            } else {
+                return Result.error("操作失败");
+            }
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 删除订单
+     */
+    @PostMapping("/user/orders/{id}/delete")
+    @ResponseBody
+    public Result deleteOrder(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Result.error("请先登录");
+        }
+
+        try {
+            boolean success = orderService.removeById(id);
+            if (success) {
+                asyncService.asyncLogOperation(authentication.getName(), "删除订单", "订单ID: " + id);
+                return Result.success("订单已删除");
+            } else {
+                return Result.error("删除失败");
+            }
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
     }
 }
