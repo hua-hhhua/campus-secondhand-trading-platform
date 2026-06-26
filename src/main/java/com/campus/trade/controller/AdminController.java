@@ -328,32 +328,40 @@ public class AdminController {
     //  5. 学校管理
     // ============================================================
 
-    @GetMapping("/school-manage")
-    public String schoolManage(Model model) {
-        List<School> schools = schoolService.list();
-        model.addAttribute("schools", schools);
+    @GetMapping("/schools")
+    public String schoolManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                               @RequestParam(defaultValue = "10") Integer pageSize,
+                               @RequestParam(required = false) String keyword,
+                               Model model) {
+        IPage<School> schoolPage = schoolService.getSchoolsByPage(pageNum, pageSize, keyword);
+        model.addAttribute("schoolPage", schoolPage);
+        model.addAttribute("keyword", keyword);
         return "admin/school-manage";
     }
 
-    @PostMapping("/school/save")
+    @PostMapping("/schools/add")
     @ResponseBody
-    public boolean saveSchool(@RequestBody School school) {
-        if (school.getId() == null) {
-            school.setCreateTime(LocalDateTime.now());
-            school.setUpdateTime(LocalDateTime.now());
-            return schoolService.save(school);
-        } else {
-            school.setUpdateTime(LocalDateTime.now());
-            return schoolService.updateById(school);
-        }
+    public boolean addSchool(@RequestBody School school) {
+        return schoolService.addSchool(school);
     }
 
-    @GetMapping("/school/delete/{id}")
+    @PostMapping("/schools/update")
+    @ResponseBody
+    public boolean updateSchool(@RequestBody School school) {
+        return schoolService.updateSchool(school);
+    }
+
+    @PostMapping("/schools/delete/{id}")
     @ResponseBody
     public boolean deleteSchool(@PathVariable Integer id) {
-        return schoolService.removeById(id);
+        return schoolService.deleteSchool(id);
     }
 
+    @PostMapping("/schools/delete-batch")
+    @ResponseBody
+    public boolean deleteSchools(@RequestBody List<Integer> ids) {
+        return schoolService.deleteSchools(ids);
+    }
     // ============================================================
     //  6. 标签管理
     // ============================================================
