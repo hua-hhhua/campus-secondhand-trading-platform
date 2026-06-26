@@ -9,9 +9,14 @@ import com.campus.trade.dto.UserUpdateDTO;
 import com.campus.trade.service.AsyncService;
 import com.campus.trade.service.OrderService;
 import com.campus.trade.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +37,9 @@ public class UserController {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     // ========== 个人信息 ==========
 
@@ -189,6 +197,38 @@ public class UserController {
     @ResponseBody
     public boolean delete(@PathVariable Integer id) {
         return userService.removeById(id);
+    }
+
+    // ========== API 登录接口（返回 JSON，支持 Session） ==========
+
+    @PostMapping("/api/login")
+    @ResponseBody
+    public Map<String, Object> apiLogin(@RequestBody Map<String, String> loginRequest, HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String username = loginRequest.get("username");
+            String password = loginRequest.get("password");
+
+            // 使用 Spring Security 的 AuthenticationManager 进行认证
+            UsernamePasswordAuthenticationToken token =
+                    new UsernamePasswordAuthenticationToken(username, password);
+            Authentication authentication = authenticationManager.authenticate(token);
+
+            // 手动设置 SecurityContext
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // 将 SecurityContext 保存到 Session
+            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
+
+            result.put("success", true);
+            result.put("message", "登录成功");
+            result.put("username", username);
+            return result;
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "登录失败：" + e.getMessage());
+            return result;
+        }
     }
 
     // ========== 内部类 ==========
