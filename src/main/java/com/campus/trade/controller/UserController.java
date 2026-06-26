@@ -426,4 +426,39 @@ public class UserController {
             return Result.error(e.getMessage());
         }
     }
+
+    /**
+     * 订单详情页
+     */
+    @GetMapping("/user/orders/{id}")
+    public String orderDetail(@PathVariable Long id,
+                              Model model, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        // 获取订单详情
+        Order order = orderService.getById(id);
+        if (order == null) {
+            return "redirect:/user/my-orders";
+        }
+
+        // 验证权限(只能查看自己的订单)
+        if (!order.getBuyerId().equals(user.getId())) {
+            return "redirect:/user/my-orders";
+        }
+
+        model.addAttribute("order", order);
+        model.addAttribute("username", user.getUsername());
+        model.addAttribute("userNickname", user.getNickname());
+        model.addAttribute("userAvatar", user.getAvatar());
+        
+        return "user/order-detail";
+    }
 }
