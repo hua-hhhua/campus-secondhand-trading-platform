@@ -59,21 +59,13 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
-    /**
-     * 持久化令牌仓库 - 将记住我 token 存入数据库
-     */
     @Bean
     public PersistentTokenRepository persistentTokenRepository() {
         JdbcTokenRepositoryImpl tokenRepository = new JdbcTokenRepositoryImpl();
         tokenRepository.setDataSource(dataSource);
-        // ⚠️ 首次启动时打开下面这行，启动成功后注释掉
-        // tokenRepository.setCreateTableOnStartup(true);
         return tokenRepository;
     }
 
-    /**
-     * 记住我服务
-     */
     @Bean
     public RememberMeServices rememberMeServices() {
         PersistentTokenBasedRememberMeServices rememberMeServices =
@@ -82,15 +74,10 @@ public class SecurityConfig {
                         userService,
                         persistentTokenRepository());
         rememberMeServices.setParameter("remember-me");
-        rememberMeServices.setTokenValiditySeconds(60 * 60 * 24 * 7); // 7天
+        rememberMeServices.setTokenValiditySeconds(60 * 60 * 24 * 7);
         return rememberMeServices;
     }
 
-    /**
-     * 自定义登录失败处理器
-     * - 保存登录失败的用户名到 session
-     * - 重定向到登录页并携带 error 参数
-     */
     @Bean
     public AuthenticationFailureHandler authenticationFailureHandler() {
         return new AuthenticationFailureHandler() {
@@ -99,13 +86,10 @@ public class SecurityConfig {
                                                 HttpServletResponse response,
                                                 AuthenticationException exception)
                     throws IOException, ServletException {
-                // 保存登录失败的用户名到 session
                 String username = request.getParameter("username");
                 if (username != null && !username.isEmpty()) {
-                    // 存入 session，供 LoginController 使用
                     HttpSession session = request.getSession();
                     session.setAttribute("loginErrorUsername", username);
-                    // 如果用户存在但被禁用，额外标记
                     try {
                         User user = userService.findByUsername(username);
                         if (user != null && user.getStatus() == 0) {
@@ -114,10 +98,9 @@ public class SecurityConfig {
                             session.removeAttribute("loginErrorDisabled");
                         }
                     } catch (Exception e) {
-                        // 查询失败，忽略
+                        // 忽略
                     }
                 }
-                // 重定向到登录页
                 response.sendRedirect("/toLoginPage?error=true");
             }
         };
@@ -136,25 +119,22 @@ public class SecurityConfig {
                                 "/css/**", "/js/**", "/images/**", "/avatars/**",
                                 "/api/**"
                         ).permitAll()
-                        // 用户管理（/admin/users/**）仅限管理员访问（ROLE_ADMIN）
+                        // 用户管理仅限管理员访问
                         .requestMatchers("/admin/users/**").hasRole("ADMIN")
-                        // 文章管理（/admin/articles/**）允许 ADMIN 和 USER 访问
+                        // 文章管理允许 ADMIN 和 USER
                         .requestMatchers("/admin/articles/**").hasAnyRole("ADMIN", "USER")
-                        // 登录即可访问
                         .requestMatchers("/users").authenticated()
-                        // 管理员后台首页
                         .requestMatchers("/admin/dashboard").hasRole("ADMIN")
-                        // 其他请求需要登录
                         .anyRequest().authenticated()
                 )
+                // ===== 关键修改：使用默认的 /login 处理登录 =====
                 .formLogin(form -> form
                         .loginPage("/toLoginPage")
                         .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/", true)
-                        .failureHandler(authenticationFailureHandler())  // 使用自定义失败处理器
+                        .failureHandler(authenticationFailureHandler())
                         .permitAll()
                 )
-                // === 记住我配置 ===
                 .rememberMe(rememberMe -> rememberMe
                         .tokenRepository(persistentTokenRepository())
                         .tokenValiditySeconds(60 * 60 * 24 * 7)
@@ -162,7 +142,6 @@ public class SecurityConfig {
                         .rememberMeParameter("remember-me")
                         .rememberMeServices(rememberMeServices())
                 )
-                // === 退出配置（清除记住我Cookie） ===
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/toLoginPage?logout=true")
@@ -171,7 +150,6 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID", "remember-me")
                         .permitAll()
                 )
-                // === 403 权限拒绝处理（直接返回403页面，不跳转登录页） ===
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);

@@ -281,25 +281,25 @@ public class ShoppingCartController {
      */
     @GetMapping("/checkout")
     public String checkout(Model model,
-                          @RequestParam(defaultValue = "1") Integer page,
-                          @RequestParam(defaultValue = "10") Integer size) {
+                           @RequestParam(defaultValue = "1") Integer page,
+                           @RequestParam(defaultValue = "10") Integer size) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || "anonymousUser".equals(auth.getPrincipal())) {
             return "redirect:/toLoginPage";
         }
-        
+
         try {
             User user = getUserFromAuth(auth);
             IPage<ArticleVO> checkedItems = shoppingCartService.getCheckedItems(user.getId(), page, size);
-            
+
             model.addAttribute("checkedItems", checkedItems.getRecords());
             model.addAttribute("checkedPage", checkedItems);
-            
+
         } catch (Exception e) {
             logger.error("结算页面异常：", e);
         }
-        
-        return "checkout";
+
+        return "checkout";  // ← 修改这里
     }
 
     /**
