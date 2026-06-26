@@ -1,14 +1,18 @@
 package com.campus.trade.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.campus.trade.entity.Order;
-import com.campus.trade.service.OrderService;
+import com.campus.trade.entity.*;
+import com.campus.trade.mapper.ArticleMapper;
+import com.campus.trade.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Controller
@@ -17,6 +21,31 @@ public class AdminController {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private ArticleService articleService;
+
+    @Autowired
+    private ArticleMapper articleMapper;
+
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private SchoolService schoolService;
+
+    @Autowired
+    private TagService tagService;
+
+    @Autowired
+    private CommentService commentService;
+
+    // ============================================================
+    //  1. 订单管理
+    // ============================================================
 
     @GetMapping("/orders")
     public String orderManage(@RequestParam(defaultValue = "1") Integer pageNum,
@@ -63,5 +92,350 @@ public class AdminController {
     @ResponseBody
     public boolean deleteOrders(@RequestBody List<Long> ids) {
         return orderService.removeByIds(ids);
+    }
+
+    // ============================================================
+    //  2. 用户管理
+    // ============================================================
+
+    @GetMapping("/users")
+    public String userManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                             @RequestParam(defaultValue = "10") Integer pageSize,
+                             @RequestParam(required = false) String keyword,
+                             Model model) {
+        Page<User> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.like(User::getUsername, keyword)
+                    .or()
+                    .like(User::getNickname, keyword)
+                    .or()
+                    .like(User::getEmail, keyword)
+                    .or()
+                    .like(User::getPhone, keyword);
+        }
+        wrapper.orderByDesc(User::getCreatedAt);
+        IPage<User> userPage = userService.page(page, wrapper);
+        model.addAttribute("userPage", userPage);
+        model.addAttribute("keyword", keyword);
+        return "admin/user-manage";
+    }
+
+    @GetMapping("/users/add")
+    public String addUserPage(Model model) {
+        model.addAttribute("user", new User());
+        model.addAttribute("isEdit", false);
+        return "admin/user-form";
+    }
+
+    @GetMapping("/users/edit/{id}")
+    public String editUserPage(@PathVariable Integer id, Model model) {
+        User user = userService.getById(id);
+        if (user == null) {
+            return "redirect:/admin/users";
+        }
+        model.addAttribute("user", user);
+        model.addAttribute("isEdit", true);
+        return "admin/user-form";
+    }
+
+    @PostMapping("/users/save")
+    public String saveUser(User user) {
+        if (user.getId() == null) {
+            user.setRole(0);
+            user.setStatus(1);
+            userService.save(user);
+        } else {
+            if (user.getPassword() == null || user.getPassword().isEmpty()) {
+                User existing = userService.getById(user.getId());
+                if (existing != null) {
+                    user.setPassword(existing.getPassword());
+                }
+            }
+            userService.updateById(user);
+        }
+        return "redirect:/admin/users";
+    }
+
+    @GetMapping("/users/delete/{id}")
+    public String deleteUser(@PathVariable Integer id) {
+        userService.removeById(id);
+        return "redirect:/admin/users";
+    }
+
+    @GetMapping("/users/batchDelete")
+    public String batchDeleteUsers(@RequestParam String ids) {
+        String[] idArray = ids.split(",");
+        for (String id : idArray) {
+            userService.removeById(Integer.parseInt(id));
+        }
+        return "redirect:/admin/users";
+    }
+
+    // ============================================================
+    //  3. 文章管理（使用联表查询）
+    // ============================================================
+
+    @GetMapping("/articles")
+    public String articleManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                                @RequestParam(defaultValue = "10") Integer pageSize,
+                                @RequestParam(required = false) String keyword,
+                                @RequestParam(required = false) Integer statusFilter,
+                                @RequestParam(required = false) Integer categoryId,
+                                @RequestParam(required = false) String startTime,
+                                @RequestParam(required = false) String endTime,
+                                Model model) {
+        Page<Article> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.like(Article::getTitle, keyword)
+                    .or()
+                    .like(Article::getContent, keyword);
+        }
+        if (statusFilter != null) {
+            wrapper.eq(Article::getStatus, statusFilter);
+        }
+        if (categoryId != null) {
+            wrapper.eq(Article::getCategoryId, categoryId);
+        }
+
+        // 时间范围查询
+        if (startTime != null && !startTime.isEmpty()) {
+            try {
+                LocalDateTime start = LocalDateTime.parse(startTime + "T00:00:00");
+                wrapper.ge(Article::getCreateTime, start);
+            } catch (Exception e) {
+                // 忽略格式错误
+            }
+        }
+        if (endTime != null && !endTime.isEmpty()) {
+            try {
+                LocalDateTime end = LocalDateTime.parse(endTime + "T23:59:59");
+                wrapper.le(Article::getCreateTime, end);
+            } catch (Exception e) {
+                // 忽略格式错误
+            }
+        }
+
+        wrapper.orderByDesc(Article::getIsTop)
+                .orderByDesc(Article::getCreateTime);
+
+        // 使用联表查询，直接填充 authorName 和 categoryName
+        IPage<Article> articlePage = articleMapper.selectArticlePageWithInfo(page, wrapper);
+
+        model.addAttribute("articlePage", articlePage);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("statusFilter", statusFilter);
+        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("startTime", startTime);
+        model.addAttribute("endTime", endTime);
+        model.addAttribute("categories", categoryService.list());
+        return "admin/article-manage";
+    }
+
+    @GetMapping("/articles/form")
+    public String articleForm(@RequestParam(required = false) Integer id, Model model) {
+        Article article;
+        boolean isEdit = false;
+        if (id != null) {
+            article = articleService.getById(id);
+            isEdit = true;
+        } else {
+            article = new Article();
+        }
+        model.addAttribute("article", article);
+        model.addAttribute("isEdit", isEdit);
+        model.addAttribute("categories", categoryService.list());
+        model.addAttribute("schools", schoolService.list());
+        return "admin/article-form";
+    }
+
+    @PostMapping("/articles/save")
+    public String saveArticle(Article article) {
+        if (article.getId() == null) {
+            article.setStatus(1);
+            article.setViewCount(0);
+            article.setIsTop(0);
+            article.setAllowComment(1);
+            article.setSendEmail(0);
+            article.setCreateTime(LocalDateTime.now());
+            article.setUpdateTime(LocalDateTime.now());
+            articleService.save(article);
+        } else {
+            article.setUpdateTime(LocalDateTime.now());
+            articleService.updateById(article);
+        }
+        return "redirect:/admin/articles";
+    }
+
+    @GetMapping("/articles/delete/{id}")
+    public String deleteArticle(@PathVariable Integer id) {
+        articleService.removeById(id);
+        return "redirect:/admin/articles";
+    }
+
+    @GetMapping("/articles/batchDelete")
+    public String batchDeleteArticles(@RequestParam String ids) {
+        String[] idArray = ids.split(",");
+        for (String id : idArray) {
+            articleService.removeById(Integer.parseInt(id));
+        }
+        return "redirect:/admin/articles";
+    }
+
+    @PostMapping("/articles/status/{id}")
+    @ResponseBody
+    public boolean updateArticleStatus(@PathVariable Integer id, @RequestParam Integer status) {
+        Article article = new Article();
+        article.setId(id);
+        article.setStatus(status);
+        article.setUpdateTime(LocalDateTime.now());
+        return articleService.updateById(article);
+    }
+
+    // ============================================================
+    //  4. 分类管理
+    // ============================================================
+
+    @GetMapping("/category-manage")
+    public String categoryManage(Model model) {
+        List<Category> categories = categoryService.list();
+        model.addAttribute("categories", categories);
+        return "admin/category-manage";
+    }
+
+    @PostMapping("/category/save")
+    @ResponseBody
+    public boolean saveCategory(@RequestBody Category category) {
+        if (category.getId() == null) {
+            category.setCreateTime(LocalDateTime.now());
+            category.setUpdateTime(LocalDateTime.now());
+            return categoryService.save(category);
+        } else {
+            category.setUpdateTime(LocalDateTime.now());
+            return categoryService.updateById(category);
+        }
+    }
+
+    @GetMapping("/category/delete/{id}")
+    @ResponseBody
+    public boolean deleteCategory(@PathVariable Integer id) {
+        return categoryService.removeById(id);
+    }
+
+    // ============================================================
+    //  5. 学校管理
+    // ============================================================
+
+    @GetMapping("/school-manage")
+    public String schoolManage(Model model) {
+        List<School> schools = schoolService.list();
+        model.addAttribute("schools", schools);
+        return "admin/school-manage";
+    }
+
+    @PostMapping("/school/save")
+    @ResponseBody
+    public boolean saveSchool(@RequestBody School school) {
+        if (school.getId() == null) {
+            school.setCreateTime(LocalDateTime.now());
+            school.setUpdateTime(LocalDateTime.now());
+            return schoolService.save(school);
+        } else {
+            school.setUpdateTime(LocalDateTime.now());
+            return schoolService.updateById(school);
+        }
+    }
+
+    @GetMapping("/school/delete/{id}")
+    @ResponseBody
+    public boolean deleteSchool(@PathVariable Integer id) {
+        return schoolService.removeById(id);
+    }
+
+    // ============================================================
+    //  6. 标签管理
+    // ============================================================
+
+    @GetMapping("/tag-manage")
+    public String tagManage(Model model) {
+        List<Tag> tags = tagService.list();
+        model.addAttribute("tags", tags);
+        return "admin/tag-manage";
+    }
+
+    @PostMapping("/tag/save")
+    @ResponseBody
+    public boolean saveTag(@RequestBody Tag tag) {
+        if (tag.getId() == null) {
+            tag.setCreateTime(LocalDateTime.now());
+            tag.setUpdateTime(LocalDateTime.now());
+            return tagService.save(tag);
+        } else {
+            tag.setUpdateTime(LocalDateTime.now());
+            return tagService.updateById(tag);
+        }
+    }
+
+    @GetMapping("/tag/delete/{id}")
+    @ResponseBody
+    public boolean deleteTag(@PathVariable Integer id) {
+        return tagService.removeById(id);
+    }
+
+    // ============================================================
+    //  7. 评论管理
+    // ============================================================
+
+    @GetMapping("/comment-manage")
+    public String commentManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                                @RequestParam(defaultValue = "10") Integer pageSize,
+                                @RequestParam(required = false) Integer statusFilter,
+                                Model model) {
+        Page<Comment> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<Comment> wrapper = new LambdaQueryWrapper<>();
+        if (statusFilter != null) {
+            wrapper.eq(Comment::getStatus, statusFilter);
+        }
+        wrapper.orderByDesc(Comment::getCreateTime);
+        IPage<Comment> commentPage = commentService.page(page, wrapper);
+        model.addAttribute("commentPage", commentPage);
+        model.addAttribute("statusFilter", statusFilter);
+        return "admin/comment-manage";
+    }
+
+    @PostMapping("/comment/status/{id}")
+    @ResponseBody
+    public boolean updateCommentStatus(@PathVariable Integer id, @RequestParam Integer status) {
+        Comment comment = new Comment();
+        comment.setId(id);
+        comment.setStatus(status);
+        comment.setUpdateTime(LocalDateTime.now());
+        return commentService.updateById(comment);
+    }
+
+    @GetMapping("/comment/delete/{id}")
+    @ResponseBody
+    public boolean deleteComment(@PathVariable Integer id) {
+        return commentService.removeById(id);
+    }
+
+    // ============================================================
+    //  8. 仪表盘
+    // ============================================================
+
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        long userCount = userService.count();
+        long articleCount = articleService.count();
+        long orderCount = orderService.count();
+        long commentCount = commentService.count();
+
+        model.addAttribute("userCount", userCount);
+        model.addAttribute("articleCount", articleCount);
+        model.addAttribute("orderCount", orderCount);
+        model.addAttribute("commentCount", commentCount);
+        return "admin/dashboard";
     }
 }

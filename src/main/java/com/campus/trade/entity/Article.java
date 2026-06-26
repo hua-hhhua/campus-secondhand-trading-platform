@@ -44,6 +44,13 @@ public class Article {
     @TableField(exist = false)
     private List<Integer> tagIds;
 
+    // ========== 临时字段（不存数据库，用于页面展示） ==========
+    @TableField(exist = false)
+    private String authorName;
+
+    @TableField(exist = false)
+    private String categoryName;
+
     // ========== Getters and Setters ==========
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -113,4 +120,10 @@ public class Article {
 
     public List<Integer> getTagIds() { return tagIds; }
     public void setTagIds(List<Integer> tagIds) { this.tagIds = tagIds; }
+
+    public String getAuthorName() { return authorName; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+
+    public String getCategoryName() { return categoryName; }
+    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
 }

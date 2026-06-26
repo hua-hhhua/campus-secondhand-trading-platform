@@ -528,4 +528,36 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         return result.getRecords();
     }
+
+    // ========== 库存管理方法 ==========
+
+    @Override
+    @Transactional
+    public boolean deductStock(Integer articleId, Integer quantity) {
+        // 1. 查询商品
+        Article article = this.getById(articleId);
+        if (article == null) {
+            System.out.println("【库存扣减】商品不存在 - articleId: " + articleId);
+            return false;
+        }
+
+        // 2. 校验库存是否充足
+        if (article.getStock() < quantity) {
+            System.out.println("【库存扣减】库存不足 - articleId: " + articleId + ", 当前库存: " + article.getStock() + ", 需要: " + quantity);
+            return false;
+        }
+
+        // 3. 扣减库存
+        article.setStock(article.getStock() - quantity);
+        System.out.println("【库存扣减】扣减成功 - articleId: " + articleId + ", 剩余库存: " + article.getStock());
+
+        // 4. 库存为0时自动下架
+        if (article.getStock() == 0) {
+            article.setProductStatus(2);  // 2=已下架
+            System.out.println("【库存扣减】库存为0，商品已自动下架 - articleId: " + articleId);
+        }
+
+        // 5. 更新数据库
+        return this.updateById(article);
+    }
 }

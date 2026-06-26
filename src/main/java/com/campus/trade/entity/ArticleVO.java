@@ -43,6 +43,9 @@ public class ArticleVO {
     private Integer checked;     // 是否选中：0-未选中，1-选中
     private Integer quantity;    // 购买数量
 
+    // ========== 浏览历史字段 ==========
+    private LocalDateTime browseTime;  // 浏览时间
+
     // ========== Getters and Setters ==========
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -130,4 +133,7 @@ public class ArticleVO {
 
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public LocalDateTime getBrowseTime() { return browseTime; }
+    public void setBrowseTime(LocalDateTime browseTime) { this.browseTime = browseTime; }
 }

@@ -193,6 +193,9 @@
       <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/articles" class="admin-link">📝 商品管理</a>
       <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/article/manage" class="article-link">✏️ 发布商品</a>
       <a href="/profile" class="article-link" style="color: #f1c40f !important;">👤 个人中心</a>
+      <!-- ========== 浏览历史入口 ========== -->
+      <a href="/browse/history" class="article-link" style="color: #4ecdc4 !important;">📖 浏览历史</a>
+      <!-- ================================= -->
       <form th:action="@{/logout}" method="post" style="display: inline;">
         <button type="submit" class="logout-btn">退出</button>
       </form>

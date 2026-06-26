@@ -272,6 +272,38 @@ UNLOCK TABLES;
 -- Table structure for table `tag`
 --
 
+--
+-- Table structure for table `browse_history`
+--
+
+DROP TABLE IF EXISTS `browse_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `browse_history` (
+                                  `id` int NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                  `user_id` int NOT NULL COMMENT '用户ID',
+                                  `article_id` int NOT NULL COMMENT '商品ID',
+                                  `browse_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '浏览时间',
+                                  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                  PRIMARY KEY (`id`),
+                                  UNIQUE KEY `uk_user_article` (`user_id`,`article_id`),
+                                  KEY `idx_user_id` (`user_id`),
+                                  KEY `idx_article_id` (`article_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商品浏览历史表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `browse_history`
+--
+
+LOCK TABLES `browse_history` WRITE;
+/*!40000 ALTER TABLE `browse_history` DISABLE KEYS */;
+INSERT INTO `browse_history` VALUES (1,4,5,'2026-06-26 12:48:31','2026-06-26 12:48:31'),(2,4,13,'2026-06-26 12:50:15','2026-06-26 12:50:15'),(3,37,1,'2026-06-26 12:51:20','2026-06-26 12:51:20');
+/*!40000 ALTER TABLE `browse_history` ENABLE KEYS */;
+UNLOCK TABLES;
+
+
+
 DROP TABLE IF EXISTS `tag`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;

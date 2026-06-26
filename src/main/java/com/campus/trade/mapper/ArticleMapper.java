@@ -8,13 +8,14 @@ import com.campus.trade.entity.Article;
 import com.campus.trade.entity.ArticleResultMapVO;
 import com.campus.trade.entity.ArticleVO;
 import org.apache.ibatis.annotations.*;
-import org.apache.ibatis.mapping.FetchType;  // ⬅️ 添加这个导入
+import org.apache.ibatis.mapping.FetchType;
 
 @Mapper
 public interface ArticleMapper extends BaseMapper<Article> {
 
     /**
-     * 多表查询文章列表（包含作者和分类信息）- 方案二：JOIN查询
+     * 多表查询文章列表（包含作者和分类信息）- 方案一：JOIN查询
+     * 返回 ArticleVO，包含 authorName、categoryName 等字段
      */
     @Select("SELECT a.*, " +
             "u.nickname as author_name, " +
@@ -25,7 +26,38 @@ public interface ArticleMapper extends BaseMapper<Article> {
             "LEFT JOIN users u ON a.user_id = u.id " +
             "LEFT JOIN category c ON a.category_id = c.id " +
             "${ew.customSqlSegment}")
-    IPage<ArticleVO> selectArticleVOPage(IPage<ArticleVO> page, @Param(Constants.WRAPPER) Wrapper<Article> wrapper);
+    IPage<ArticleVO> selectArticleVOPage(IPage<ArticleVO> page,
+                                         @Param(Constants.WRAPPER) Wrapper<Article> wrapper);
+
+    /**
+     * 多表查询文章列表（简单版，返回 Article）
+     * 用于 AdminController 中直接填充 authorName 和 categoryName
+     */
+    @Select("SELECT a.*, " +
+            "u.nickname as author_name, " +
+            "c.name as category_name " +
+            "FROM article a " +
+            "LEFT JOIN users u ON a.user_id = u.id " +
+            "LEFT JOIN category c ON a.category_id = c.id " +
+            "${ew.customSqlSegment}")
+    IPage<Article> selectArticleWithInfo(IPage<Article> page,
+                                         @Param(Constants.WRAPPER) Wrapper<Article> wrapper);
+
+    /**
+     * 多表查询文章列表（包含作者和分类信息）- 方案二：JOIN查询
+     * 使用 Map 接收
+     */
+    @Select("SELECT a.*, " +
+            "u.nickname as author_name, " +
+            "u.avatar as author_avatar, " +
+            "c.name as category_name, " +
+            "c.slug as category_slug " +
+            "FROM article a " +
+            "LEFT JOIN users u ON a.user_id = u.id " +
+            "LEFT JOIN category c ON a.category_id = c.id " +
+            "${ew.customSqlSegment}")
+    IPage<Article> selectArticlePageWithInfo(IPage<Article> page,
+                                             @Param(Constants.WRAPPER) Wrapper<Article> wrapper);
 
     // ========== 方案三：MyBatis ResultMap 关联查询（支持懒加载） ==========
 

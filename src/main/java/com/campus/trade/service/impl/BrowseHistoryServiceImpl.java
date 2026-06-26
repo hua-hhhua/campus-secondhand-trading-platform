@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class BrowseHistoryServiceImpl extends ServiceImpl<BrowseHistoryMapper, BrowseHistory> implements BrowseHistoryService {
@@ -86,12 +88,20 @@ public class BrowseHistoryServiceImpl extends ServiceImpl<BrowseHistoryMapper, B
                 new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 100);
         List<ArticleVO> voList = articleMapper.selectArticleVOPage(page, queryWrapper).getRecords();
 
+        // ========== 将浏览时间设置到对应的 ArticleVO 中 ==========
+        // 创建一个 Map 用于快速查找：articleId -> browseTime
+        Map<Integer, LocalDateTime> browseTimeMap = new HashMap<>();
+        for (BrowseHistory history : histories) {
+            browseTimeMap.put(history.getArticleId(), history.getBrowseTime());
+        }
+
         // 按浏览时间排序（最新浏览的在前）
-        // 由于查询结果可能打乱顺序，重新按 histories 顺序排列
         List<ArticleVO> result = new ArrayList<>();
         for (BrowseHistory history : histories) {
             for (ArticleVO vo : voList) {
                 if (vo.getId().equals(history.getArticleId())) {
+                    // 设置浏览时间
+                    vo.setBrowseTime(browseTimeMap.get(vo.getId()));
                     result.add(vo);
                     break;
                 }

@@ -121,9 +121,18 @@ public interface ArticleService extends IService<Article> {
      */
     String uploadCoverImage(MultipartFile file, Integer userId);
 
-    // 在接口中添加
     /**
      * 多条件查询商品（关键词 + 学校 + 分类）
      */
     List<ArticleVO> getArticlesByConditions(String keyword, Integer schoolId, Integer categoryId);
+
+    // ========== 库存管理方法 ==========
+
+    /**
+     * 扣减库存（供订单模块调用）
+     * @param articleId 商品ID
+     * @param quantity 购买数量
+     * @return true扣减成功，false库存不足
+     */
+    boolean deductStock(Integer articleId, Integer quantity);
 }
