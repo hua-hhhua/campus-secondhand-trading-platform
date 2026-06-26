@@ -461,4 +461,75 @@ public class UserController {
         
         return "user/order-detail";
     }
+
+    /**
+     * 我的销售订单列表页（卖家）
+     */
+    @GetMapping("/user/seller-orders")
+    public String sellerOrders(@RequestParam(defaultValue = "1") Integer pageNum,
+                               @RequestParam(defaultValue = "10") Integer pageSize,
+                               @RequestParam(required = false) Integer statusFilter,
+                               Model model, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        // 获取卖家的销售订单列表
+        List<Order> allOrders = orderService.getSellerOrders(user.getId());
+
+        // 按状态筛选
+        if (statusFilter != null) {
+            allOrders = allOrders.stream()
+                    .filter(order -> order.getStatus().equals(statusFilter))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        // 手动分页
+        int total = allOrders.size();
+        int start = (pageNum - 1) * pageSize;
+        int end = Math.min(start + pageSize, total);
+        
+        List<Order> orders = allOrders.subList(Math.max(0, start), Math.min(end, total));
+        
+        // 创建分页对象
+        IPage<Order> orderPage = new Page<>(pageNum, pageSize, total);
+        orderPage.setRecords(orders);
+
+        model.addAttribute("orderPage", orderPage);
+        model.addAttribute("statusFilter", statusFilter);
+        model.addAttribute("username", user.getUsername());
+        model.addAttribute("userNickname", user.getNickname());
+        model.addAttribute("userAvatar", user.getAvatar());
+        
+        return "user/seller-orders";
+    }
+
+    /**
+     * 发货
+     */
+    @PostMapping("/user/orders/{id}/ship")
+    @ResponseBody
+    public Result shipOrder(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Result.error("请先登录");
+        }
+
+        try {
+            boolean success = orderService.shipOrder(id);
+            if (success) {
+                asyncService.asyncLogOperation(authentication.getName(), "发货", "订单ID: " + id);
+                return Result.success("发货成功");
+            } else {
+                return Result.error("发货失败，订单可能不存在或状态不允许发货");
+            }
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 }
