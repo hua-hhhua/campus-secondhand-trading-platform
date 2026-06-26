@@ -37,8 +37,15 @@ public class UserController {
 
     @GetMapping("/user/profile")
     public String profile(Model model, Authentication authentication) {
+        // 检查是否已登录
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/toLoginPage";
+        }
         String username = authentication.getName();
         User user = userService.findByUsername(username);
+        if (user == null) {
+            return "redirect:/toLoginPage";
+        }
         model.addAttribute("user", user);
         return "user/profile";
     }
