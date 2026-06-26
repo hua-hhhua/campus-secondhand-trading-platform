@@ -375,7 +375,7 @@ CREATE TABLE `orders` (
                           `price` decimal(10,2) NOT NULL COMMENT '购买单价',
                           `quantity` int NOT NULL DEFAULT '1' COMMENT '购买数量',
                           `total_amount` decimal(10,2) NOT NULL COMMENT '订单总金额',
-                          `status` tinyint NOT NULL DEFAULT '0' COMMENT '订单状态: 0-待付款, 1-待发货, 2-已发货, 3-已收货, 4-已取消, 5-已完成',
+                          `status` tinyint NOT NULL DEFAULT '0' COMMENT '订单状态: 0-待支付, 1-待发货, 2-已发货, 3-已完成, 4-已取消, 5-已退款',
                           `buyer_name` varchar(64) DEFAULT NULL COMMENT '买家昵称',
                           `buyer_phone` varchar(20) DEFAULT NULL COMMENT '买家电话',
                           `buyer_address` varchar(255) DEFAULT NULL COMMENT '收货地址',
@@ -440,6 +440,34 @@ LOCK TABLES `order_reviews` WRITE;
 /*!40000 ALTER TABLE `order_reviews` ENABLE KEYS */;
 UNLOCK TABLES;
 
+
+--
+-- Table structure for table `order_status_history`
+--
+
+DROP TABLE IF EXISTS `order_status_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_status_history` (
+                                        `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                        `order_id` bigint NOT NULL COMMENT '订单ID',
+                                        `from_status` tinyint NOT NULL COMMENT '原状态',
+                                        `to_status` tinyint NOT NULL COMMENT '新状态',
+                                        `remark` varchar(255) DEFAULT NULL COMMENT '备注/操作原因',
+                                        `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                        PRIMARY KEY (`id`),
+                                        KEY `idx_order_id` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单状态历史记录表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_status_history`
+--
+
+LOCK TABLES `order_status_history` WRITE;
+/*!40000 ALTER TABLE `order_status_history` DISABLE KEYS */;
+/*!40000 ALTER TABLE `order_status_history` ENABLE KEYS */;
+UNLOCK TABLES;
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
