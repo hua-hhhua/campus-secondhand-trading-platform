@@ -59,37 +59,55 @@ public class UserController {
         return "user/profile";
     }
 
+    /**
+     * 更新个人信息 - 返回 Map（兼容前端）
+     */
     @PostMapping("/update")
     @ResponseBody
-    public Result updateProfile(@RequestBody UserUpdateDTO dto, Authentication authentication) {
-        String username = authentication.getName();
-        User user = userService.findByUsername(username);
+    public Map<String, Object> updateProfile(@RequestBody UserUpdateDTO dto, Authentication authentication) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String username = authentication.getName();
+            User user = userService.findByUsername(username);
 
-        if (user == null) {
-            return Result.error("用户不存在");
-        }
-
-        if (dto.getNickname() != null && !dto.getNickname().isEmpty()) {
-            user.setNickname(dto.getNickname());
-        }
-
-        if (dto.getPhone() != null && !dto.getPhone().isEmpty()) {
-            user.setPhone(dto.getPhone());
-        }
-
-        if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
-            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-            if (!encoder.matches(dto.getPassword(), user.getPassword())) {
-                return Result.error("原密码错误");
+            if (user == null) {
+                result.put("success", false);
+                result.put("message", "用户不存在");
+                return result;
             }
-            if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
-                return Result.error("两次密码输入不一致");
-            }
-            user.setPassword(encoder.encode(dto.getNewPassword()));
-        }
 
-        userService.updateById(user);
-        return Result.success("个人信息更新成功");
+            if (dto.getNickname() != null && !dto.getNickname().isEmpty()) {
+                user.setNickname(dto.getNickname());
+            }
+
+            if (dto.getPhone() != null && !dto.getPhone().isEmpty()) {
+                user.setPhone(dto.getPhone());
+            }
+
+            if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+                BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+                if (!encoder.matches(dto.getPassword(), user.getPassword())) {
+                    result.put("success", false);
+                    result.put("message", "原密码错误");
+                    return result;
+                }
+                if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+                    result.put("success", false);
+                    result.put("message", "两次密码输入不一致");
+                    return result;
+                }
+                user.setPassword(encoder.encode(dto.getNewPassword()));
+            }
+
+            userService.updateById(user);
+            result.put("success", true);
+            result.put("message", "个人信息更新成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "更新失败：" + e.getMessage());
+        }
+        return result;
     }
 
     /**
@@ -182,13 +200,36 @@ public class UserController {
         return user;
     }
 
-    @PostMapping("/api/users/register")
+    /**
+     * 用户注册 - 返回 Map（兼容前端，解决 No acceptable representation 错误）
+     */
+    @PostMapping("/api/register")
     @ResponseBody
-    public boolean register(@RequestBody User user) {
-        boolean result = userService.register(user);
-        if (result) {
-            asyncService.asyncLogOperation(user.getUsername(), "用户注册", "注册成功");
-            asyncService.asyncSendNotification(user.getUsername(), "欢迎注册", "感谢您注册校园交易平台");
+    public Map<String, Object> register(@RequestBody User user) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            // 校验用户名是否已存在
+            User existingUser = userService.findByUsername(user.getUsername());
+            if (existingUser != null) {
+                result.put("success", false);
+                result.put("message", "用户名已存在");
+                return result;
+            }
+
+            boolean success = userService.register(user);
+            if (success) {
+                asyncService.asyncLogOperation(user.getUsername(), "用户注册", "注册成功");
+                asyncService.asyncSendNotification(user.getUsername(), "欢迎注册", "感谢您注册校园交易平台");
+                result.put("success", true);
+                result.put("message", "注册成功");
+            } else {
+                result.put("success", false);
+                result.put("message", "注册失败，请稍后重试");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "注册失败：" + e.getMessage());
         }
         return result;
     }

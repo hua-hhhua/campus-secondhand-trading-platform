@@ -22,9 +22,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +54,6 @@ public class ArticleController {
     @Autowired
     private TagService tagService;
 
-    /**
-     * 我的商品列表（普通用户）/ 商品管理（管理员）
-     */
     @GetMapping("/manage")
     public String articlesEntry(
             Model model,
@@ -71,7 +71,6 @@ public class ArticleController {
             return "redirect:/toLoginPage";
         }
 
-        // ========== 根据角色查询不同数据 ==========
         IPage<ArticleVO> articlePage;
 
         if (currentUser.getRole() == 1) {
@@ -94,9 +93,6 @@ public class ArticleController {
         }
     }
 
-    /**
-     * 商品发布/编辑表单
-     */
     @GetMapping("/form")
     public String articleForm(@RequestParam(required = false) Integer id, Model model, HttpSession session) {
         List<Category> categories = categoryService.list();
@@ -132,89 +128,146 @@ public class ArticleController {
     }
 
     /**
-     * 保存商品 - 支持定时发布
+     * 保存商品 - 支持定时发布和草稿保存
      */
     @PostMapping("/save")
     public String saveArticle(
-            Article article,
+            HttpServletRequest request,
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String content,
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) Integer status,
             @RequestParam(required = false) String scheduledTime,
+            @RequestParam(required = false) BigDecimal price,
+            @RequestParam(required = false) Integer stock,
+            @RequestParam(required = false) Integer schoolId,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String coverImage,
+            @RequestParam(required = false) String wechat,
+            @RequestParam(required = false) String qq,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) Integer isTop,
+            @RequestParam(required = false) Integer allowComment,
+            @RequestParam(required = false) List<Integer> tagIds,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
 
+        // ========== 打印所有请求参数（调试用） ==========
+        System.out.println("========================================");
+        System.out.println("========== 所有请求参数 ==========");
+        Map<String, String[]> paramMap = request.getParameterMap();
+        for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+            String key = entry.getKey();
+            String[] values = entry.getValue();
+            System.out.println("参数名: " + key + ", 值: " + String.join(", ", values));
+        }
+        System.out.println("========== 打印结束 ==========");
+
         User currentUser = (User) session.getAttribute("currentUser");
 
-        // ========== 校验用户是否登录 ==========
         if (currentUser == null) {
             redirectAttributes.addFlashAttribute("errorMsg", "请先登录后再发布商品");
             return "redirect:/toLoginPage";
         }
 
-        // ========== 校验：至少填写一种联系方式 ==========
-        boolean hasContact = (article.getWechat() != null && !article.getWechat().trim().isEmpty()) ||
-                (article.getQq() != null && !article.getQq().trim().isEmpty()) ||
-                (article.getPhone() != null && !article.getPhone().trim().isEmpty());
+        // ========== 校验联系方式 ==========
+        boolean hasContact = (wechat != null && !wechat.trim().isEmpty()) ||
+                (qq != null && !qq.trim().isEmpty()) ||
+                (phone != null && !phone.trim().isEmpty());
 
         if (!hasContact) {
             redirectAttributes.addFlashAttribute("errorMsg", "请至少填写一种联系方式(微信/QQ/手机号)");
             return "redirect:/article/form";
         }
 
-        article.setSendEmail(0);
+        // ========== 创建或获取 Article 对象 ==========
+        Article article;
+        if (id != null) {
+            article = articleService.getById(id);
+            if (article == null) {
+                redirectAttributes.addFlashAttribute("errorMsg", "商品不存在");
+                return "redirect:/article/manage";
+            }
+        } else {
+            article = new Article();
+            article.setViewCount(0);
+            article.setCreateTime(LocalDateTime.now());
+        }
+
+        // ========== 设置基本字段 ==========
+        article.setTitle(title);
+        article.setContent(content);
+        article.setCategoryId(categoryId);
         article.setUserId(currentUser.getId());
+        article.setPrice(price != null ? price : BigDecimal.ZERO);
+        article.setStock(stock != null ? stock : 1);
+        article.setSchoolId(schoolId);
+        article.setLocation(location);
+        article.setCoverImage(coverImage);
+        article.setWechat(wechat);
+        article.setQq(qq);
+        article.setPhone(phone);
+        article.setSendEmail(0);
+        article.setAllowComment(allowComment != null ? allowComment : 1);
+        article.setIsTop(isTop != null && isTop == 1 ? 1 : 0);
+        article.setUpdateTime(LocalDateTime.now());
+        article.setTagIds(tagIds);
 
-        if (article.getAllowComment() == null) {
-            article.setAllowComment(0);
-        }
-
-        if (article.getIsTop() == null) {
-            article.setIsTop(0);
-        }
-        if (article.getIsTop() == 2) {
-            article.setIsTop(0);
-        }
-        if (article.getIsTop() != 0 && article.getIsTop() != 1) {
-            article.setIsTop(0);
-        }
-
-        // ========== 处理定时发布逻辑 ==========
-        Integer status = article.getStatus();
+        // ========== 处理发布状态 ==========
         LocalDateTime now = LocalDateTime.now();
 
-        if (status != null && status == ArticleStatus.SCHEDULED) {
-            // 定时发布：状态设为2，使用用户选择的时间
-            article.setStatus(ArticleStatus.SCHEDULED);
+        System.out.println("========== 接收到的 status 值: " + status);
 
+        // 如果 status 为 null，默认为立即发布
+        if (status == null) {
+            status = 1;
+        }
+
+        // 直接设置 status，不经过任何其他逻辑
+        article.setStatus(status);
+        System.out.println("========== 设置 article.status = " + article.getStatus());
+
+        // ========== 根据发布状态设置商品状态 ==========
+        if (status == 0) {
+            // 草稿：设置为已下架，不在首页显示
+            article.setProductStatus(2);
+            article.setPublishedAt(null);
+            System.out.println("========== 保存为草稿，商品状态设为已下架");
+        } else if (status == 2) {
+            // 定时发布：先设置为已下架，等定时任务触发时再上架
+            article.setProductStatus(2);
             if (scheduledTime != null && !scheduledTime.isEmpty()) {
                 try {
-                    LocalDateTime publishTime = LocalDateTime.parse(scheduledTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-                    article.setPublishedAt(publishTime);
+                    article.setPublishedAt(LocalDateTime.parse(scheduledTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
                 } catch (Exception e) {
-                    // 解析失败，默认1小时后发布
                     article.setPublishedAt(now.plusHours(1));
                 }
             } else {
-                // 如果没有选择时间，默认1小时后
                 article.setPublishedAt(now.plusHours(1));
             }
-        } else if (status != null && status == ArticleStatus.DRAFT) {
-            // 草稿：状态设为0
-            article.setStatus(ArticleStatus.DRAFT);
-            article.setPublishedAt(null);
+            System.out.println("========== 保存为定时发布，发布时间: " + article.getPublishedAt() + "，商品状态设为已下架");
         } else {
-            // 立即发布：状态设为1，发布时间为当前时间
-            article.setStatus(ArticleStatus.PUBLISHED);
+            // 立即发布：设置为在售
+            article.setProductStatus(0);
             article.setPublishedAt(now);
+            System.out.println("========== 保存为立即发布，商品状态设为在售");
         }
 
         // ========== 保存文章 ==========
         boolean result = articleService.saveOrUpdateArticle(article, currentUser.getId());
 
         if (result) {
+            // 保存标签关联
+            if (tagIds != null && !tagIds.isEmpty()) {
+                articleService.saveArticleTags(article.getId(), tagIds);
+            }
+
             String statusDesc = "";
             if (article.getStatus() != null) {
-                if (article.getStatus() == ArticleStatus.SCHEDULED) {
+                if (article.getStatus() == 2) {
                     statusDesc = "定时发布（发布时间：" + article.getPublishedAt() + "）";
-                } else if (article.getStatus() == ArticleStatus.PUBLISHED) {
+                } else if (article.getStatus() == 1) {
                     statusDesc = "发布商品";
                 } else {
                     statusDesc = "保存草稿";
@@ -222,7 +275,7 @@ public class ArticleController {
             }
             asyncService.asyncLogOperation(currentUser.getUsername(), statusDesc, "商品标题: " + article.getTitle());
 
-            if (article.getStatus() != null && article.getStatus() == ArticleStatus.PUBLISHED) {
+            if (article.getStatus() != null && article.getStatus() == 1) {
                 asyncService.asyncUpdateArticleStats(article.getId(), "publish");
             }
         }
@@ -230,9 +283,6 @@ public class ArticleController {
         return "redirect:/article/manage";
     }
 
-    /**
-     * 删除商品
-     */
     @GetMapping("/delete/{id}")
     public String deleteArticle(@PathVariable Integer id, HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
@@ -251,9 +301,6 @@ public class ArticleController {
         return "redirect:/article/manage";
     }
 
-    /**
-     * 下架商品
-     */
     @GetMapping("/off-shelf/{id}")
     public String offShelf(@PathVariable Integer id, HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
@@ -267,13 +314,11 @@ public class ArticleController {
         if (article != null && (article.getUserId().equals(currentUser.getId()) || currentUser.getRole() == 1)) {
             article.setProductStatus(2);
             articleService.updateById(article);
+            asyncService.asyncLogOperation(currentUser.getUsername(), "下架商品", "商品ID: " + id + ", 标题: " + article.getTitle());
         }
         return "redirect:/article/manage";
     }
 
-    /**
-     * 上架商品
-     */
     @GetMapping("/on-shelf/{id}")
     public String onShelf(@PathVariable Integer id, HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
@@ -287,13 +332,11 @@ public class ArticleController {
         if (article != null && (article.getUserId().equals(currentUser.getId()) || currentUser.getRole() == 1)) {
             article.setProductStatus(0);
             articleService.updateById(article);
+            asyncService.asyncLogOperation(currentUser.getUsername(), "上架商品", "商品ID: " + id + ", 标题: " + article.getTitle());
         }
         return "redirect:/article/manage";
     }
 
-    /**
-     * 上传商品图片
-     */
     @PostMapping("/upload-image")
     @ResponseBody
     public Map<String, Object> uploadImage(@RequestParam("file") MultipartFile file) {

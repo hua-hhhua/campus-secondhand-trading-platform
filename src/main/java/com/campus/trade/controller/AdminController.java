@@ -284,24 +284,72 @@ public class AdminController {
         article.setUserId(currentUser.getId());
 
         if (article.getId() == null) {
-            article.setStatus(1);
+            // 新增文章
             article.setViewCount(0);
             article.setIsTop(0);
             article.setAllowComment(1);
             article.setSendEmail(0);
             article.setCreateTime(LocalDateTime.now());
             article.setUpdateTime(LocalDateTime.now());
-            // ========== 修复：设置发布时间，首页显示必须 ==========
-            if (article.getPublishedAt() == null) {
-                article.setPublishedAt(LocalDateTime.now());
+            
+            // ========== 根据 status 设置 productStatus ==========
+            if (article.getStatus() == null) {
+                article.setStatus(1); // 默认立即发布
             }
+            
+            if (article.getStatus() == 0) {
+                // 草稿：设置为已下架，不在首页显示
+                article.setProductStatus(2);
+                article.setPublishedAt(null);
+            } else if (article.getStatus() == 2) {
+                // 定时发布：先设置为已下架，等定时任务触发时再上架
+                article.setProductStatus(2);
+                if (article.getPublishedAt() == null) {
+                    article.setPublishedAt(LocalDateTime.now().plusHours(1));
+                }
+            } else {
+                // 立即发布：设置为在售
+                article.setProductStatus(0);
+                if (article.getPublishedAt() == null) {
+                    article.setPublishedAt(LocalDateTime.now());
+                }
+            }
+            
             articleService.save(article);
         } else {
+            // 更新文章
             article.setUpdateTime(LocalDateTime.now());
             // 如果是更新，保留原有的 user_id
             Article existing = articleService.getById(article.getId());
             if (existing != null) {
                 article.setUserId(existing.getUserId());
+                
+                // ========== 更新时也需要同步设置 productStatus ==========
+                if (article.getStatus() == null) {
+                    article.setStatus(existing.getStatus());
+                }
+                
+                if (article.getStatus() == 0) {
+                    // 草稿：设置为已下架
+                    article.setProductStatus(2);
+                    article.setPublishedAt(null);
+                } else if (article.getStatus() == 2) {
+                    // 定时发布：保持已下架状态
+                    article.setProductStatus(2);
+                    if (article.getPublishedAt() == null && existing.getPublishedAt() == null) {
+                        article.setPublishedAt(LocalDateTime.now().plusHours(1));
+                    }
+                } else {
+                    // 立即发布：如果之前是下架状态，则恢复为在售
+                    if (existing.getProductStatus() == 2) {
+                        article.setProductStatus(0);
+                    } else {
+                        article.setProductStatus(existing.getProductStatus());
+                    }
+                    if (article.getPublishedAt() == null && existing.getPublishedAt() == null) {
+                        article.setPublishedAt(LocalDateTime.now());
+                    }
+                }
             }
             articleService.updateById(article);
         }
@@ -341,6 +389,44 @@ public class AdminController {
         article.setStatus(status);
         article.setUpdateTime(LocalDateTime.now());
         return articleService.updateById(article);
+    }
+
+    // 下架商品
+    @GetMapping("/articles/off-shelf/{id}")
+    public String offShelf(@PathVariable Integer id, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+        
+        Article article = articleService.getById(id);
+        
+        if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+            article.setProductStatus(2); // 2=已下架
+            article.setUpdateTime(LocalDateTime.now());
+            articleService.updateById(article);
+        }
+        return "redirect:/admin/articles";
+    }
+
+    // 上架商品
+    @GetMapping("/articles/on-shelf/{id}")
+    public String onShelf(@PathVariable Integer id, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+        
+        Article article = articleService.getById(id);
+        
+        if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+            article.setProductStatus(0); // 0=在售
+            article.setUpdateTime(LocalDateTime.now());
+            articleService.updateById(article);
+        }
+        return "redirect:/admin/articles";
     }
 
     // ============================================================

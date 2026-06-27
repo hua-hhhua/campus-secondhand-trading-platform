@@ -21,6 +21,8 @@
         .btn-add { background-color: #67c23a; color: white; }
         .btn-edit { background-color: #e6a23c; color: white; }
         .btn-delete { background-color: #f56c6c; color: white; }
+        .btn-warning { background-color: #e6a23c; color: white; }
+        .btn-success { background-color: #67c23a; color: white; }
         .btn-sm { padding: 4px 12px; font-size: 12px; }
 
         .status-filter { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
@@ -40,6 +42,10 @@
         .status-published { color: #67c23a; background: #e1f3d8; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
         .status-draft { color: #e6a23c; background: #fdf6ec; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
         .status-scheduled { color: #e6a23c; background: #fdf6ec; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
+
+        .status-in-sale { color: #67c23a; background: #e1f3d8; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
+        .status-sold { color: #909399; background: #f4f4f5; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
+        .status-off-shelf { color: #e6a23c; background: #fdf6ec; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
 
         .top-badge { background-color: #ff9800; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 6px; display: inline-block; vertical-align: middle; }
 
@@ -94,6 +100,7 @@
                 <th>库存</th>
                 <th>浏览量</th>
                 <th>状态</th>
+                <th>商品状态</th>
                 <th>发布时间</th>
                 <th>操作</th>
             </tr>
@@ -116,14 +123,31 @@
                     <span th:if="${article.status == 0}" class="status-draft">📝 草稿</span>
                     <span th:if="${article.status == 2}" class="status-scheduled">⏰ 定时发布</span>
                 </td>
+                <td style="white-space: nowrap;">
+                    <span th:if="${article.productStatus == 0 or article.productStatus == null}" class="status-in-sale">✅ 在售</span>
+                    <span th:if="${article.productStatus == 1}" class="status-sold">已售</span>
+                    <span th:if="${article.productStatus == 2}" class="status-off-shelf">⏸️ 已下架</span>
+                </td>
                 <td th:text="${#temporals.format(article.createTime, 'yyyy-MM-dd HH:mm')}">?</td>
                 <td class="action-buttons">
                     <a th:href="@{/admin/articles/form(id=${article.id})}" class="btn btn-edit btn-sm">编辑</a>
                     <a th:href="@{/admin/articles/delete/{id}(id=${article.id})}" class="btn btn-delete btn-sm" onclick="return confirm('确定删除？')">删除</a>
+                    
+                    <!-- 下架按钮：在售状态显示 -->
+                    <a th:if="${article.productStatus == 0 or article.productStatus == null}"
+                       th:href="@{/admin/articles/off-shelf/{id}(id=${article.id})}"
+                       class="btn btn-warning btn-sm"
+                       onclick="return confirm('确定要下架该商品吗？下架后买家将看不到此商品')">下架</a>
+                    
+                    <!-- 上架按钮：已下架状态显示 -->
+                    <a th:if="${article.productStatus == 2}"
+                       th:href="@{/admin/articles/on-shelf/{id}(id=${article.id})}"
+                       class="btn btn-success btn-sm"
+                       onclick="return confirm('确定要重新上架该商品吗？')">上架</a>
                 </td>
             </tr>
             <tr th:if="${articlePage == null or articlePage.records.isEmpty()}">
-                <td colspan="11" style="text-align: center; color: #999; padding: 40px;">暂无商品数据</td>
+                <td colspan="12" style="text-align: center; color: #999; padding: 40px;">暂无商品数据</td>
             </tr>
             </tbody>
         </table>
