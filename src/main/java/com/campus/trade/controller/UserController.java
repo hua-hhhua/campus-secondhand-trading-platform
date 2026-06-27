@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
 
 @Controller
 @RequestMapping("/user")
@@ -245,7 +246,6 @@ public class UserController {
     }
 
     // ========== 内部类 ==========
-
     public static class LoginRequest {
         private String username;
         private String password;
@@ -409,5 +409,41 @@ public class UserController {
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }
+    }
+
+    // ========== 支付订单 ==========
+    @PostMapping("/orders/{id}/pay")
+    @ResponseBody
+    public Result payOrder(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Result.error("请先登录");
+        }
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        try {
+            boolean success = orderService.payOrder(id, user.getId());
+            return success ? Result.success("支付成功") : Result.error("支付失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    // ========== 获取待支付总额（用于前端显示） ==========
+    @GetMapping("/orders/pending-amount")
+    @ResponseBody
+    public Result getPendingAmount(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Result.error("请先登录");
+        }
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        BigDecimal amount = orderService.calculatePendingAmount(user.getId());
+        return Result.success(String.valueOf(amount));
     }
 }

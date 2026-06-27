@@ -505,7 +505,7 @@
         <div class="empty-state" th:if="${orderPage.records == null or orderPage.records.empty}">
             <div class="empty-state-icon">📦</div>
             <div class="empty-state-text">暂无销售订单</div>
-            <a th:href="@{/article/publish}" class="empty-state-btn">发布商品</a>
+            <a th:href="@{/admin/articles/form}" class="empty-state-btn">发布商品</a>
         </div>
     </div>
 

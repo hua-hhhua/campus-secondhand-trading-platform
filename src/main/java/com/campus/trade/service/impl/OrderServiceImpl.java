@@ -279,6 +279,36 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return orderMapper.deleteById(orderId) > 0;
     }
 
+
+    // ========== 支付相关 ==========
+    @Override
+    public BigDecimal calculatePendingAmount(Integer buyerId) {
+        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Order::getBuyerId, buyerId)
+                .eq(Order::getStatus, 0);
+        List<Order> orders = list(wrapper);
+        return orders.stream()
+                .map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    @Override
+    @Transactional
+    public boolean payOrder(Long orderId, Integer buyerId) {
+        Order order = getById(orderId);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (!order.getBuyerId().equals(buyerId)) {
+            throw new RuntimeException("无权操作此订单");
+        }
+        if (order.getStatus() != 0) {
+            throw new RuntimeException("当前状态无法支付，状态：" + order.getStatus());
+        }
+        return updateStatus(orderId, 1);
+    }
+
+
     // ========== 评价 ==========
     @Override
     @Transactional

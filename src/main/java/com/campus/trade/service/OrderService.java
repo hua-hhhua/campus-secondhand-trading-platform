@@ -5,6 +5,7 @@ import com.campus.trade.entity.Order;
 import com.campus.trade.entity.OrderReview;
 import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
 
 public interface OrderService extends IService<Order> {
 
@@ -34,6 +35,13 @@ public interface OrderService extends IService<Order> {
 
     boolean adminDeleteOrder(Long orderId);
 
+    // ========== 支付 ==========
+    // 统计待支付总额
+    BigDecimal calculatePendingAmount(Integer buyerId);
+
+    // 确认支付
+    boolean payOrder(Long orderId, Integer buyerId);
+
     // ========== 评价 ==========
     boolean reviewOrder(OrderReview review);
 
@@ -47,4 +55,6 @@ public interface OrderService extends IService<Order> {
     List<Order> searchOrders(Integer userId, String role, String keyword, Integer status);
 
     boolean isValidStatusTransition(int fromStatus, int toStatus);
+
+
 }

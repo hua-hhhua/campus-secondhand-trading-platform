@@ -1,0 +1,522 @@
+[1mdiff --git a/src/main/java/com/campus/trade/controller/UserController.java b/src/main/java/com/campus/trade/controller/UserController.java[m
+[1mindex a78a3cb..a88319e 100644[m
+[1m--- a/src/main/java/com/campus/trade/controller/UserController.java[m
+[1m+++ b/src/main/java/com/campus/trade/controller/UserController.java[m
+[36m@@ -25,6 +25,7 @@[m [mimport org.springframework.web.multipart.MultipartFile;[m
+ import java.util.HashMap;[m
+ import java.util.List;[m
+ import java.util.Map;[m
+[32m+[m[32mimport java.math.BigDecimal;[m
+ [m
+ @Controller[m
+ @RequestMapping("/user")[m
+[36m@@ -245,7 +246,6 @@[m [mpublic class UserController {[m
+     }[m
+ [m
+     // ========== 内部类 ==========[m
+[31m-[m
+     public static class LoginRequest {[m
+         private String username;[m
+         private String password;[m
+[36m@@ -410,4 +410,40 @@[m [mpublic class UserController {[m
+             return Result.error(e.getMessage());[m
+         }[m
+     }[m
+[32m+[m
+[32m+[m[32m    // ========== 支付订单 ==========[m
+[32m+[m[32m    @PostMapping("/orders/{id}/pay")[m
+[32m+[m[32m    @ResponseBody[m
+[32m+[m[32m    public Result payOrder(@PathVariable Long id, Authentication authentication) {[m
+[32m+[m[32m        if (authentication == null || !authentication.isAuthenticated()) {[m
+[32m+[m[32m            return Result.error("请先登录");[m
+[32m+[m[32m        }[m
+[32m+[m[32m        String username = authentication.getName();[m
+[32m+[m[32m        User user = userService.findByUsername(username);[m
+[32m+[m[32m        if (user == null) {[m
+[32m+[m[32m            return Result.error("用户不存在");[m
+[32m+[m[32m        }[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            boolean success = orderService.payOrder(id, user.getId());[m
+[32m+[m[32m            return success ? Result.success("支付成功") : Result.error("支付失败");[m
+[32m+[m[32m        } catch (Exception e) {[m
+[32m+[m[32m            return Result.error(e.getMessage());[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // ========== 获取待支付总额（用于前端显示） ==========[m
+[32m+[m[32m    @GetMapping("/orders/pending-amount")[m
+[32m+[m[32m    @ResponseBody[m
+[32m+[m[32m    public Result getPendingAmount(Authentication authentication) {[m
+[32m+[m[32m        if (authentication == null || !authentication.isAuthenticated()) {[m
+[32m+[m[32m            return Result.error("请先登录");[m
+[32m+[m[32m        }[m
+[32m+[m[32m        String username = authentication.getName();[m
+[32m+[m[32m        User user = userService.findByUsername(username);[m
+[32m+[m[32m        if (user == null) {[m
+[32m+[m[32m            return Result.error("用户不存在");[m
+[32m+[m[32m        }[m
+[32m+[m[32m        BigDecimal amount = orderService.calculatePendingAmount(user.getId());[m
+[32m+[m[32m        return Result.success(String.valueOf(amount));[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/java/com/campus/trade/service/OrderService.java b/src/main/java/com/campus/trade/service/OrderService.java[m
+[1mindex 0ba7361..1aaa5c3 100644[m
+[1m--- a/src/main/java/com/campus/trade/service/OrderService.java[m
+[1m+++ b/src/main/java/com/campus/trade/service/OrderService.java[m
+[36m@@ -5,6 +5,7 @@[m [mimport com.campus.trade.entity.Order;[m
+ import com.campus.trade.entity.OrderReview;[m
+ import java.util.List;[m
+ import java.util.Map;[m
+[32m+[m[32mimport java.math.BigDecimal;[m
+ [m
+ public interface OrderService extends IService<Order> {[m
+ [m
+[36m@@ -34,6 +35,13 @@[m [mpublic interface OrderService extends IService<Order> {[m
+ [m
+     boolean adminDeleteOrder(Long orderId);[m
+ [m
+[32m+[m[32m    // ========== 支付 ==========[m
+[32m+[m[32m    // 统计待支付总额[m
+[32m+[m[32m    BigDecimal calculatePendingAmount(Integer buyerId);[m
+[32m+[m
+[32m+[m[32m    // 确认支付[m
+[32m+[m[32m    boolean payOrder(Long orderId, Integer buyerId);[m
+[32m+[m
+     // ========== 评价 ==========[m
+     boolean reviewOrder(OrderReview review);[m
+ [m
+[36m@@ -47,4 +55,6 @@[m [mpublic interface OrderService extends IService<Order> {[m
+     List<Order> searchOrders(Integer userId, String role, String keyword, Integer status);[m
+ [m
+     boolean isValidStatusTransition(int fromStatus, int toStatus);[m
+[32m+[m
+[32m+[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/java/com/campus/trade/service/impl/OrderServiceImpl.java b/src/main/java/com/campus/trade/service/impl/OrderServiceImpl.java[m
+[1mindex 4980641..b65f522 100644[m
+[1m--- a/src/main/java/com/campus/trade/service/impl/OrderServiceImpl.java[m
+[1m+++ b/src/main/java/com/campus/trade/service/impl/OrderServiceImpl.java[m
+[36m@@ -279,6 +279,36 @@[m [mpublic class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements[m
+         return orderMapper.deleteById(orderId) > 0;[m
+     }[m
+ [m
+[32m+[m
+[32m+[m[32m    // ========== 支付相关 ==========[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public BigDecimal calculatePendingAmount(Integer buyerId) {[m
+[32m+[m[32m        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();[m
+[32m+[m[32m        wrapper.eq(Order::getBuyerId, buyerId)[m
+[32m+[m[32m                .eq(Order::getStatus, 0);[m
+[32m+[m[32m        List<Order> orders = list(wrapper);[m
+[32m+[m[32m        return orders.stream()[m
+[32m+[m[32m                .map(Order::getTotalAmount)[m
+[32m+[m[32m                .reduce(BigDecimal.ZERO, BigDecimal::add);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    @Transactional[m
+[32m+[m[32m    public boolean payOrder(Long orderId, Integer buyerId) {[m
+[32m+[m[32m        Order order = getById(orderId);[m
+[32m+[m[32m        if (order == null) {[m
+[32m+[m[32m            throw new RuntimeException("订单不存在");[m
+[32m+[m[32m        }[m
+[32m+[m[32m        if (!order.getBuyerId().equals(buyerId)) {[m
+[32m+[m[32m            throw new RuntimeException("无权操作此订单");[m
+[32m+[m[32m        }[m
+[32m+[m[32m        if (order.getStatus() != 0) {[m
+[32m+[m[32m            throw new RuntimeException("当前状态无法支付，状态：" + order.getStatus());[m
+[32m+[m[32m        }[m
+[32m+[m[32m        return updateStatus(orderId, 1);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+     // ========== 评价 ==========[m
+     @Override[m
+     @Transactional[m
+[1mdiff --git a/src/main/resources/templates/user/my-orders.html b/src/main/resources/templates/user/my-orders.html[m
+[1mindex e8f0496..040fefd 100644[m
+[1m--- a/src/main/resources/templates/user/my-orders.html[m
+[1m+++ b/src/main/resources/templates/user/my-orders.html[m
+[36m@@ -310,6 +310,57 @@[m
+             font-size: 64px;[m
+             margin-bottom: 20px;[m
+         }[m
+[32m+[m
+[32m+[m[32m        /* 待支付合计浮动按钮 */[m
+[32m+[m[32m        .pending-fixed {[m
+[32m+[m[32m            position: fixed;[m
+[32m+[m[32m            bottom: 30px;[m
+[32m+[m[32m            right: 30px;[m
+[32m+[m[32m            background: white;[m
+[32m+[m[32m            border-radius: 12px;[m
+[32m+[m[32m            box-shadow: 0 4px 20px rgba(0,0,0,0.15);[m
+[32m+[m[32m            padding: 20px 30px;[m
+[32m+[m[32m            z-index: 999;[m
+[32m+[m[32m            border: 1px solid #e8e8e8;[m
+[32m+[m[32m            min-width: 280px;[m
+[32m+[m[32m            display: none;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        .pending-fixed .label {[m
+[32m+[m[32m            font-size: 12px;[m
+[32m+[m[32m            color: #999;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        .pending-fixed .amount {[m
+[32m+[m[32m            font-size: 24px;[m
+[32m+[m[32m            font-weight: bold;[m
+[32m+[m[32m            color: #ff4d4f;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        .pending-fixed .pay-btn {[m
+[32m+[m[32m            padding: 12px 30px;[m
+[32m+[m[32m            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);[m
+[32m+[m[32m            color: white;[m
+[32m+[m[32m            border: none;[m
+[32m+[m[32m            border-radius: 8px;[m
+[32m+[m[32m            font-size: 16px;[m
+[32m+[m[32m            cursor: pointer;[m
+[32m+[m[32m            font-weight: bold;[m
+[32m+[m[32m            transition: all 0.3s;[m
+[32m+[m[32m            white-space: nowrap;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        .pending-fixed .pay-btn:hover {[m
+[32m+[m[32m            opacity: 0.9;[m
+[32m+[m[32m            transform: translateY(-2px);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        .pending-fixed .flex-row {[m
+[32m+[m[32m            display: flex;[m
+[32m+[m[32m            justify-content: space-between;[m
+[32m+[m[32m            align-items: center;[m
+[32m+[m[32m            gap: 20px;[m
+[32m+[m[32m        }[m
+     </style>[m
+ </head>[m
+ <body>[m
+[36m@@ -394,10 +445,10 @@[m
+                     </div>[m
+                 </td>[m
+             </tr>[m
+[31m-            <tr th:if="${orderPage.records.empty}">[m
+[32m+[m[32m            <tr th:if="${#lists.isEmpty(orderPage.records)}">[m
+                 <td colspan="9">[m
+                     <div class="empty-state">[m
+[31m-                        <div class="empty-state-icon"></div>[m
+[32m+[m[32m                        <div class="empty-state-icon">📭</div>[m
+                         <p>暂无订单记录</p>[m
+                         <p style="margin-top: 10px; font-size: 12px;">快去挑选心仪的商品吧！</p>[m
+                     </div>[m
+[36m@@ -422,6 +473,17 @@[m
+     </div>[m
+ </div>[m
+ [m
+[32m+[m[32m<!-- 待支付订单合计 & 一键支付（浮动按钮） -->[m
+[32m+[m[32m<div id="pendingFixed" class="pending-fixed">[m
+[32m+[m[32m    <div class="flex-row">[m
+[32m+[m[32m        <div>[m
+[32m+[m[32m            <div class="label">💰 待支付合计</div>[m
+[32m+[m[32m            <div class="amount" id="totalPendingAmountFixed">¥0.00</div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m        <button class="pay-btn" id="payAllBtnFixed" onclick="payAll()">💳 确定支付</button>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m</div>[m
+[32m+[m
+ <!-- 订单详情弹窗 -->[m
+ <div id="orderModal" class="modal">[m
+     <div class="modal-content">[m
+[36m@@ -432,7 +494,7 @@[m
+ </div>[m
+ [m
+ <script>[m
+[31m-    // 筛选订单[m
+[32m+[m[32m    // ========== 筛选订单 ==========[m
+     function filterOrders() {[m
+         const statusFilter = document.getElementById('statusFilter').value;[m
+         let url = '/user/my-orders?pageNum=1&pageSize=10';[m
+[36m@@ -440,7 +502,7 @@[m
+         window.location.href = url;[m
+     }[m
+ [m
+[31m-    // 跳转到指定页[m
+[32m+[m[32m    // ========== 跳转到指定页 ==========[m
+     function goToPage(page) {[m
+         const statusFilter = document.getElementById('statusFilter').value;[m
+         let url = '/user/my-orders?pageNum=' + page + '&pageSize=10';[m
+[36m@@ -448,93 +510,94 @@[m
+         window.location.href = url;[m
+     }[m
+ [m
+[31m-    // 查看订单详情[m
+[32m+[m[32m    // ========== 查看订单详情 ==========[m
+     function viewOrder(id) {[m
+         fetch('/api/orders/' + id)[m
+[31m-            .then(response => response.json())[m
+[31m-            .then(data => {[m
+[32m+[m[32m            .then(function(response) {[m
+[32m+[m[32m                return response.json();[m
+[32m+[m[32m            })[m
+[32m+[m[32m            .then(function(data) {[m
+                 if (data.success) {[m
+[31m-                    const order = data.data;[m
+[31m-                    const detailHtml = `[m
+[31m-                            <div class="detail-row"><div class="detail-label">订单号：</div><div class="detail-value">${order.orderNo}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">商品标题：</div><div class="detail-value">${order.articleTitle || '-'}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">卖家姓名：</div><div class="detail-value">${order.sellerName || '-'}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">卖家电话：</div><div class="detail-value">${order.sellerPhone || '-'}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">买家地址：</div><div class="detail-value">${order.buyerAddress || '-'}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">单价：</div><div class="detail-value">¥${order.price}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">数量：</div><div class="detail-value">${order.quantity}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">总金额：</div><div class="detail-value">¥${order.totalAmount}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">状态：</div><div class="detail-value">${order.statusText}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">备注：</div><div class="detail-value">${order.remark || '-'}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">取消原因：</div><div class="detail-value">${order.cancelReason || '-'}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">下单时间：</div><div class="detail-value">${formatDateTime(order.createdAt)}</div></div>[m
+[31m-                            <div class="detail-row"><div class="detail-label">更新时间：</div><div class="detail-value">${formatDateTime(order.updatedAt)}</div></div>[m
+[31m-                        `;[m
+[32m+[m[32m                    var order = data.data;[m
+[32m+[m[32m                    var detailHtml =[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">订单号：</div><div class="detail-value">' + order.orderNo + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">商品标题：</div><div class="detail-value">' + (order.articleTitle || '-') + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">卖家姓名：</div><div class="detail-value">' + (order.sellerName || '-') + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">卖家电话：</div><div class="detail-value">' + (order.sellerPhone || '-') + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">买家地址：</div><div class="detail-value">' + (order.buyerAddress || '-') + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">单价：</div><div class="detail-value">¥' + order.price + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">数量：</div><div class="detail-value">' + order.quantity + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">总金额：</div><div class="detail-value">¥' + order.totalAmount + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">状态：</div><div class="detail-value">' + order.statusText + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">备注：</div><div class="detail-value">' + (order.remark || '-') + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">取消原因：</div><div class="detail-value">' + (order.cancelReason || '-') + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">下单时间：</div><div class="detail-value">' + formatDateTime(order.createdAt) + '</div></div>' +[m
+[32m+[m[32m                        '<div class="detail-row"><div class="detail-label">更新时间：</div><div class="detail-value">' + formatDateTime(order.updatedAt) + '</div></div>';[m
+                     document.getElementById('orderDetail').innerHTML = detailHtml;[m
+                     document.getElementById('orderModal').classList.add('show');[m
+                 } else {[m
+                     alert('获取订单详情失败');[m
+                 }[m
+             })[m
+[31m-            .catch(error => {[m
+[32m+[m[32m            .catch(function(error) {[m
+                 console.error('Error:', error);[m
+                 alert('获取订单详情失败');[m
+             });[m
+     }[m
+ [m
+[31m-    // 关闭弹窗[m
+[32m+[m[32m    // ========== 关闭弹窗 ==========[m
+     function closeModal() {[m
+         document.getElementById('orderModal').classList.remove('show');[m
+     }[m
+ [m
+[31m-    // 通用 POST 操作处理[m
+[32m+[m[32m    // ========== 通用 POST 操作处理 ==========[m
+     function handleAction(url, successMsg, failMsg) {[m
+         fetch(url, {method: 'POST'})[m
+[31m-            .then(response => {[m
+[32m+[m[32m            .then(function(response) {[m
+                 if (!response.ok) throw new Error('HTTP ' + response.status);[m
+[31m-                const contentType = response.headers.get('content-type') || '';[m
+[32m+[m[32m                var contentType = response.headers.get('content-type') || '';[m
+                 if (contentType.includes('application/json')) {[m
+                     return response.json();[m
+                 }[m
+                 return {success: true};[m
+             })[m
+[31m-            .then(result => {[m
+[31m-                if (result.success) {[m
+[32m+[m[32m            .then(function(result) {[m
+[32m+[m[32m                if (result.success === true || result.code === 200) {[m
+                     alert(successMsg);[m
+                     location.reload();[m
+                 } else {[m
+                     alert(failMsg + '：' + (result.message || '未知错误'));[m
+                 }[m
+             })[m
+[31m-            .catch(error => {[m
+[32m+[m[32m            .catch(function(error) {[m
+                 console.error('Error:', error);[m
+                 alert(failMsg);[m
+             });[m
+     }[m
+ [m
+[31m-    // 取消订单[m
+[32m+[m[32m    // ========== 取消订单 ==========[m
+     function cancelOrder(id) {[m
+         if (!confirm('确定要取消这个订单吗？')) return;[m
+[31m-        const reason = prompt('请输入取消原因（可选）：');[m
+[32m+[m[32m        var reason = prompt('请输入取消原因（可选）：');[m
+         handleAction('/user/orders/' + id + '/cancel?reason=' + encodeURIComponent(reason || ''), '订单已取消', '取消失败');[m
+     }[m
+ [m
+[31m-    // 确认收货[m
+[32m+[m[32m    // ========== 确认收货 ==========[m
+     function confirmReceipt(id) {[m
+         if (!confirm('确认已收到商品吗？')) return;[m
+         handleAction('/user/orders/' + id + '/confirm', '确认收货成功！', '操作失败');[m
+     }[m
+ [m
+[31m-    // 删除订单[m
+[32m+[m[32m    // ========== 删除订单 ==========[m
+     function deleteOrder(id) {[m
+         if (!confirm('确定要删除这个订单吗？删除后不可恢复。')) return;[m
+         handleAction('/user/orders/' + id + '/delete', '订单已删除', '删除失败');[m
+     }[m
+ [m
+[31m-    // 格式化时间[m
+[32m+[m[32m    // ========== 格式化时间 ==========[m
+     function formatDateTime(dateTime) {[m
+         if (!dateTime) return '-';[m
+[31m-        const date = new Date(dateTime);[m
+[32m+[m[32m        var date = new Date(dateTime);[m
+         return date.toLocaleString('zh-CN', {[m
+             year: 'numeric',[m
+             month: '2-digit',[m
+[36m@@ -544,12 +607,129 @@[m
+         });[m
+     }[m
+ [m
+[31m-    // 点击弹窗外部关闭[m
+[32m+[m[32m    // ========== 计算待支付总金额 ==========[m
+[32m+[m[32m    function calculatePendingTotal() {[m
+[32m+[m[32m        var rows = document.querySelectorAll('tbody tr');[m
+[32m+[m[32m        var total = 0;[m
+[32m+[m[32m        var hasPending = false;[m
+[32m+[m
+[32m+[m[32m        rows.forEach(function(row) {[m
+[32m+[m[32m            var statusBadge = row.querySelector('.status-badge');[m
+[32m+[m[32m            if (statusBadge && statusBadge.textContent.trim() === '待付款') {[m
+[32m+[m[32m                var cells = row.querySelectorAll('td');[m
+[32m+[m[32m                if (cells.length >= 6) {[m
+[32m+[m[32m                    var amountText = cells[5].textContent;[m
+[32m+[m[32m                    var amount = parseFloat(amountText.replace('¥', ''));[m
+[32m+[m[32m                    if (!isNaN(amount)) {[m
+[32m+[m[32m                        total += amount;[m
+[32m+[m[32m                        hasPending = true;[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m        var totalElement = document.getElementById('totalPendingAmountFixed');[m
+[32m+[m[32m        var fixedContainer = document.getElementById('pendingFixed');[m
+[32m+[m
+[32m+[m[32m        if (totalElement) {[m
+[32m+[m[32m            totalElement.textContent = '¥' + total.toFixed(2);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        if (fixedContainer) {[m
+[32m+[m[32m            if (hasPending && total > 0) {[m
+[32m+[m[32m                fixedContainer.style.display = 'block';[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                fixedContainer.style.display = 'none';[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // ========== 一键支付全部待付款订单 ==========[m
+[32m+[m[32m    function payAll() {[m
+[32m+[m[32m        var rows = document.querySelectorAll('tbody tr');[m
+[32m+[m[32m        var pendingOrders = [];[m
+[32m+[m[32m        var totalAmount = 0;[m
+[32m+[m
+[32m+[m[32m        rows.forEach(function(row) {[m
+[32m+[m[32m            var statusBadge = row.querySelector('.status-badge');[m
+[32m+[m[32m            if (statusBadge && statusBadge.textContent.trim() === '待付款') {[m
+[32m+[m[32m                var detailBtn = row.querySelector('.btn-primary');[m
+[32m+[m[32m                if (detailBtn) {[m
+[32m+[m[32m                    var onclickAttr = detailBtn.getAttribute('onclick');[m
+[32m+[m[32m                    var match = onclickAttr.match(/\d+/);[m
+[32m+[m[32m                    if (match) {[m
+[32m+[m[32m                        pendingOrders.push(parseInt(match[0]));[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                }[m
+[32m+[m[32m                var cells = row.querySelectorAll('td');[m
+[32m+[m[32m                if (cells.length >= 6) {[m
+[32m+[m[32m                    var amountText = cells[5].textContent;[m
+[32m+[m[32m                    var amount = parseFloat(amountText.replace('¥', ''));[m
+[32m+[m[32m                    if (!isNaN(amount)) {[m
+[32m+[m[32m                        totalAmount += amount;[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m        if (pendingOrders.length === 0) {[m
+[32m+[m[32m            alert('没有待付款的订单');[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        if (!confirm('确认支付 ' + pendingOrders.length + ' 个待付款订单，总金额 ¥' + totalAmount.toFixed(2) + ' 吗？')) {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        var completed = 0;[m
+[32m+[m[32m        var failed = 0;[m
+[32m+[m[32m        var total = pendingOrders.length;[m
+[32m+[m
+[32m+[m[32m        pendingOrders.forEach(function(id) {[m
+[32m+[m[32m            // ========== 关键修改：使用 /pay 接口 ==========[m
+[32m+[m[32m            fetch('/user/orders/' + id + '/pay', {[m
+[32m+[m[32m                method: 'POST'[m
+[32m+[m[32m            })[m
+[32m+[m[32m                .then(function(response) {[m
+[32m+[m[32m                    return response.json();[m
+[32m+[m[32m                })[m
+[32m+[m[32m                .then(function(result) {[m
+[32m+[m[32m                    if (result.code === 200 || result.success === true) {[m
+[32m+[m[32m                        completed++;[m
+[32m+[m[32m                    } else {[m
+[32m+[m[32m                        failed++;[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                    if (completed + failed === total) {[m
+[32m+[m[32m                        if (failed === 0) {[m
+[32m+[m[32m                            alert('支付成功！所有订单已进入待发货状态');[m
+[32m+[m[32m                            window.location.href = '/user/my-orders';[m
+[32m+[m[32m                        } else {[m
+[32m+[m[32m                            alert('支付完成：成功 ' + completed + ' 个，失败 ' + failed + ' 个');[m
+[32m+[m[32m                            location.reload();[m
+[32m+[m[32m                        }[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                })[m
+[32m+[m[32m                .catch(function(error) {[m
+[32m+[m[32m                    failed++;[m
+[32m+[m[32m                    if (completed + failed === total) {[m
+[32m+[m[32m                        alert('支付完成：成功 ' + completed + ' 个，失败 ' + failed + ' 个');[m
+[32m+[m[32m                        location.reload();[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                });[m
+[32m+[m[32m        });[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // ========== 点击弹窗外部关闭 ==========[m
+     document.getElementById('orderModal').addEventListener('click', function(e) {[m
+         if (e.target === this) {[m
+             closeModal();[m
+         }[m
+     });[m
+[32m+[m
+[32m+[m[32m    // ========== 页面加载时计算待支付总金额 ==========[m
+[32m+[m[32m    document.addEventListener('DOMContentLoaded', function() {[m
+[32m+[m[32m        calculatePendingTotal();[m
+[32m+[m[32m    });[m
+ </script>[m
+ </body>[m
+[31m-</html>[m
+[32m+[m[32m</html>[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/resources/templates/user/seller-orders.html b/src/main/resources/templates/user/seller-orders.html[m
+[1mindex 78a97a9..425e6ac 100644[m
+[1m--- a/src/main/resources/templates/user/seller-orders.html[m
+[1m+++ b/src/main/resources/templates/user/seller-orders.html[m
+[36m@@ -505,7 +505,7 @@[m
+         <div class="empty-state" th:if="${orderPage.records == null or orderPage.records.empty}">[m
+             <div class="empty-state-icon">📦</div>[m
+             <div class="empty-state-text">暂无销售订单</div>[m
+[31m-            <a th:href="@{/article/publish}" class="empty-state-btn">发布商品</a>[m
+[32m+[m[32m            <a th:href="@{/admin/articles/form}" class="empty-state-btn">发布商品</a>[m
+         </div>[m
+     </div>[m
+ [m
