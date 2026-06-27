@@ -196,25 +196,25 @@ public class AdminController {
                                 @RequestParam(required = false) String endTime,
                                 Model model) {
         Page<Article> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Article> wrapper = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
 
         if (keyword != null && !keyword.isEmpty()) {
-            wrapper.like(Article::getTitle, keyword)
+            wrapper.like("a.title", keyword)
                     .or()
-                    .like(Article::getContent, keyword);
+                    .like("a.content", keyword);
         }
         if (statusFilter != null) {
-            wrapper.eq(Article::getStatus, statusFilter);
+            wrapper.eq("a.status", statusFilter);
         }
         if (categoryId != null) {
-            wrapper.eq(Article::getCategoryId, categoryId);
+            wrapper.eq("a.category_id", categoryId);
         }
 
         // 时间范围查询
         if (startTime != null && !startTime.isEmpty()) {
             try {
                 LocalDateTime start = LocalDateTime.parse(startTime + "T00:00:00");
-                wrapper.ge(Article::getCreateTime, start);
+                wrapper.ge("a.create_time", start);
             } catch (Exception e) {
                 // 忽略格式错误
             }
@@ -222,14 +222,14 @@ public class AdminController {
         if (endTime != null && !endTime.isEmpty()) {
             try {
                 LocalDateTime end = LocalDateTime.parse(endTime + "T23:59:59");
-                wrapper.le(Article::getCreateTime, end);
+                wrapper.le("a.create_time", end);
             } catch (Exception e) {
                 // 忽略格式错误
             }
         }
 
-        wrapper.orderByDesc(Article::getIsTop)
-                .orderByDesc(Article::getCreateTime);
+        wrapper.orderByDesc("a.is_top")
+                .orderByDesc("a.create_time");
 
         // 使用联表查询，直接填充 authorName 和 categoryName
         IPage<Article> articlePage = articleMapper.selectArticlePageWithInfo(page, wrapper);

@@ -320,21 +320,21 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
         if (StrUtil.isNotBlank(keyword)) {
-            wrapper.and(w -> w.like("title", keyword).or().like("content", keyword));
+            wrapper.and(w -> w.like("a.title", keyword).or().like("a.content", keyword));
         }
 
         if (statusFilter != null) {
-            wrapper.eq("status", statusFilter);
+            wrapper.eq("a.status", statusFilter);
         }
 
         if (startTime != null) {
-            wrapper.ge("create_time", startTime);
+            wrapper.ge("a.create_time", startTime);
         }
         if (endTime != null) {
-            wrapper.le("create_time", endTime);
+            wrapper.le("a.create_time", endTime);
         }
 
-        wrapper.orderByDesc("create_time");
+        wrapper.orderByDesc("a.create_time");
 
         return baseMapper.selectArticleVOPage(pageParam, wrapper);
     }
@@ -565,24 +565,24 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
         // ========== 关键：按用户ID过滤 ==========
-        wrapper.eq("user_id", userId);
+        wrapper.eq("a.user_id", userId);
 
         if (StrUtil.isNotBlank(keyword)) {
-            wrapper.and(w -> w.like("title", keyword).or().like("content", keyword));
+            wrapper.and(w -> w.like("a.title", keyword).or().like("a.content", keyword));
         }
 
         if (statusFilter != null) {
-            wrapper.eq("status", statusFilter);
+            wrapper.eq("a.status", statusFilter);
         }
 
         if (startTime != null) {
-            wrapper.ge("create_time", startTime);
+            wrapper.ge("a.create_time", startTime);
         }
         if (endTime != null) {
-            wrapper.le("create_time", endTime);
+            wrapper.le("a.create_time", endTime);
         }
 
-        wrapper.orderByDesc("create_time");
+        wrapper.orderByDesc("a.create_time");
 
         return baseMapper.selectArticleVOPage(pageParam, wrapper);
     }
