@@ -319,7 +319,7 @@
     <div class="user-info">
         <img th:src="${userAvatar != null ? userAvatar : '/avatars/default.png'}" alt="头像" class="user-avatar">
         <span th:text="${userNickname != null ? userNickname : username}"></span>
-        <a href="/personal-center" style="color: white;">个人中心</a>
+        <a href="/profile" style="color: white;">个人中心</a>
     </div>
 </div>
 
@@ -327,7 +327,7 @@
     <!-- 头部 -->
     <div class="header-section">
         <h2>📦 我的订单</h2>
-        <a href="/personal-center" class="back-btn">← 返回个人中心</a>
+        <a href="/profile" class="back-btn">← 返回个人中心</a>
     </div>
 
     <!-- 筛选栏 -->
