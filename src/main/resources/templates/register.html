@@ -130,6 +130,20 @@
             <label>手机号</label>
             <input type="text" id="phone" placeholder="请输入手机号" required>
         </div>
+        <div class="form-group">
+            <label>学校</label>
+            <select id="schoolId" required>
+                <option value="">请选择学校</option>
+                <option value="1">武汉大学</option>
+                <option value="2">华中科技大学</option>
+                <option value="3">武汉理工大学</option>
+                <option value="4">华中师范大学</option>
+                <option value="5">中国地质大学（武汉）</option>
+                <option value="6">中南财经政法大学</option>
+                <option value="7">湖北大学</option>
+                <option value="8">武汉科技大学</option>
+            </select>
+        </div>
 
         <button type="button" class="btn-register" onclick="handleRegister()">立即注册</button>
     </form>
@@ -153,6 +167,8 @@
         const confirmPassword = document.getElementById('confirmPassword').value;
         const nickname = document.getElementById('nickname').value.trim();
         const phone = document.getElementById('phone').value.trim();
+        const schoolId = document.getElementById('schoolId').value;
+        if (!schoolId) { showMsg('请选择学校', 'error'); return; }
 
         // 验证
         if (!username) { showMsg('请输入用户名', 'error'); return; }
@@ -173,6 +189,7 @@
         data.append('password', password);
         data.append('nickname', nickname);
         data.append('phone', phone);
+        data.append('schoolId', schoolId);
 
         fetch('/register', {
             method: 'POST',

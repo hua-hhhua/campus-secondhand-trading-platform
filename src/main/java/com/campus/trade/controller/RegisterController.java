@@ -33,7 +33,8 @@ public class RegisterController {
     public Result register(@RequestParam String username,
                            @RequestParam String password,
                            @RequestParam String nickname,
-                           @RequestParam String phone) {
+                           @RequestParam String phone,
+                            @RequestParam Integer schoolId){
         // 检查用户名是否已存在
         User existingUser = userService.findByUsername(username);
         if (existingUser != null) {
@@ -46,6 +47,7 @@ public class RegisterController {
         user.setPassword(password); // 会在 service 中加密
         user.setNickname(nickname);
         user.setPhone(phone);
+        user.setSchoolId(schoolId);
         user.setRole(0); // 普通用户
         user.setStatus(1); // 正常状态
 
