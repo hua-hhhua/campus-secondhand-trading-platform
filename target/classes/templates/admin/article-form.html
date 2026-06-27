@@ -118,6 +118,8 @@
 
   <form th:action="@{/admin/articles/save}" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
     <input type="hidden" name="id" th:value="${article.id}">
+    <!-- 隐藏字段：用于传递 status 值 -->
+    <input type="hidden" name="status" id="hiddenStatus" value="1">
 
     <!-- 商品标题 -->
     <div class="form-group">
@@ -219,10 +221,10 @@
       <textarea name="content" placeholder="请详细描述商品情况" required th:text="${article.content}"></textarea>
     </div>
 
-    <!-- 发布状态 -->
+    <!-- 发布状态（只用于显示，实际值由隐藏字段传递） -->
     <div class="form-group">
       <label>发布状态</label>
-      <select name="status" id="publishStatus" onchange="togglePublishTime()">
+      <select id="publishStatus" onchange="togglePublishTime()">
         <option value="1">立即发布</option>
         <option value="0">保存草稿</option>
         <option value="2">定时发布</option>
@@ -270,28 +272,32 @@
   });
 
   // ============================================================
-  //  设置发布状态（核心修复）
+  //  设置发布状态
   // ============================================================
   function setPublishStatus() {
     var statusSelect = document.getElementById('publishStatus');
-    if (!statusSelect) return;
+    var hiddenStatus = document.getElementById('hiddenStatus');
+    if (!statusSelect || !hiddenStatus) return;
 
     // 获取后端传入的 article.status
-    var currentStatus = /*[[${article.status}]]*/ 1;
+    var currentStatus = /*[[${article.status}]]*/ null;
 
     // 如果是新建文章（status为null或undefined），默认选中"立即发布"(1)
-    // 否则根据数据库中的值选中对应的选项
     if (currentStatus == null || currentStatus === undefined || currentStatus === '') {
       statusSelect.value = 1;
+      hiddenStatus.value = 1;
     } else {
-      // 确保值是数字类型
       var statusNum = parseInt(currentStatus);
       if (!isNaN(statusNum)) {
         statusSelect.value = statusNum;
+        hiddenStatus.value = statusNum;
       } else {
         statusSelect.value = 1;
+        hiddenStatus.value = 1;
       }
     }
+
+    console.log('========== 页面初始化，设置 status = ' + hiddenStatus.value);
 
     // 触发一次 change 事件，控制定时发布时间显示
     var event = new Event('change');
@@ -324,8 +330,13 @@
   function togglePublishTime() {
     var statusSelect = document.getElementById('publishStatus');
     var scheduleGroup = document.getElementById('scheduleTimeGroup');
+    var hiddenStatus = document.getElementById('hiddenStatus');
 
-    if (!statusSelect || !scheduleGroup) return;
+    if (!statusSelect || !scheduleGroup || !hiddenStatus) return;
+
+    // 同步隐藏字段的值
+    hiddenStatus.value = statusSelect.value;
+    console.log('========== 切换状态，设置隐藏字段 status = ' + hiddenStatus.value);
 
     if (statusSelect.value === '2') {
       scheduleGroup.classList.add('show');
@@ -363,6 +374,14 @@
     var wechat = document.getElementById('wechat');
     var qq = document.getElementById('qq');
     var phone = document.getElementById('phone');
+    var statusSelect = document.getElementById('publishStatus');
+    var hiddenStatus = document.getElementById('hiddenStatus');
+
+    // ========== 关键：提交前确保隐藏字段的值正确 ==========
+    if (hiddenStatus && statusSelect) {
+      hiddenStatus.value = statusSelect.value;
+      console.log('========== 提交前设置隐藏字段 status = ' + hiddenStatus.value);
+    }
 
     if (!wechat || !qq || !phone) return true;
 
@@ -373,7 +392,6 @@
       return false;
     }
 
-    var statusSelect = document.getElementById('publishStatus');
     if (statusSelect && statusSelect.value === '2') {
       var timeInput = document.getElementById('scheduledTime');
       if (!timeInput || !timeInput.value) {

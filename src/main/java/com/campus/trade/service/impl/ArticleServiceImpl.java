@@ -158,9 +158,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         for (Article article : scheduledArticles) {
             article.setStatus(ArticleStatus.PUBLISHED);
+            article.setProductStatus(0);  // 设置为在售
             article.setUpdateTime(LocalDateTime.now());
             this.updateById(article);
-            System.out.println("【定时发布】文章已发布 - ID: " + article.getId() + ", 标题: " + article.getTitle());
+            System.out.println("【定时发布】文章已发布 - ID: " + article.getId() + ", 标题: " + article.getTitle() + "，商品状态设为在售");
 
             if (article.getSendEmail() != null && article.getSendEmail() == 1) {
                 asyncService.asyncSendArticleNotification(article, "publish");
@@ -219,7 +220,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private boolean doCreateArticle(Article article) {
         article.setCreateTime(LocalDateTime.now());
         article.setUpdateTime(LocalDateTime.now());
-        handlePublishedAt(article);
+        // 直接使用 Controller 已设置好的 status 和 publishedAt，不再额外处理
+        // handlePublishedAt(article) 已移除
 
         boolean result = this.save(article);
 
@@ -246,7 +248,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     private boolean doUpdateArticle(Article article) {
         article.setUpdateTime(LocalDateTime.now());
-        handlePublishedAt(article);
+        // 直接使用 Controller 已设置好的 status 和 publishedAt，不再额外处理
+        // handlePublishedAt(article) 已移除
 
         boolean result = this.updateById(article);
 
@@ -258,19 +261,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
-    private void handlePublishedAt(Article article) {
-        if (article.getStatus() == ArticleStatus.SCHEDULED) {
-            if (article.getPublishedAt() == null) {
-                article.setPublishedAt(LocalDateTime.now().plusHours(1));
-                System.out.println("【发布时间处理】定时发布未设置时间，已自动设置为1小时后");
-            }
-        } else if (article.getStatus() == ArticleStatus.DRAFT && article.getPublishedAt() != null) {
-            article.setStatus(ArticleStatus.SCHEDULED);
-            System.out.println("【发布时间处理】草稿含有发布时间，已自动转为定时发布");
-        } else if (article.getStatus() == ArticleStatus.PUBLISHED) {
-            article.setPublishedAt(LocalDateTime.now());
-        }
-    }
+    // ========== 已废弃：不再使用此方法，防止覆盖 status ==========
+    // private void handlePublishedAt(Article article) {
+    //     此方法已废弃，不再使用
+    // }
 
     @Override
     public boolean validateArticleForPublish(Article article) {
