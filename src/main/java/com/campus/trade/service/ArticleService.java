@@ -135,4 +135,13 @@ public interface ArticleService extends IService<Article> {
      * @return true扣减成功，false库存不足
      */
     boolean deductStock(Integer articleId, Integer quantity);
+
+    // ========== 按用户ID查询商品 ==========
+
+    /**
+     * 分页查询当前用户的商品（按用户ID过滤）
+     */
+    IPage<ArticleVO> getArticleVOPageByUserId(Integer page, Integer size, String keyword,
+                                              Integer statusFilter, LocalDateTime startTime,
+                                              LocalDateTime endTime, Integer userId);
 }
