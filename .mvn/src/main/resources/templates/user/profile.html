@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>个人信息 - 校园交易平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 { font-size: 24px; }
+        .navbar a { color: white; text-decoration: none; }
+
+        .user-info { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .login-btn, .logout-btn {
+            padding: 8px 20px;
+            background-color: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .login-btn:hover, .logout-btn:hover { background-color: rgba(255,255,255,0.3); }
+
+        .role-badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .role-admin { background-color: #e74c3c; color: white; }
+        .role-user { background-color: #95a5a6; color: white; }
+        .admin-link { color: #f1c40f !important; text-decoration: none; margin-left: 10px; }
+        .admin-link:hover { text-decoration: underline; }
+        .article-link { color: #3498db !important; text-decoration: none; margin-left: 10px; }
+        .article-link:hover { text-decoration: underline; }
+
+        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header-section h2 {
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        .header-section a {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .header-section a:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .profile-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px 35px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .form-group { margin-bottom: 22px; }
+        .form-group label { display: block; font-weight: 600; color: #555; margin-bottom: 6px; font-size: 14px; }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #dcdfe6;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus { outline: none; border-color: #409EFF; box-shadow: 0 0 0 3px rgba(64,158,255,0.1); }
+        .form-group input:disabled { background: #f5f7fa; color: #999; }
+
+        .divider { border: none; border-top: 2px dashed #e4e7ed; margin: 30px 0 25px; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-submit:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .msg {
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+        }
+        .msg.success { display: block; background: #f0f9eb; color: #67c23a; border: 1px solid #c2e7b0; }
+        .msg.error { display: block; background: #fef0f0; color: #f56c6c; border: 1px solid #fde2e2; }
+
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #409EFF; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 10px 0;
+        }
+        .avatar-img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #dcdfe6;
+        }
+        .avatar-upload-btn {
+            padding: 6px 16px;
+            background: #67c23a;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .avatar-upload-btn:hover { background: #5daf34; }
+        #avatarInput { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<div class="navbar">
+    <h1>🏫 校园交易平台</h1>
+    <div class="user-info">
+        <div th:if="${username == null and session.username == null}">
+            <a href="/toLoginPage" class="login-btn">登录</a>
+        </div>
+        <div th:unless="${username == null and session.username == null}">
+            <img th:src="${userAvatar != null ? userAvatar : (session.userAvatar != null ? session.userAvatar : '/avatars/default.png')}" alt="头像" class="user-avatar">
+            <span th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>
+            <span th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="role-badge role-admin">管理员</span>
+            <span th:if="${userRole == 'USER' or session.userRole == 'USER'}" class="role-badge role-user">普通用户</span>
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/users" class="admin-link">👑 用户管理</a>
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/articles" class="admin-link">📝 商品管理</a>
+            <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/article/manage" class="article-link">✏️ 发布商品</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">退出</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 主要内容 -->
+<div class="container">
+    <div class="header-section">
+        <h2>👤 个人信息</h2>
+        <a href="/">← 返回首页</a>
+    </div>
+
+    <div class="profile-card">
+        <div id="msg" class="msg"></div>
+
+        <form id="profileForm">
+            <!-- 头像 -->
+            <div class="form-group">
+                <label>头像</label>
+                <div class="avatar-section">
+                    <img id="avatarPreview" class="avatar-img"
+                         th:src="${user.avatar != null ? user.avatar : '/avatars/default.png'}"
+                         alt="头像">
+                    <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
+                        更换头像
+                    </button>
+                    <input type="file" id="avatarInput" accept="image/*">
+                </div>
+            </div>
+
+            <!-- 用户名（只读） -->
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="username" th:value="${user.username}" disabled>
+            </div>
+
+            <!-- 昵称 -->
+            <div class="form-group">
+                <label>昵称</label>
+                <input type="text" id="nickname" th:value="${user.nickname}" placeholder="请输入昵称">
+            </div>
+
+            <!-- 手机号 -->
+            <div class="form-group">
+                <label>手机号</label>
+                <input type="text" id="phone" th:value="${user.phone}" placeholder="请输入手机号">
+            </div>
+
+            <!-- 邮箱（只读） -->
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="text" id="email" th:value="${user.email}" disabled>
+            </div>
+
+            <hr class="divider">
+
+            <h4 style="color:#333; margin-bottom: 16px;">🔑 修改密码</h4>
+
+            <div class="form-group">
+                <label>原密码</label>
+                <input type="password" id="oldPassword" placeholder="请输入原密码">
+            </div>
+
+            <div class="form-group">
+                <label>新密码</label>
+                <input type="password" id="newPassword" placeholder="请输入新密码（至少6位）">
+            </div>
+
+            <div class="form-group">
+                <label>确认密码</label>
+                <input type="password" id="confirmPassword" placeholder="请再次输入新密码">
+            </div>
+
+            <button type="button" class="btn-submit" onclick="updateProfile()">💾 保存修改</button>
+        </form>
+
+        <a href="/" class="back-link">← 返回首页</a>
+    </div>
+</div>
+
+<script>
+    function showMsg(message, type) {
+        const msg = document.getElementById('msg');
+        msg.textContent = message;
+        msg.className = 'msg ' + type;
+        setTimeout(() => { msg.className = 'msg'; }, 3000);
+    }
+
+    function updateProfile() {
+        const data = {
+            nickname: document.getElementById('nickname').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            password: document.getElementById('oldPassword').value,
+            newPassword: document.getElementById('newPassword').value,
+            confirmPassword: document.getElementById('confirmPassword').value
+        };
+
+        if (!data.nickname && !data.phone && !data.newPassword) {
+            showMsg('请至少修改一项内容', 'error');
+            return;
+        }
+
+        if (data.newPassword) {
+            if (data.newPassword.length < 6) {
+                showMsg('新密码至少6位', 'error');
+                return;
+            }
+            if (data.newPassword !== data.confirmPassword) {
+                showMsg('两次密码输入不一致', 'error');
+                return;
+            }
+            if (!data.password) {
+                showMsg('修改密码需要输入原密码', 'error');
+                return;
+            }
+        }
+
+        fetch('/user/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showMsg(result.message || '修改成功！', 'success');
+                    document.getElementById('oldPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                } else {
+                    showMsg(result.message || '修改失败，请重试', 'error');
+                }
+            })
+            .catch(() => {
+                showMsg('网络错误，请重试', 'error');
+            });
+    }
+
+    // 头像上传
+    document.getElementById('avatarInput').addEventListener('change', function(e) {
+        const file = this.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert('图片大小不能超过2MB');
+            this.value = '';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/user/uploadAvatar', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    document.getElementById('avatarPreview').src = result.data + '?t=' + Date.now();
+                    showMsg('头像上传成功！', 'success');
+                } else {
+                    showMsg(result.message || '头像上传失败', 'error');
+                }
+            })
+            .catch(() => {
+                showMsg('头像上传失败，请重试', 'error');
+            });
+
+        this.value = '';
+    });
+</script>
+
+</body>
+</html>

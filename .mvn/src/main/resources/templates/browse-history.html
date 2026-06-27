@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浏览历史</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 { font-size: 24px; }
+        .navbar a { color: white; text-decoration: none; }
+
+        .user-info { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .logout-btn {
+            padding: 8px 20px;
+            background-color: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .logout-btn:hover { background-color: rgba(255,255,255,0.3); }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .header-section h2 {
+            color: #333;
+            border-left: 4px solid #e74c3c;
+            padding-left: 15px;
+        }
+        .header-section a {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .header-section a:hover { opacity: 0.9; }
+
+        .history-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .history-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e74c3c;
+            display: inline-block;
+        }
+
+        .clear-btn {
+            float: right;
+            padding: 8px 20px;
+            background: #f56c6c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .clear-btn:hover { background: #f78989; }
+
+        .history-list { list-style: none; margin-top: 20px; }
+        .history-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+        .history-item:hover { background-color: #f9f9f9; padding-left: 10px; }
+
+        .history-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        .history-item .no-image {
+            width: 80px;
+            height: 80px;
+            background: #f5f7fa;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 12px;
+            border: 1px dashed #ddd;
+        }
+        .history-info { flex: 1; }
+        .history-title { font-size: 18px; font-weight: bold; }
+        .history-title a { color: #333; text-decoration: none; }
+        .history-title a:hover { color: #667eea; }
+
+        .history-meta { font-size: 13px; color: #999; margin-top: 5px; }
+        .history-meta span { margin-right: 15px; }
+        .history-time { color: #999; font-size: 12px; }
+
+        .price-tag {
+            background: #ff6b6b;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .no-history { text-align: center; padding: 40px; color: #999; }
+        .no-history p { font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h1>🏫 校园交易平台</h1>
+    <div class="user-info">
+        <img th:src="${session.userAvatar != null ? session.userAvatar : '/avatars/default.png'}" alt="头像" class="user-avatar">
+        <span th:text="${session.userNickname != null ? session.userNickname : session.username}"></span>
+        <a href="/" style="color:white;text-decoration:none;">首页</a>
+        <form th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit" class="logout-btn">退出</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header-section">
+        <h2>📖 浏览历史</h2>
+        <a href="/">← 返回首页</a>
+    </div>
+
+    <div class="history-section">
+        <h3>最近浏览</h3>
+        <button class="clear-btn" onclick="clearHistory()">🗑️ 清空全部</button>
+
+        <div th:if="${historyList == null or #lists.isEmpty(historyList)}" class="no-history">
+            <p>📭 还没有浏览记录，去逛逛商品吧！</p>
+        </div>
+
+        <ul class="history-list" th:unless="${historyList == null or #lists.isEmpty(historyList)}">
+            <li th:each="article : ${historyList}" class="history-item">
+                <img th:if="${article.coverImage != null and article.coverImage != ''}" th:src="${article.coverImage}" alt="商品图片">
+                <div th:unless="${article.coverImage != null and article.coverImage != ''}" class="no-image">暂无图片</div>
+                <div class="history-info">
+                    <div class="history-title">
+                        <a th:href="@{/article/{id}(id=${article.id})}" th:text="${article.title}">标题</a>
+                        <span class="price-tag" th:text="'¥' + ${article.price}">¥0</span>
+                        <!-- 新增一行测试 -->
+                        <span style="color:red;font-size:12px;">浏览时间: <span th:text="${article.browseTime}"></span></span>
+                    </div>
+                    <div class="history-meta">
+                        <span>✍️ 作者：<strong th:text="${article.authorName != null ? article.authorName : '未知'}">作者</strong></span>
+                        <span>📁 分类：<strong th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类</strong></span>
+                        <span>💰 库存：<span th:text="${article.stock}">0</span></span>
+                    </div>
+                </div>
+                <div class="history-time">
+                    浏览时间：<span th:text="${#temporals.format(article.browseTime, 'yyyy-MM-dd HH:mm')}">时间</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    function clearHistory() {
+        if (!confirm('确定要清空所有浏览历史吗？')) {
+            return;
+        }
+
+        fetch('/browse/clear', {
+            method: 'DELETE'
+        })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.needLogin) {
+                    alert('请先登录');
+                    window.location.href = '/toLoginPage';
+                    return;
+                }
+                if (data.success) {
+                    alert('浏览历史已清空');
+                    location.reload();
+                } else {
+                    alert(data.message || '操作失败');
+                }
+            })
+            .catch(function() {
+                alert('操作失败，请重试');
+            });
+    }
+</script>
+
+</body>
+</html>

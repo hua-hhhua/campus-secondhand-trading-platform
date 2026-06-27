@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .home-link:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        .form-control {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 180px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #409EFF;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: #409EFF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #66b1ff;
+        }
+
+        .btn-reset {
+            background-color: #909399;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background-color: #a6a9ad;
+        }
+
+        .btn-add {
+            background-color: #67c23a;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background-color: #85ce61;
+        }
+
+        .btn-danger {
+            background-color: #f56c6c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #f78989;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        thead {
+            background-color: #f5f7fa;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        th {
+            font-weight: 600;
+            color: #606266;
+            white-space: nowrap;
+        }
+
+        tr:hover {
+            background-color: #f5f7fa;
+        }
+
+        .avatar-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #f5f7fa;
+            cursor: pointer;
+        }
+
+        .avatar-placeholder {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e4e7ed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #909399;
+            font-size: 12px;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #e1f3d8;
+            color: #67c23a;
+        }
+
+        .status-disabled {
+            background-color: #fef0f0;
+            color: #f56c6c;
+        }
+
+        .role-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .role-admin {
+            background-color: #ecf5ff;
+            color: #409EFF;
+        }
+
+        .role-user {
+            background-color: #f4f4f5;
+            color: #909399;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .pagination a, .pagination span {
+            padding: 8px 15px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #606266;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .pagination a:hover {
+            color: #409EFF;
+            border-color: #c6e2ff;
+            background-color: #ecf5ff;
+        }
+
+        .pagination .active {
+            background-color: #409EFF;
+            color: white;
+            border-color: #409EFF;
+        }
+
+        .pagination .disabled {
+            color: #c0c4cc;
+            cursor: not-allowed;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #909399;
+            font-size: 16px;
+        }
+
+        .total-info {
+            margin-bottom: 15px;
+            color: #606266;
+            font-size: 14px;
+        }
+
+        .error-message {
+            color: #f56c6c;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 5px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background-color: #e6a23c;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background-color: #ebb563;
+        }
+
+        .btn-delete {
+            background-color: #f56c6c;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background-color: #f78989;
+        }
+
+        /* 图片预览模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            cursor: pointer;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>👥 用户管理</h1>
+        <a href="/" class="home-link">🏠 返回首页</a>
+    </div>
+
+    <!-- 搜索表单 -->
+    <form class="search-form" method="get" action="/admin/users" id="searchForm">
+        <div class="form-group">
+            <label for="keyword">用户名/昵称：</label>
+            <input type="text" id="keyword" name="keyword" class="form-control"
+                   placeholder="请输入用户名或昵称" th:value="${keyword}">
+        </div>
+
+        <div class="form-group">
+            <label for="startTime">注册时间起始：</label>
+            <input type="date" id="startTime" name="startDate" class="form-control"
+                   th:value="${startTime}">
+        </div>
+
+        <div class="form-group">
+            <label for="endTime">注册时间截止：</label>
+            <input type="date" id="endTime" name="endDate" class="form-control"
+                   th:value="${endTime}">
+            <span id="dateError" class="error-message"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">查询</button>
+        <button type="button" class="btn btn-reset" onclick="resetForm()">重置</button>
+        <a href="/admin/users/add" class="btn btn-add">新增用户</a>
+        <button type="button" class="btn btn-danger" id="batchDeleteBtn">批量删除</button>
+    </form>
+
+    <!-- 总数统计 -->
+    <div class="total-info" th:if="${userPage}">
+        共找到 <strong th:text="${userPage.total}">0</strong> 位用户，
+        当前第 <strong th:text="${userPage.current}">1</strong> 页，
+        每页 <strong th:text="${userPage.size}">10</strong> 条
+    </div>
+
+    <!-- 用户列表表格 -->
+    <div class="table-container">
+        <table th:if="${userPage} and ${userPage.records.size() > 0}">
+            <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAll"></th>
+                <th>ID</th>
+                <th>头像</th>
+                <th>用户名</th>
+                <th>昵称</th>
+                <th>邮箱</th>
+                <th>手机号</th>
+                <th>学校ID</th>
+                <th>角色</th>
+                <th>状态</th>
+                <th>注册时间</th>
+                <th>操作</th>
+            </thead>
+            <tbody>
+            <tr th:each="user : ${userPage.records}">
+                <td><input type="checkbox" class="userCheckbox" th:value="${user.id}"></td>
+                <td th:text="${user.id}">?</td>
+                <td>
+                    <div th:if="${user.avatar != null and user.avatar != ''}">
+                        <img th:src="${user.avatar}" alt="头像" class="avatar-thumb"
+                             th:attr="onclick='showAvatarModal(\'' + ${user.avatar} + '\')'">
+                    </div>
+                    <div th:unless="${user.avatar != null and user.avatar != ''}" class="avatar-placeholder">
+                        📷
+                    </div>
+                </td>
+                <td th:text="${user.username}" style="font-weight: 500;">?</td>
+                <td th:text="${user.nickname}">?</td>
+                <td th:text="${user.email}">?</td>
+                <td th:text="${user.phone}">?</td>
+                <td th:text="${user.schoolId}">?</td>
+                <td>
+                    <span class="role-badge"
+                          th:classappend="${user.role == 1} ? 'role-admin' : 'role-user'"
+                          th:text="${user.role == 1} ? '管理员' : '普通用户'">
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge"
+                          th:classappend="${user.status == 1} ? 'status-active' : 'status-disabled'"
+                          th:text="${user.status == 1} ? '正常' : '禁用'">
+                    </span>
+                </td>
+                <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm:ss')}">?</td>
+                <td class="action-buttons">
+                    <a th:href="@{/admin/users/edit/{id}(id=${user.id})}" class="btn-edit">编辑</a>
+                    <a th:href="@{/admin/users/delete/{id}(id=${user.id})}"
+                       class="btn-delete"
+                       onclick="return confirm('确定要删除用户【' + (user.username) + '】吗？')">删除</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- 无数据提示 -->
+        <div class="no-data" th:if="${userPage} and ${userPage.records.size() == 0}">
+            暂无用户数据
+        </div>
+    </div>
+
+    <!-- 分页导航 -->
+    <div class="pagination" th:if="${userPage} and ${userPage.pages > 1}">
+        <!-- 上一页 -->
+        <a th:if="${userPage.hasPrevious}"
+           th:href="@{/admin/users(page=${userPage.current - 1}, size=${userPage.size}, keyword=${keyword}, startDate=${startTime}, endDate=${endTime})}">
+            上一页
+        </a>
+        <span th:unless="${userPage.hasPrevious}" class="disabled">上一页</span>
+
+        <!-- 页码 -->
+        <a th:each="i : ${#numbers.sequence(1, userPage.pages)}"
+           th:classappend="${i == userPage.current} ? 'active'"
+           th:text="${i}"
+           th:href="@{/admin/users(page=${i}, size=${userPage.size}, keyword=${keyword}, startDate=${startTime}, endDate=${endTime})}">
+        </a>
+
+        <!-- 下一页 -->
+        <a th:if="${userPage.hasNext}"
+           th:href="@{/admin/users(page=${userPage.current + 1}, size=${userPage.size}, keyword=${keyword}, startDate=${startTime}, endDate=${endTime})}">
+            下一页
+        </a>
+        <span th:unless="${userPage.hasNext}" class="disabled">下一页</span>
+    </div>
+</div>
+
+<!-- 图片预览模态框 -->
+<div id="avatarModal" class="modal" onclick="closeAvatarModal()">
+    <span class="modal-close" onclick="closeAvatarModal()">&times;</span>
+    <img class="modal-content" id="modalImage">
+</div>
+
+<script>
+    function parseDate(dateStr) {
+        if (!dateStr) return null;
+        return new Date(dateStr);
+    }
+
+    function validateDates() {
+        var startTime = document.getElementById('startTime').value;
+        var endTime = document.getElementById('endTime').value;
+        var errorSpan = document.getElementById('dateError');
+
+        if (!startTime && !endTime) {
+            errorSpan.textContent = '';
+            return true;
+        }
+
+        var startDate = parseDate(startTime);
+        var endDate = parseDate(endTime);
+
+        if (startTime && endTime && startDate > endDate) {
+            errorSpan.textContent = '起始时间不能晚于截止时间';
+            return false;
+        }
+
+        errorSpan.textContent = '';
+        return true;
+    }
+
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+        if (!validateDates()) {
+            e.preventDefault();
+        }
+    });
+
+    document.getElementById('startTime').addEventListener('change', validateDates);
+    document.getElementById('endTime').addEventListener('change', validateDates);
+
+    function resetForm() {
+        document.getElementById('keyword').value = '';
+        document.getElementById('startTime').value = '';
+        document.getElementById('endTime').value = '';
+        document.getElementById('dateError').textContent = '';
+        window.location.href = '/admin/users';
+    }
+
+    // 全选/取消全选
+    var selectAll = document.getElementById('selectAll');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            var checkboxes = document.querySelectorAll('.userCheckbox');
+            checkboxes.forEach(function(cb) {
+                cb.checked = this.checked;
+            }, this);
+        });
+    }
+
+    // 批量删除
+    var batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    if (batchDeleteBtn) {
+        batchDeleteBtn.addEventListener('click', function() {
+            var checkboxes = document.querySelectorAll('.userCheckbox:checked');
+            if (checkboxes.length === 0) {
+                alert('请至少选择一条数据');
+                return;
+            }
+
+            var ids = [];
+            checkboxes.forEach(function(cb) {
+                ids.push(cb.value);
+            });
+
+            if (confirm('确定要删除选中的 ' + ids.length + ' 位用户吗？')) {
+                window.location.href = '/admin/users/batchDelete?ids=' + ids.join(',');
+            }
+        });
+    }
+
+    // 显示头像大图
+    function showAvatarModal(avatarUrl) {
+        console.log("点击的图片路径：" + avatarUrl);
+        var modal = document.getElementById('avatarModal');
+        var modalImg = document.getElementById('modalImage');
+        if (!modal || !modalImg) {
+            console.log("找不到模态框元素");
+            return;
+        }
+        modal.style.display = 'block';
+        modalImg.src = avatarUrl;
+        console.log("设置图片路径：" + modalImg.src);
+    }
+
+    // 关闭模态框
+    function closeAvatarModal() {
+        var modal = document.getElementById('avatarModal');
+        modal.style.display = 'none';
+    }
+</script>
+</body>
+</html>
