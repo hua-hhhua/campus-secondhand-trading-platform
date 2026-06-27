@@ -257,7 +257,7 @@ public class UserController {
 
     // ========== 我的订单 ==========
 
-    @GetMapping("/user/my-orders")
+    @GetMapping("/my-orders")
     public String myOrders(@RequestParam(defaultValue = "1") Integer pageNum,
                            @RequestParam(defaultValue = "10") Integer pageSize,
                            @RequestParam(required = false) Integer statusFilter,
@@ -294,7 +294,7 @@ public class UserController {
         return "user/my-orders";
     }
 
-    @PostMapping("/user/orders/{id}/cancel")
+    @PostMapping("/orders/{id}/cancel")
     @ResponseBody
     public Result cancelOrder(@PathVariable Long id, @RequestParam(required = false) String reason,
                               Authentication authentication) {
@@ -309,7 +309,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/user/orders/{id}/confirm")
+    @PostMapping("/orders/{id}/confirm")
     @ResponseBody
     public Result confirmReceipt(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -323,7 +323,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/user/orders/{id}/delete")
+    @PostMapping("/orders/{id}/delete")
     @ResponseBody
     public Result deleteOrder(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -337,7 +337,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/user/orders/{id}")
+    @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Long id, Model model, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
@@ -360,7 +360,7 @@ public class UserController {
         return "user/order-detail";
     }
 
-    @GetMapping("/user/seller-orders")
+    @GetMapping("/seller-orders")
     public String sellerOrders(@RequestParam(defaultValue = "1") Integer pageNum,
                                @RequestParam(defaultValue = "10") Integer pageSize,
                                @RequestParam(required = false) Integer statusFilter,
@@ -397,7 +397,7 @@ public class UserController {
         return "user/seller-orders";
     }
 
-    @PostMapping("/user/orders/{id}/ship")
+    @PostMapping("/orders/{id}/ship")
     @ResponseBody
     public Result shipOrder(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
