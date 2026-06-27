@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 校园交易平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .register-container {
+            background: white;
+            border-radius: 12px;
+            padding: 50px 40px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .register-container h2 {
+            text-align: center;
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .register-container .subtitle {
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #dcdfe6;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+        .btn-register:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 14px;
+            color: #999;
+        }
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .login-link a:hover { text-decoration: underline; }
+        .msg {
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+        .msg.success { display: block; background: #f0f9eb; color: #67c23a; border: 1px solid #c2e7b0; }
+        .msg.error { display: block; background: #fef0f0; color: #f56c6c; border: 1px solid #fde2e2; }
+        .msg.info { display: block; background: #ecf5ff; color: #409EFF; border: 1px solid #b3d8ff; }
+    </style>
+</head>
+<body>
+
+<div class="register-container">
+    <h2>📝 注册账号</h2>
+    <p class="subtitle">加入校园交易平台，开启二手交易之旅</p>
+
+    <div id="msg" class="msg"></div>
+
+    <form id="registerForm">
+        <div class="form-group">
+            <label>用户名</label>
+            <input type="text" id="username" placeholder="请输入用户名（至少3位）" required>
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="password" placeholder="请输入密码（至少6位）" required>
+        </div>
+        <div class="form-group">
+            <label>确认密码</label>
+            <input type="password" id="confirmPassword" placeholder="请再次输入密码" required>
+        </div>
+        <div class="form-group">
+            <label>昵称</label>
+            <input type="text" id="nickname" placeholder="请输入昵称" required>
+        </div>
+        <div class="form-group">
+            <label>手机号</label>
+            <input type="text" id="phone" placeholder="请输入手机号" required>
+        </div>
+        <div class="form-group">
+            <label>学校</label>
+            <select id="schoolId" required>
+                <option value="">请选择学校</option>
+                <option value="1">武汉大学</option>
+                <option value="2">华中科技大学</option>
+                <option value="3">武汉理工大学</option>
+                <option value="4">华中师范大学</option>
+                <option value="5">中国地质大学（武汉）</option>
+                <option value="6">中南财经政法大学</option>
+                <option value="7">湖北大学</option>
+                <option value="8">武汉科技大学</option>
+            </select>
+        </div>
+
+        <button type="button" class="btn-register" onclick="handleRegister()">立即注册</button>
+    </form>
+
+    <div class="login-link">
+        已有账号？<a href="/toLoginPage">返回登录</a>
+    </div>
+</div>
+
+<script>
+    function showMsg(message, type) {
+        const msg = document.getElementById('msg');
+        msg.textContent = message;
+        msg.className = 'msg ' + type;
+        setTimeout(() => { msg.className = 'msg'; }, 4000);
+    }
+
+    function handleRegister() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const nickname = document.getElementById('nickname').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const schoolId = document.getElementById('schoolId').value;
+        if (!schoolId) { showMsg('请选择学校', 'error'); return; }
+
+        // 验证
+        if (!username) { showMsg('请输入用户名', 'error'); return; }
+        if (username.length < 3) { showMsg('用户名至少3位', 'error'); return; }
+        if (!password) { showMsg('请输入密码', 'error'); return; }
+        if (password.length < 6) { showMsg('密码至少6位', 'error'); return; }
+        if (password !== confirmPassword) { showMsg('两次密码输入不一致', 'error'); return; }
+        if (!nickname) { showMsg('请输入昵称', 'error'); return; }
+        if (!phone) { showMsg('请输入手机号', 'error'); return; }
+        if (!/^1[3-9]\d{9}$/.test(phone)) { showMsg('请输入正确的手机号', 'error'); return; }
+
+        const btn = document.querySelector('.btn-register');
+        btn.disabled = true;
+        btn.textContent = '注册中...';
+
+        const data = new URLSearchParams();
+        data.append('username', username);
+        data.append('password', password);
+        data.append('nickname', nickname);
+        data.append('phone', phone);
+        data.append('schoolId', schoolId);
+
+        fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: data
+        })
+            .then(response => response.json())
+            .then(result => {
+                btn.disabled = false;
+                btn.textContent = '立即注册';
+                if (result.success) {
+                    showMsg(result.message || '注册成功！', 'success');
+                    // 2秒后跳转到登录页
+                    setTimeout(() => {
+                        window.location.href = '/toLoginPage';
+                    }, 2000);
+                } else {
+                    showMsg(result.message || '注册失败，请重试', 'error');
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.textContent = '立即注册';
+                showMsg('网络错误，请重试', 'error');
+            });
+    }
+
+    // 按回车键提交
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            handleRegister();
+        }
+    });
+</script>
+
+</body>
+</html>

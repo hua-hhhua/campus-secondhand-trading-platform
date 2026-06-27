@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的订单 - 校园交易平台</title>
+    <title>订单管理 - 校园交易平台</title>
     <style>
         * {
             margin: 0;
@@ -16,59 +16,36 @@
             background-color: #f5f5f5;
         }
 
-        .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 30px;
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .navbar h1 {
-            font-size: 24px;
-        }
-
-        .navbar a {
-            color: white;
-            text-decoration: none;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
+            flex-wrap: wrap;
             gap: 15px;
         }
 
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-
-        .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .header-section h2 {
+        .header h1 {
             color: #333;
-            border-left: 4px solid #667eea;
-            padding-left: 15px;
+            font-size: 24px;
+            margin: 0;
         }
 
-        .back-btn {
-            padding: 8px 20px;
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-decoration: none;
@@ -77,7 +54,7 @@
             transition: all 0.3s;
         }
 
-        .back-btn:hover {
+        .home-link:hover {
             opacity: 0.9;
             transform: translateY(-2px);
         }
@@ -94,12 +71,16 @@
             flex-wrap: wrap;
         }
 
+        .filter-bar input,
         .filter-bar select {
             padding: 8px 12px;
             border: 1px solid #d9d9d9;
             border-radius: 4px;
             font-size: 14px;
-            min-width: 150px;
+        }
+
+        .filter-bar input {
+            width: 250px;
         }
 
         .btn {
@@ -123,19 +104,6 @@
         .btn-success {
             background: #52c41a;
             color: white;
-        }
-
-        .btn-success:hover {
-            background: #73d13d;
-        }
-
-        .btn-warning {
-            background: #faad14;
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background: #ffc53d;
         }
 
         .btn-danger {
@@ -199,7 +167,6 @@
         .action-btns {
             display: flex;
             gap: 8px;
-            flex-wrap: wrap;
         }
 
         .pagination {
@@ -300,39 +267,25 @@
             color: #333;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-
-        .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-<!-- 导航栏 -->
-<div class="navbar">
-    <h1>🏫 校园交易平台</h1>
-    <div class="user-info">
-        <img th:src="${userAvatar != null ? userAvatar : '/avatars/default.png'}" alt="头像" class="user-avatar">
-        <span th:text="${userNickname != null ? userNickname : username}"></span>
-        <a href="/personal-center" style="color: white;">个人中心</a>
-    </div>
-</div>
-
 <div class="container">
     <!-- 头部 -->
-    <div class="header-section">
-        <h2>📦 我的订单</h2>
-        <a href="/personal-center" class="back-btn">← 返回个人中心</a>
+    <div class="header">
+        <h1>📦 订单管理</h1>
+        <a href="/" class="home-link">🏠 返回首页</a>
     </div>
 
     <!-- 筛选栏 -->
     <div class="filter-bar">
-        <select id="statusFilter" onchange="filterOrders()">
+        <input type="text" id="keyword" placeholder="搜索订单号/买家/卖家" th:value="${keyword}">
+        <select id="statusFilter">
             <option value="">全部状态</option>
             <option value="0" th:selected="${statusFilter == 0}">待付款</option>
             <option value="1" th:selected="${statusFilter == 1}">待发货</option>
@@ -341,6 +294,8 @@
             <option value="4" th:selected="${statusFilter == 4}">已取消</option>
             <option value="5" th:selected="${statusFilter == 5}">已完成</option>
         </select>
+        <button class="btn btn-primary" onclick="searchOrders()">搜索</button>
+        <button class="btn btn-danger" onclick="batchDelete()">批量删除</button>
     </div>
 
     <!-- 表格 -->
@@ -348,8 +303,10 @@
         <table>
             <thead>
             <tr>
+                <th><input type="checkbox" class="checkbox" id="selectAll"></th>
                 <th>订单号</th>
                 <th>商品标题</th>
+                <th>买家</th>
                 <th>卖家</th>
                 <th>价格</th>
                 <th>数量</th>
@@ -361,8 +318,10 @@
             </thead>
             <tbody>
             <tr th:each="order : ${orderPage.records}">
+                <td><input type="checkbox" class="checkbox order-checkbox" th:value="${order.id}"></td>
                 <td th:text="${order.orderNo}"></td>
                 <td th:text="${order.articleTitle}"></td>
+                <td th:text="${order.buyerName}"></td>
                 <td th:text="${order.sellerName}"></td>
                 <td th:text="'¥' + ${#numbers.formatDecimal(order.price, 1, 2)}"></td>
                 <td th:text="${order.quantity}"></td>
@@ -375,33 +334,13 @@
                 <td>
                     <div class="action-btns">
                         <button class="btn btn-primary" th:onclick="'viewOrder(' + ${order.id} + ')'">详情</button>
-
-                        <!-- 待付款：可以取消 -->
-                        <button class="btn btn-danger" th:if="${order.status == 0}"
-                                th:onclick="'cancelOrder(' + ${order.id} + ')'">取消订单</button>
-
-                        <!-- 待发货：可以取消 -->
-                        <button class="btn btn-danger" th:if="${order.status == 1}"
-                                th:onclick="'cancelOrder(' + ${order.id} + ')'">取消订单</button>
-
-                        <!-- 已发货：可以确认收货 -->
-                        <button class="btn btn-success" th:if="${order.status == 2}"
-                                th:onclick="'confirmReceipt(' + ${order.id} + ')'">确认收货</button>
-
-                        <!-- 已完成或已取消：可以删除 -->
-                        <button class="btn btn-warning" th:if="${order.status == 4 or order.status == 5}"
-                                th:onclick="'deleteOrder(' + ${order.id} + ')'">删除订单</button>
+                        <button class="btn btn-success" th:onclick="'changeStatus(' + ${order.id} + ', ' + ${order.status} + ')'">改状态</button>
+                        <button class="btn btn-danger" th:onclick="'deleteOrder(' + ${order.id} + ')'">删除</button>
                     </div>
                 </td>
             </tr>
             <tr th:if="${orderPage.records.empty}">
-                <td colspan="9">
-                    <div class="empty-state">
-                        <div class="empty-state-icon"></div>
-                        <p>暂无订单记录</p>
-                        <p style="margin-top: 10px; font-size: 12px;">快去挑选心仪的商品吧！</p>
-                    </div>
-                </td>
+                <td colspan="11" style="text-align: center; padding: 40px; color: #999;">暂无订单数据</td>
             </tr>
             </tbody>
         </table>
@@ -431,125 +370,166 @@
     </div>
 </div>
 
+<!-- 修改状态弹窗 -->
+<div id="statusModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <span class="close-btn" onclick="closeStatusModal()">&times;</span>
+        <div class="modal-header">修改订单状态</div>
+        <div>
+            <p style="margin-bottom: 15px;">订单号: <strong id="statusOrderNo"></strong></p>
+            <p style="margin-bottom: 15px;">当前状态: <strong id="currentStatus"></strong></p>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px;">修改为:</label>
+                <select id="newStatus" style="width: 100%; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                    <option value="0">待付款</option>
+                    <option value="1">待发货</option>
+                    <option value="2">已发货</option>
+                    <option value="3">已收货</option>
+                    <option value="4">已取消</option>
+                    <option value="5">已完成</option>
+                </select>
+            </div>
+            <div style="text-align: right;">
+                <button class="btn" onclick="closeStatusModal()" style="margin-right: 10px;">取消</button>
+                <button class="btn btn-primary" onclick="confirmChangeStatus()">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    // 筛选订单
-    function filterOrders() {
+    // 全选/取消全选
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.order-checkbox');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    // 搜索订单
+    function searchOrders() {
+        const keyword = document.getElementById('keyword').value;
         const statusFilter = document.getElementById('statusFilter').value;
-        let url = '/user/my-orders?pageNum=1&pageSize=10';
-        if (statusFilter) url += '&statusFilter=' + statusFilter;
+        let url = '/admin/orders?';
+        if (keyword) url += 'keyword=' + encodeURIComponent(keyword) + '&';
+        if (statusFilter) url += 'status=' + statusFilter + '&';
         window.location.href = url;
     }
 
-    // 跳转到指定页
-    function goToPage(page) {
-        const statusFilter = document.getElementById('statusFilter').value;
-        let url = '/user/my-orders?pageNum=' + page + '&pageSize=10';
-        if (statusFilter) url += '&statusFilter=' + statusFilter;
-        window.location.href = url;
+    // 批量删除
+    function batchDelete() {
+        const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('请至少选择一个订单');
+            return;
+        }
+        if (!confirm('确定要删除选中的 ' + checkboxes.length + ' 个订单吗？')) {
+            return;
+        }
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+        fetch('/admin/orders/delete-batch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(ids)
+        })
+            .then(res => res.json())
+            .then(success => {
+                if (success) {
+                    alert('删除成功');
+                    location.reload();
+                } else {
+                    alert('删除失败');
+                }
+            })
+            .catch(err => alert('操作失败：' + err));
     }
 
     // 查看订单详情
-    function viewOrder(id) {
-        fetch('/api/orders/' + id)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const order = data.data;
-                    const detailHtml = `
-                            <div class="detail-row"><div class="detail-label">订单号：</div><div class="detail-value">${order.orderNo}</div></div>
-                            <div class="detail-row"><div class="detail-label">商品标题：</div><div class="detail-value">${order.articleTitle || '-'}</div></div>
-                            <div class="detail-row"><div class="detail-label">卖家姓名：</div><div class="detail-value">${order.sellerName || '-'}</div></div>
-                            <div class="detail-row"><div class="detail-label">卖家电话：</div><div class="detail-value">${order.sellerPhone || '-'}</div></div>
-                            <div class="detail-row"><div class="detail-label">买家地址：</div><div class="detail-value">${order.buyerAddress || '-'}</div></div>
-                            <div class="detail-row"><div class="detail-label">单价：</div><div class="detail-value">¥${order.price}</div></div>
-                            <div class="detail-row"><div class="detail-label">数量：</div><div class="detail-value">${order.quantity}</div></div>
-                            <div class="detail-row"><div class="detail-label">总金额：</div><div class="detail-value">¥${order.totalAmount}</div></div>
-                            <div class="detail-row"><div class="detail-label">状态：</div><div class="detail-value">${order.statusText}</div></div>
-                            <div class="detail-row"><div class="detail-label">备注：</div><div class="detail-value">${order.remark || '-'}</div></div>
-                            <div class="detail-row"><div class="detail-label">取消原因：</div><div class="detail-value">${order.cancelReason || '-'}</div></div>
-                            <div class="detail-row"><div class="detail-label">下单时间：</div><div class="detail-value">${formatDateTime(order.createdAt)}</div></div>
-                            <div class="detail-row"><div class="detail-label">更新时间：</div><div class="detail-value">${formatDateTime(order.updatedAt)}</div></div>
-                        `;
-                    document.getElementById('orderDetail').innerHTML = detailHtml;
-                    document.getElementById('orderModal').classList.add('show');
-                } else {
-                    alert('获取订单详情失败');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('获取订单详情失败');
+    function viewOrder(orderId) {
+        fetch('/admin/orders/' + orderId)
+            .then(res => res.json())
+            .then(order => {
+                document.getElementById('orderDetail').innerHTML = `
+                    <div class="detail-row"><div class="detail-label">订单号：</div><div class="detail-value">${order.orderNo}</div></div>
+                    <div class="detail-row"><div class="detail-label">商品标题：</div><div class="detail-value">${order.articleTitle}</div></div>
+                    <div class="detail-row"><div class="detail-label">买家：</div><div class="detail-value">${order.buyerName}</div></div>
+                    <div class="detail-row"><div class="detail-label">卖家：</div><div class="detail-value">${order.sellerName}</div></div>
+                    <div class="detail-row"><div class="detail-label">单价：</div><div class="detail-value">¥${order.price}</div></div>
+                    <div class="detail-row"><div class="detail-label">数量：</div><div class="detail-value">${order.quantity}</div></div>
+                    <div class="detail-row"><div class="detail-label">总金额：</div><div class="detail-value">¥${order.totalAmount}</div></div>
+                    <div class="detail-row"><div class="detail-label">状态：</div><div class="detail-value">${order.statusText}</div></div>
+                    <div class="detail-row"><div class="detail-label">下单时间：</div><div class="detail-value">${order.createdAt}</div></div>
+                `;
+                document.getElementById('orderModal').classList.add('show');
             });
     }
 
-    // 关闭弹窗
+    // 关闭详情弹窗
     function closeModal() {
         document.getElementById('orderModal').classList.remove('show');
     }
 
-    // 通用 POST 操作处理
-    function handleAction(url, successMsg, failMsg) {
-        fetch(url, {method: 'POST'})
-            .then(response => {
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                const contentType = response.headers.get('content-type') || '';
-                if (contentType.includes('application/json')) {
-                    return response.json();
-                }
-                return {success: true};
+    // 修改订单状态
+    function changeStatus(orderId, currentStatus) {
+        const currentOrderId = orderId;
+        const statuses = ['待付款', '待发货', '已发货', '已收货', '已取消', '已完成'];
+        document.getElementById('statusOrderNo').textContent = 'ORD' + orderId;
+        document.getElementById('currentStatus').textContent = statuses[currentStatus];
+        document.getElementById('newStatus').value = currentStatus;
+
+        window.confirmChangeStatus = function() {
+            const newStatus = document.getElementById('newStatus').value;
+            fetch('/admin/orders/update-status?id=' + currentOrderId + '&status=' + newStatus, {
+                method: 'POST'
             })
-            .then(result => {
-                if (result.success) {
-                    alert(successMsg);
-                    location.reload();
-                } else {
-                    alert(failMsg + '：' + (result.message || '未知错误'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert(failMsg);
-            });
+                .then(res => res.json())
+                .then(success => {
+                    if (success) {
+                        alert('状态修改成功');
+                        location.reload();
+                    } else {
+                        alert('状态修改失败');
+                    }
+                    closeStatusModal();
+                })
+                .catch(err => alert('操作失败：' + err));
+        };
+
+        document.getElementById('statusModal').classList.add('show');
     }
 
-    // 取消订单
-    function cancelOrder(id) {
-        if (!confirm('确定要取消这个订单吗？')) return;
-        const reason = prompt('请输入取消原因（可选）：');
-        handleAction('/user/orders/' + id + '/cancel?reason=' + encodeURIComponent(reason || ''), '订单已取消', '取消失败');
-    }
-
-    // 确认收货
-    function confirmReceipt(id) {
-        if (!confirm('确认已收到商品吗？')) return;
-        handleAction('/user/orders/' + id + '/confirm', '确认收货成功！', '操作失败');
+    // 关闭状态弹窗
+    function closeStatusModal() {
+        document.getElementById('statusModal').classList.remove('show');
     }
 
     // 删除订单
-    function deleteOrder(id) {
-        if (!confirm('确定要删除这个订单吗？删除后不可恢复。')) return;
-        handleAction('/user/orders/' + id + '/delete', '订单已删除', '删除失败');
-    }
-
-    // 格式化时间
-    function formatDateTime(dateTime) {
-        if (!dateTime) return '-';
-        const date = new Date(dateTime);
-        return date.toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    // 点击弹窗外部关闭
-    document.getElementById('orderModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeModal();
+    function deleteOrder(orderId) {
+        if (!confirm('确定要删除这个订单吗？')) {
+            return;
         }
-    });
+        fetch('/admin/orders/' + orderId, {
+            method: 'DELETE'
+        })
+            .then(res => res.json())
+            .then(success => {
+                if (success) {
+                    alert('删除成功');
+                    location.reload();
+                } else {
+                    alert('删除失败');
+                }
+            })
+            .catch(err => alert('操作失败：' + err));
+    }
+
+    // 跳转到指定页
+    function goToPage(page) {
+        const keyword = document.getElementById('keyword').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        let url = '/admin/orders?page=' + page + '&';
+        if (keyword) url += 'keyword=' + encodeURIComponent(keyword) + '&';
+        if (statusFilter) url += 'status=' + statusFilter + '&';
+        window.location.href = url;
+    }
 </script>
 </body>
 </html>

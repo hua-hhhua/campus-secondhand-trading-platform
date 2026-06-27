@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品详情</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .back { margin-bottom: 20px; }
+        .back a { color: #667eea; text-decoration: none; }
+        .back a:hover { text-decoration: underline; }
+
+        .title-area { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .title-area h1 { color: #333; font-size: 26px; margin: 0; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .badge-top { background: #ff9800; color: white; }
+        .badge-sale { background: #e1f3d8; color: #67c23a; }
+        .badge-sold { background: #fdf6ec; color: #e6a23c; }
+        .badge-off { background: #fde2e2; color: #f56c6c; }
+
+        .meta { font-size: 14px; color: #999; margin-bottom: 20px; }
+        .meta span { margin-right: 20px; }
+
+        .detail-main { display: flex; gap: 30px; margin: 15px 0 25px; }
+        .detail-image { flex: 0 0 300px; }
+        .detail-image img { width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+        .detail-image .no-image { width: 100%; height: 200px; background: #f5f7fa; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; border: 1px dashed #ddd; }
+        .detail-info { flex: 1; }
+
+        .price { font-size: 28px; color: #f56c6c; font-weight: bold; margin-bottom: 10px; }
+        .stock { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 14px; margin-bottom: 10px; }
+        .stock-in { background: #e1f3d8; color: #67c23a; }
+        .stock-out { background: #fef0f0; color: #f56c6c; }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; background: #f8f9fa; padding: 15px 20px; border-radius: 8px; margin: 10px 0; }
+        .info-item { font-size: 14px; color: #555; }
+        .info-item strong { color: #333; margin-right: 5px; }
+
+        .content { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; line-height: 1.8; color: #333; }
+
+        .btn { padding: 10px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; transition: all 0.3s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-success { background: #67c23a; color: white; }
+        .btn-success:hover { background: #5daf34; }
+        .btn-warning { background: #e6a23c; color: white; }
+        .btn-warning:hover { background: #cf9236; }
+        .btn-danger { background: #f56c6c; color: white; }
+        .btn-danger:hover { background: #f78989; }
+        .btn-group { margin-top: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 6px;
+        }
+        .quantity-selector label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .quantity-input {
+            width: 60px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+            pointer-events: auto !important;
+            user-select: text !important;
+            cursor: text !important;
+        }
+        .quantity-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .comment-section { margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; }
+        .comment-section h3 { margin-bottom: 15px; }
+        .comment-input-area { display: flex; gap: 10px; align-items: center; }
+        .comment-input-area input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .comment-input-area input:focus { outline: none; border-color: #667eea; }
+        .comment-submit-btn { padding: 10px 25px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .comment-submit-btn:hover { background: #5a6fd6; }
+        .comment-tip { font-size: 12px; color: #999; margin-top: 5px; }
+        .comment-list { margin-top: 20px; }
+        .comment-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .comment-user { display: flex; align-items: center; gap: 10px; }
+        .comment-user img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+        .comment-user strong { font-size: 14px; }
+        .comment-user span { color: #999; font-size: 12px; }
+        .comment-content { margin-top: 5px; font-size: 14px; color: #333; }
+        .comment-empty { color: #999; font-size: 14px; }
+        .comment-login-tip a { color: #667eea; text-decoration: none; }
+        .comment-login-tip a:hover { text-decoration: underline; }
+        .comment-self-tip { color: #999; font-size: 14px; }
+
+        /* 收藏按钮状态样式 */
+        #favoriteBtn {
+            min-width: 120px;
+        }
+        #favoriteBtn.loading {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="back">
+        <a href="/">← 返回首页</a>
+    </div>
+
+    <!-- 标题区域 -->
+    <div class="title-area">
+        <h1 th:text="${article.title}">商品标题</h1>
+        <span th:if="${article.isTop == 1}" class="badge badge-top">置顶</span>
+        <span th:if="${article.productStatus == 0}" class="badge badge-sale">在售</span>
+        <span th:if="${article.productStatus == 1}" class="badge badge-sold">已售</span>
+        <span th:if="${article.productStatus == 2}" class="badge badge-off">已下架</span>
+    </div>
+
+    <!-- 基本信息 -->
+    <div class="meta">
+        <span>📅 发布时间：<span th:text="${#temporals.format(article.publishedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 00:00</span></span>
+        <span>👁️ 阅读量：<span th:text="${article.viewCount != null ? article.viewCount : 0}">0</span></span>
+        <span>✍️ 作者：<span th:text="${authorName}">作者</span></span>
+    </div>
+
+    <!-- 图片 + 信息 双栏布局 -->
+    <div class="detail-main">
+        <div class="detail-image">
+            <img th:if="${article.coverImage != null and article.coverImage != ''}" th:src="${article.coverImage}" alt="商品图片">
+            <div th:unless="${article.coverImage != null and article.coverImage != ''}" class="no-image">📷 暂无图片</div>
+        </div>
+
+        <div class="detail-info">
+            <div class="price" th:text="'¥' + ${article.price != null ? article.price : '0.00'}">¥0.00</div>
+            <div>
+                <span class="stock stock-in" th:if="${article.stock != null and article.stock > 0}" th:text="'库存：' + ${article.stock}">库存：10</span>
+                <span class="stock stock-out" th:if="${article.stock == null or article.stock <= 0}">库存：已售罄</span>
+            </div>
+            <div class="info-grid">
+                <div class="info-item"><strong>📁 分类：</strong><span th:text="${categoryName != null ? categoryName : '未分类'}">未分类</span></div>
+                <div class="info-item"><strong>🏫 学校：</strong><span th:text="${schoolName != null ? schoolName : '未设置'}">未设置</span></div>
+                <div class="info-item" th:if="${article.location != null}"><strong>📍 地点：</strong><span th:text="${article.location}">交易地点</span></div>
+                <div class="info-item"><strong>📞 联系方式：</strong>
+                    <span th:if="${article.wechat != null and article.wechat != ''}">微信：<span th:text="${article.wechat}"></span>&nbsp;</span>
+                    <span th:if="${article.qq != null and article.qq != ''}">QQ：<span th:text="${article.qq}"></span>&nbsp;</span>
+                    <span th:if="${article.phone != null and article.phone != ''}">手机：<span th:text="${article.phone}"></span></span>
+                    <span th:if="${(article.wechat == null or article.wechat == '') and (article.qq == null or article.qq == '') and (article.phone == null or article.phone == '')}" style="color:#999;">未填写</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 商品描述 -->
+    <div class="content" th:text="${article.content}">商品描述内容</div>
+
+    <!-- 操作按钮 -->
+    <div class="btn-group">
+        <!-- 收藏按钮 - 使用 data-* 属性存储商品ID -->
+        <button class="btn btn-warning" id="favoriteBtn" th:data-article-id="${article.id}">
+            <span th:if="${isFavorited}">❤️ 已收藏</span>
+            <span th:unless="${isFavorited}">🤍 收藏</span>
+        </button>
+        
+        <!-- 数量选择器 + 加入购物车按钮 -->
+        <div class="quantity-selector">
+            <label for="cartQuantity">购买数量：</label>
+            <input type="number" id="cartQuantity" class="quantity-input" value="1" min="1" max="99">
+        </div>
+        <button class="btn btn-success" id="addToCartBtn" th:data-article-id="${article.id}" th:data-stock="${article.stock}">🛒 加入购物车</button>
+        
+        <button class="btn btn-primary" onclick="alert('联系卖家功能开发中')">💬 联系卖家</button>
+    </div>
+
+    <!-- ========== 评论区域 ========== -->
+    <div class="comment-section">
+        <h3>💬 评论</h3>
+
+        <!-- 评论输入框 -->
+        <div th:if="${currentUserId != null and canComment}">
+            <form th:action="@{/article/{id}/comment(id=${article.id})}" method="post">
+                <input type="hidden" name="parentId" value="0">
+                <div class="comment-input-area">
+                    <input type="text" name="content" placeholder="写下你的评论..." required>
+                    <button type="submit" class="comment-submit-btn">发表评论</button>
+                </div>
+                <div class="comment-tip">请文明评论，友善交流</div>
+            </form>
+        </div>
+
+        <div th:if="${currentUserId == null}" class="comment-login-tip" style="color: #999; font-size: 14px;">
+            <a href="/toLoginPage">登录</a> 后可以发表评论
+        </div>
+
+        <div th:if="${currentUserId != null and !canComment and article.status == 1}" class="comment-self-tip">
+            ℹ️ 你发布了自己的商品，不能对自己的商品发表评论
+        </div>
+
+        <!-- 评论列表 -->
+        <div class="comment-list">
+            <div th:if="${comments == null or comments.isEmpty()}" class="comment-empty">
+                暂无评论，快来发表你的看法吧！
+            </div>
+            <div th:each="comment : ${comments}" class="comment-item">
+                <div class="comment-user">
+                    <img th:src="${comment.userAvatar != null ? comment.userAvatar : '/avatars/default.png'}">
+                    <strong th:text="${comment.username}">用户名</strong>
+                    <span th:text="${#temporals.format(comment.createTime, 'yyyy-MM-dd HH:mm')}">2024-01-01 00:00</span>
+                </div>
+                <div class="comment-content" th:text="${comment.content}">评论内容</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 等待页面加载完成后绑定事件
+    document.addEventListener('DOMContentLoaded', function() {
+        var btn = document.getElementById('favoriteBtn');
+        if (btn) {
+            // 从 data-article-id 属性获取商品ID
+            var articleId = btn.getAttribute('data-article-id');
+            console.log('从 data 属性获取文章ID：', articleId);
+
+            // 绑定点击事件
+            btn.addEventListener('click', function() {
+                toggleFavorite(articleId);
+            });
+        } else {
+            console.error('找不到收藏按钮');
+        }
+
+        // 绑定加入购物车按钮事件
+        var addToCartBtn = document.getElementById('addToCartBtn');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function() {
+                var articleId = this.getAttribute('data-article-id');
+                var stock = parseInt(this.getAttribute('data-stock'));
+                
+                // 获取用户输入的数量
+                var quantityInput = document.getElementById('cartQuantity');
+                var quantity = parseInt(quantityInput.value);
+                
+                if (!articleId || articleId === 'null') {
+                    alert('商品信息错误，请刷新页面重试');
+                    return;
+                }
+                
+                // 检查库存
+                if (stock <= 0) {
+                    alert('该商品已售罄，无法加入购物车');
+                    return;
+                }
+                
+                // 检查数量是否有效
+                if (isNaN(quantity) || quantity < 1) {
+                    alert('请输入有效的购买数量');
+                    quantityInput.value = 1;
+                    return;
+                }
+                
+                // 检查数量是否超过库存
+                if (quantity > stock) {
+                    alert('购买数量不能超过库存数量（' + stock + '）');
+                    quantityInput.value = stock;
+                    return;
+                }
+                
+                addToCart(articleId, quantity, this);
+            });
+        }
+    });
+
+    function toggleFavorite(articleId) {
+        console.log('点击收藏，文章ID：', articleId);
+
+        // 校验商品ID
+        if (!articleId || articleId === 'null' || articleId === '') {
+            alert('商品ID不存在，请刷新页面重试');
+            return;
+        }
+
+        var btn = document.getElementById('favoriteBtn');
+        // 防止重复点击
+        if (btn.classList.contains('loading')) {
+            console.log('正在处理中，请勿重复点击');
+            return;
+        }
+
+        // 显示加载状态
+        btn.classList.add('loading');
+        var originalText = btn.innerHTML;
+
+        fetch('/favorites/toggle?articleId=' + articleId, {
+            method: 'POST'
+        })
+            .then(function(res) {
+                console.log('响应状态：', res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                console.log('返回数据：', data);
+                // 移除加载状态
+                btn.classList.remove('loading');
+
+                if (data.needLogin) {
+                    alert('请先登录');
+                    window.location.href = '/toLoginPage';
+                    return;
+                }
+
+                if (data.success) {
+                    // 更新按钮文字
+                    btn.innerHTML = data.favorited ? '❤️ 已收藏' : '🤍 收藏';
+                    // 显示提示消息
+                    alert(data.message);
+                    // 刷新页面更新收藏状态
+                    location.reload();
+                } else {
+                    alert(data.message || '操作失败，请重试');
+                    // 恢复原始文字
+                    btn.innerHTML = originalText;
+                }
+            })
+            .catch(function(err) {
+                console.error('错误：', err);
+                btn.classList.remove('loading');
+                btn.innerHTML = originalText;
+                alert('网络错误，请检查网络连接后重试');
+            });
+    }
+
+    // 加入购物车函数
+    function addToCart(articleId, quantity, btn) {
+        console.log('加入购物车，商品ID：', articleId, '数量：', quantity);
+
+        if (!articleId || articleId === 'null' || articleId === '') {
+            alert('商品ID不存在，请刷新页面重试');
+            return;
+        }
+
+        // 显示加载状态
+        var originalText = btn.textContent;
+        btn.classList.add('loading');
+        btn.disabled = true;
+        btn.textContent = '加入中...';
+
+        fetch('/cart/add?articleId=' + articleId + '&quantity=' + quantity, {
+            method: 'POST'
+        })
+            .then(function(res) {
+                console.log('响应状态：', res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                console.log('返回数据：', data);
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                btn.textContent = originalText;
+
+                if (data.needLogin) {
+                    alert('请先登录');
+                    window.location.href = '/toLoginPage';
+                    return;
+                }
+
+                if (data.success) {
+                    alert('✓ ' + data.message + '\n购物车共有 ' + data.cartCount + ' 件商品');
+                    // 重置数量为 1
+                    document.getElementById('cartQuantity').value = 1;
+                } else {
+                    alert('✗ ' + data.message);
+                }
+            })
+            .catch(function(err) {
+                console.error('错误：', err);
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                btn.textContent = originalText;
+                alert('网络错误，请检查网络连接后重试');
+            });
+    }
+</script>
+
+</body>
+</html>

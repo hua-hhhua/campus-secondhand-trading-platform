@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>校园交易平台 - 首页</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; }
+
+    .navbar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .navbar h1 { font-size: 24px; }
+    .navbar a { color: white; text-decoration: none; }
+
+    .user-info { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .login-btn, .logout-btn {
+      padding: 8px 20px;
+      background-color: rgba(255,255,255,0.2);
+      border: 1px solid white;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .login-btn:hover, .logout-btn:hover { background-color: rgba(255,255,255,0.3); }
+
+    .role-badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    .role-admin { background-color: #e74c3c; color: white; }
+    .role-user { background-color: #95a5a6; color: white; }
+    .admin-link { color: #f1c40f !important; text-decoration: none; margin-left: 10px; }
+    .admin-link:hover { text-decoration: underline; }
+    .article-link { color: #3498db !important; text-decoration: none; margin-left: 10px; }
+    .article-link:hover { text-decoration: underline; }
+
+    .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+    .welcome-card {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    .welcome-card h2 { color: #333; margin-bottom: 15px; }
+    .welcome-card p { color: #666; font-size: 16px; }
+
+    .articles-section {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .articles-section h3 {
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+      display: inline-block;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 15px 0 20px;
+      padding: 12px 18px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .filter-bar select {
+      padding: 8px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 130px;
+      background: white;
+      cursor: pointer;
+    }
+    .filter-bar select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .filter-bar .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .filter-bar .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .filter-bar .search-btn {
+      padding: 8px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .filter-bar .search-btn:hover { opacity: 0.9; }
+    .filter-bar .clear-btn {
+      padding: 8px 16px;
+      background: #909399;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .filter-bar .clear-btn:hover { background: #a6a9ad; }
+
+    .article-list { list-style: none; margin-top: 20px; }
+    .article-item {
+      padding: 20px 0;
+      border-bottom: 1px solid #eee;
+      transition: all 0.3s ease;
+    }
+    .article-item:hover { background-color: #f9f9f9; padding-left: 10px; }
+
+    .article-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+    .article-title a { color: #333; text-decoration: none; transition: color 0.3s; }
+    .article-title a:hover { color: #667eea; }
+
+    .top-badge {
+      background-color: #ff9800;
+      color: white;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-left: 10px;
+    }
+
+    .article-meta { font-size: 13px; color: #999; margin-bottom: 8px; }
+    .article-meta span { margin-right: 15px; }
+
+    .article-meta .author-name { color: #667eea; font-weight: bold; }
+    .article-meta .category-name { color: #e74c3c; font-weight: bold; }
+
+    .article-summary { font-size: 14px; color: #666; line-height: 1.5; }
+
+    .no-articles { text-align: center; padding: 40px; color: #999; }
+    .no-articles p { font-size: 16px; }
+
+    .price-tag {
+      background: #ff6b6b;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .stock-tag {
+      background: #4ecdc4;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .stock-tag {
+      background: #4ecdc4;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    /* 数据看板样式 */
+    .dashboard-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+
+    .stat-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #667eea;
+      margin: 10px 0;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .highlight-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .highlight-card::before {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .highlight-card .stat-number {
+      color: white;
+    }
+
+    .highlight-card .stat-label {
+      color: rgba(255,255,255,0.9);
+    }
+
+    .click-hint {
+      font-size: 12px;
+      color: #999;
+      margin-top: 8px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .stat-card:hover .click-hint {
+      opacity: 1;
+    }
+
+    .highlight-card:hover .click-hint {
+      color: rgba(255,255,255,0.8);
+    }
+  </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<div class="navbar">
+  <h1>🏫 校园交易平台</h1>
+  <div class="user-info">
+    <div th:if="${username == null and session.username == null}">
+      <a href="/toLoginPage" class="login-btn">登录</a>
+    </div>
+    <div th:unless="${username == null and session.username == null}">
+      <img th:src="${userAvatar != null ? userAvatar : (session.userAvatar != null ? session.userAvatar : '/avatars/default.png')}" alt="头像" class="user-avatar">
+      <span th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>
+      <span th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="role-badge role-admin">管理员</span>
+      <span th:if="${userRole == 'USER' or session.userRole == 'USER'}" class="role-badge role-user">普通用户</span>
+      <!-- 管理中心下拉菜单 -->
+      <div th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="dropdown" style="position:relative;display:inline-block;">
+        <button class="dropbtn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:white;padding:8px 18px;font-size:14px;cursor:pointer;transition:all 0.3s;">
+          ⚙️ 管理中心 ▾
+        </button>
+        <div class="dropdown-content" style="display:none;position:absolute;top:100%;left:0;background:white;min-width:160px;box-shadow:0 8px 16px rgba(0,0,0,0.15);border-radius:8px;z-index:1000;padding:8px 0;">
+          <a href="/admin/users" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">👑 用户管理</a>
+          <a href="/admin/articles" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">📝 商品管理</a>
+          <a href="/admin/orders" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">📦 订单管理</a>
+          <a href="/admin/categories" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">📂 分类管理</a>
+          <a href="/admin/tags" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">🏷️ 标签管理</a>
+          <a href="/admin/schools" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">🏫 学校管理</a>
+          <a href="/admin/comments" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">💬 评论管理</a>
+          <a href="/admin/reviews" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">⭐ 评价管理</a>
+        </div>
+      </div>
+
+      <script>
+        // 鼠标悬停显示/隐藏下拉菜单
+        document.addEventListener('DOMContentLoaded', function() {
+          var dropdown = document.querySelector('.dropdown');
+          if (dropdown) {
+            dropdown.addEventListener('mouseenter', function() {
+              this.querySelector('.dropdown-content').style.display = 'block';
+            });
+            dropdown.addEventListener('mouseleave', function() {
+              this.querySelector('.dropdown-content').style.display = 'none';
+            });
+          }
+        });
+      </script>
+      <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/article/manage" class="article-link">✏️ 发布商品</a>
+      <a href="/profile" class="article-link" style="color: #f1c40f !important;">👤 个人中心</a>
+
+      <!-- ================================= -->
+      <form th:action="@{/logout}" method="post" style="display: inline;">
+        <button type="submit" class="logout-btn">退出</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 主要内容 -->
+<div class="container">
+
+  <!-- 欢迎卡片 -->
+  <div class="welcome-card">
+    <h2 th:if="${username == null and session.username == null}">欢迎来到校园交易平台</h2>
+    <h2 th:unless="${username == null and session.username == null}">欢迎回来，<span th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>！</h2>
+    <p>这是一个校园二手交易平台，同学们可以在这里发布和浏览二手商品信息。</p>
+    <p style="margin-top: 10px;">请使用上方导航栏进行登录或查看更多功能。</p>
+  </div>
+
+  <!-- 数据看板（仅管理员可见） -->
+  <div class="dashboard-section" th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}">
+    <a href="/admin/articles" class="stat-card highlight-card">
+      <div class="stat-icon">📦</div>
+      <div class="stat-number" th:text="${articleCount != null ? articleCount : '0'}">0</div>
+      <div class="stat-label">在售商品</div>
+      <div class="click-hint">点击进入商品管理 →</div>
+    </a>
+    <a href="/admin/users" class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-number" th:text="${userCount != null ? userCount : '0'}">0</div>
+      <div class="stat-label">注册用户</div>
+      <div class="click-hint">点击进入用户管理 →</div>
+    </a>
+    <a href="/admin/orders" class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-number" th:text="${orderCount != null ? orderCount : '0'}">0</div>
+      <div class="stat-label">成交订单</div>
+      <div class="click-hint">点击进入订单管理 →</div>
+    </a>
+    <a href="/admin/comment-manage" class="stat-card">
+      <div class="stat-icon">💬</div>
+      <div class="stat-number" th:text="${commentCount != null ? commentCount : '0'}">0</div>
+      <div class="stat-label">用户评论</div>
+      <div class="click-hint">点击进入评论管理 →</div>
+    </a>
+    <a href="/admin/review-manage" class="stat-card">
+      <div class="stat-icon">⭐</div>
+      <div class="stat-number" th:text="${reviewCount != null ? reviewCount : '0'}">0</div>
+      <div class="stat-label">好评数量</div>
+      <div class="click-hint">点击进入评价管理 →</div>
+    </a>
+  </div>
+
+  <!-- 最新商品列表 -->
+  <div class="articles-section">
+    <h3>📦 最新商品</h3>
+
+    <!-- 筛选栏 -->
+    <div class="filter-bar">
+      <form th:action="@{/}" method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; width: 100%;">
+        <!-- 搜索框 -->
+        <input type="text" name="keyword" class="search-input" placeholder="🔍 搜索商品标题或内容..." th:value="${keyword}">
+
+        <!-- 学校筛选 -->
+        <select name="schoolId">
+          <option value="">全部学校</option>
+          <option th:each="school : ${schools}" th:value="${school.id}" th:text="${school.name}" th:selected="${schoolId == school.id}"></option>
+        </select>
+
+        <!-- 分类筛选 -->
+        <select name="categoryId">
+          <option value="">全部分类</option>
+          <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${categoryId == cat.id}"></option>
+        </select>
+
+        <button type="submit" class="search-btn">搜索</button>
+        <a th:href="@{/}" class="clear-btn" th:if="${keyword != null or schoolId != null or categoryId != null}">清除</a>
+      </form>
+    </div>
+
+    <!-- 商品列表 -->
+    <div th:if="${articles == null or #lists.isEmpty(articles)}" class="no-articles">
+      <p>📭 暂无商品，敬请期待！</p>
+    </div>
+
+    <div th:unless="${articles == null or #lists.isEmpty(articles)}">
+      <ul class="article-list">
+        <li th:each="article : ${articles}" class="article-item">
+          <div class="article-title">
+            <a th:href="@{/article/{id}(id=${article.id})}" th:text="${article.title}">商品标题</a>
+            <span th:if="${article.isTop == 1}" class="top-badge">置顶</span>
+            <span class="price-tag" th:text="'¥' + ${article.price}">¥0</span>
+            <span class="stock-tag" th:text="'库存：' + ${article.stock}">库存：0</span>
+          </div>
+          <div class="article-meta">
+            <span>📅 发布时间：<span th:text="${article.publishedAt != null ? #temporals.format(article.publishedAt, 'yyyy-MM-dd HH:mm') : '未知'}">2024-01-01 00:00</span></span>
+            <span>👁️ 阅读量：<span th:text="${article.viewCount != null ? article.viewCount : 0}">0</span></span>
+            <span>✍️ 作者：<strong class="author-name" th:text="${article.authorName != null ? article.authorName : '未知'}">作者名</strong></span>
+            <span>📁 分类：<strong class="category-name" th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类名</strong></span>
+            <span th:if="${article.allowComment == 1}">💬 允许评论</span>
+            <span th:if="${article.allowComment == 0}" style="color: #ccc;">🔇 禁止评论</span>
+          </div>
+          <div class="article-summary" th:text="${article.content != null ? #strings.abbreviate(article.content, 150) : '暂无描述'}">
+            商品描述...
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

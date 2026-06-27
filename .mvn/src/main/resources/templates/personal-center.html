@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 校园交易平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        /* ===== 导航栏 ===== */
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(102, 126, 234, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar .logo {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .navbar .logo a {
+            color: white;
+            text-decoration: none;
+        }
+        .navbar .logo span { color: #f1c40f; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.4);
+            transition: border-color 0.3s;
+        }
+        .user-avatar:hover { border-color: white; }
+        .user-name {
+            font-weight: 500;
+            font-size: 15px;
+        }
+        .role-badge {
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .role-admin { background: #e74c3c; color: white; }
+        .role-user { background: rgba(255,255,255,0.25); color: white; }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+            padding: 6px 4px;
+        }
+        .nav-link:hover { color: white; }
+
+        .logout-btn {
+            padding: 6px 18px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        /* ===== 主体容器 ===== */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 24px;
+        }
+
+        /* ===== 头部 ===== */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header-section h2 {
+            color: #2d3748;
+            font-size: 26px;
+            font-weight: 700;
+            border-left: 4px solid #667eea;
+            padding-left: 16px;
+        }
+        .header-section .back-btn {
+            padding: 8px 24px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.3s;
+            border: 1px solid #e8ecf1;
+        }
+        .header-section .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+        }
+
+        /* ===== 卡片网格 ===== */
+        .profile-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px 28px 28px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: block;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #f0f2f5;
+        }
+        .profile-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .profile-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+            border-color: transparent;
+        }
+        .profile-card:hover::after {
+            opacity: 1;
+        }
+
+        .profile-card-icon {
+            font-size: 48px;
+            margin-bottom: 14px;
+            display: block;
+            line-height: 1.2;
+        }
+
+        .profile-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 6px;
+        }
+
+        .profile-card-desc {
+            font-size: 14px;
+            color: #8898aa;
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        .profile-card-count {
+            display: inline-block;
+            padding: 5px 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .profile-card:hover .profile-card-count {
+            transform: scale(1.05);
+        }
+
+        /* ===== 特殊卡片颜色 ===== */
+        .card-profile .profile-card-icon { color: #667eea; }
+        .card-orders .profile-card-icon { color: #f39c12; }
+        .card-sales .profile-card-icon { color: #2ecc71; }
+        .card-cart .profile-card-icon { color: #e74c3c; }
+        .card-favorites .profile-card-icon { color: #e91e63; }
+        .card-history .profile-card-icon { color: #3498db; }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 640px) {
+            .navbar { padding: 12px 18px; flex-wrap: wrap; gap: 8px; }
+            .navbar .logo { font-size: 18px; }
+            .user-info { gap: 10px; }
+            .user-name { font-size: 13px; }
+            .header-section h2 { font-size: 20px; }
+            .profile-cards { grid-template-columns: 1fr; }
+            .profile-card { padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 导航栏 ===== -->
+<div class="navbar">
+    <div class="logo">
+        <a href="/">🏫 校园<span>交易</span>平台</a>
+    </div>
+    <div class="user-info">
+        <div th:if="${username == null and session.username == null}">
+            <a href="/toLoginPage" class="nav-link" style="padding:8px 20px;background:rgba(255,255,255,0.2);border-radius:6px;">登录</a>
+        </div>
+        <div th:unless="${username == null and session.username == null}">
+            <img th:src="${userAvatar != null ? userAvatar : (session.userAvatar != null ? session.userAvatar : '/avatars/default.png')}" alt="头像" class="user-avatar">
+            <span class="user-name" th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>
+            <span th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="role-badge role-admin">管理员</span>
+            <span th:if="${userRole == 'USER' or session.userRole == 'USER'}" class="role-badge role-user">普通用户</span>
+
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/users" class="nav-link">👑 用户管理</a>
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/articles" class="nav-link">📝 商品管理</a>
+            <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/admin/articles" class="nav-link">✏️ 发布商品</a>
+
+            <form th:action="@{/logout}" method="post" style="display:inline;">
+                <button type="submit" class="logout-btn">🚪 退出</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 主要内容 ===== -->
+<div class="container">
+    <div class="header-section">
+        <h2>👤 个人中心</h2>
+        <a href="/" class="back-btn">← 返回首页</a>
+    </div>
+
+    <div class="profile-cards">
+
+        <!-- 个人信息 -->
+        <a href="/user/profile" class="profile-card card-profile">
+            <span class="profile-card-icon">⚙️</span>
+            <div class="profile-card-title">个人信息</div>
+            <div class="profile-card-desc">修改昵称、手机号、密码等个人信息</div>
+            <span class="profile-card-count">✏️ 点击编辑</span>
+        </a>
+
+        <!-- 我的订单 -->
+        <a href="/user/my-orders" class="profile-card card-orders">
+            <span class="profile-card-icon">📦</span>
+            <div class="profile-card-title">我的订单</div>
+            <div class="profile-card-desc">查看购买记录，管理订单状态</div>
+            <span class="profile-card-count">📋 查看所有订单</span>
+        </a>
+        <!-- 浏览历史 -->
+        <a href="/browse/history" class="profile-card card-history">
+            <span class="profile-card-icon">🕐</span>
+            <div class="profile-card-title">浏览历史</div>
+            <div class="profile-card-desc">查看您最近浏览过的商品，快速找回感兴趣的商品</div>
+            <span class="profile-card-count">📖 查看记录</span>
+        </a>
+
+        <!-- 我的销售 -->
+        <a href="/user/seller-orders" class="profile-card card-sales">
+            <span class="profile-card-icon">💰</span>
+            <div class="profile-card-title">我的销售</div>
+            <div class="profile-card-desc">管理销售订单，处理发货和售后</div>
+            <span class="profile-card-count">📈 查看销售记录</span>
+        </a>
+
+        <!-- 我的购物车 -->
+        <a href="/cart" class="profile-card card-cart">
+            <span class="profile-card-icon">🛒</span>
+            <div class="profile-card-title">我的购物车</div>
+            <div class="profile-card-desc">查看已添加的商品，管理数量和结算</div>
+            <span class="profile-card-count" th:if="${cartCount != null}">共 <span th:text="${cartCount}">0</span> 件商品</span>
+            <span class="profile-card-count" th:unless="${cartCount != null}">🛍️ 去购物</span>
+        </a>
+
+        <!-- 我的收藏 -->
+        <a href="/favorites/my" class="profile-card card-favorites">
+            <span class="profile-card-icon">❤️</span>
+            <div class="profile-card-title">我的收藏</div>
+            <div class="profile-card-desc">查看已收藏的商品，快速找到心仪好物</div>
+            <span class="profile-card-count" th:if="${favoriteCount != null}">共 <span th:text="${favoriteCount}">0</span> 件收藏</span>
+            <span class="profile-card-count" th:unless="${favoriteCount != null}">⭐ 去收藏</span>
+        </a>
+
+    </div>
+</div>
+
+</body>
+</html>

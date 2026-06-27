@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单结算</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 { font-size: 24px; }
+        .navbar a { color: white; text-decoration: none; }
+
+        .user-info { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .login-btn, .logout-btn {
+            padding: 8px 20px;
+            background-color: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .login-btn:hover, .logout-btn:hover { background-color: rgba(255,255,255,0.3); }
+
+        .role-badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .role-admin { background-color: #e74c3c; color: white; }
+        .role-user { background-color: #95a5a6; color: white; }
+        .admin-link { color: #f1c40f !important; text-decoration: none; margin-left: 10px; }
+        .admin-link:hover { text-decoration: underline; }
+        .article-link { color: #3498db !important; text-decoration: none; margin-left: 10px; }
+        .article-link:hover { text-decoration: underline; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .header-section h2 {
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        .header-section a {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .header-section a:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .checkout-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .order-items {
+            margin-bottom: 30px;
+        }
+
+        .order-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .order-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .order-item-no-image {
+            width: 80px;
+            height: 80px;
+            background: #f5f7fa;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            border: 1px dashed #ddd;
+        }
+
+        .order-item-info {
+            flex: 1;
+        }
+
+        .order-item-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .order-item-price {
+            color: #f56c6c;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .order-item-quantity {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .order-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .summary-row.total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #f56c6c;
+            border-top: 2px solid #dee2e6;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .submit-order-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .submit-order-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .empty-checkout {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-checkout-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .empty-checkout p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .back-to-cart-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 16px;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .back-to-cart-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<div class="navbar">
+    <h1>🏫 校园交易平台</h1>
+    <div class="user-info">
+        <div th:if="${username == null and session.username == null}">
+            <a href="/toLoginPage" class="login-btn">登录</a>
+        </div>
+        <div th:unless="${username == null and session.username == null}">
+            <img th:src="${userAvatar != null ? userAvatar : (session.userAvatar != null ? session.userAvatar : '/avatars/default.png')}" alt="头像" class="user-avatar">
+            <span th:text="${userNickname != null ? userNickname : (session.userNickname != null ? session.userNickname : (username != null ? username : session.username))}"></span>
+            <span th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="role-badge role-admin">管理员</span>
+            <span th:if="${userRole == 'USER' or session.userRole == 'USER'}" class="role-badge role-user">普通用户</span>
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/users" class="admin-link">👑 用户管理</a>
+            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/articles" class="admin-link">📝 商品管理</a>
+            <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/article/manage" class="article-link">✏️ 发布商品</a>
+            <a href="/favorites/my" class="article-link" style="color: #f1c40f !important;">❤️ 我的收藏</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">退出</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 主要内容 -->
+<div class="container">
+    <div class="header-section">
+        <h2>💳 订单结算</h2>
+        <a href="/cart">← 返回购物车</a>
+    </div>
+
+    <div class="checkout-section">
+        <!-- 空结算提示 -->
+        <div th:if="${checkedItems == null or #lists.isEmpty(checkedItems)}" class="empty-checkout">
+            <div class="empty-checkout-icon">🛒</div>
+            <p>没有选中的商品，请先在购物车中选择商品</p>
+            <a href="/cart" class="back-to-cart-btn">返回购物车</a>
+        </div>
+
+        <!-- 结算商品列表 -->
+        <div th:unless="${checkedItems == null or #lists.isEmpty(checkedItems)}">
+            <div class="section-title">📦 确认订单商品</div>
+            
+            <div class="order-items">
+                <div th:each="item : ${checkedItems}" class="order-item">
+                    <img th:if="${item.coverImage != null and item.coverImage != ''}" 
+                         th:src="${item.coverImage}" 
+                         alt="商品图片" 
+                         class="order-item-image">
+                    <div th:unless="${item.coverImage != null and item.coverImage != ''}" 
+                         class="order-item-no-image">
+                        📷
+                    </div>
+                    <div class="order-item-info">
+                        <div class="order-item-title" th:text="${item.title}">商品标题</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 5px;">
+                            <span th:text="${item.authorName}">作者</span> | 
+                            <span th:text="${item.categoryName}">分类</span>
+                        </div>
+                    </div>
+                    <div class="order-item-price" th:text="'¥' + ${item.price}">¥0.00</div>
+                    <div class="order-item-quantity">× 1</div>
+                </div>
+            </div>
+
+            <!-- 订单汇总 -->
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>商品数量：</span>
+                    <span th:text="${#lists.size(checkedItems)} + ' 件'">0 件</span>
+                </div>
+                <div class="summary-row total">
+                    <span>应付总额：</span>
+                    <span id="totalAmount">¥0.00</span>
+                </div>
+            </div>
+
+            <!-- 提交订单按钮 -->
+            <button class="submit-order-btn" onclick="submitOrder()">提交订单</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 页面加载时计算总金额
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateTotal();
+    });
+
+    // 计算总金额
+    function calculateTotal() {
+        var items = document.querySelectorAll('.order-item');
+        var total = 0;
+        
+        items.forEach(function(item) {
+            var priceText = item.querySelector('.order-item-price').textContent;
+            var price = parseFloat(priceText.replace('¥', ''));
+            total += price;
+        });
+        
+        document.getElementById('totalAmount').textContent = '¥' + total.toFixed(2);
+    }
+
+    // 提交订单
+    function submitOrder() {
+        if (!confirm('确认提交订单吗？')) {
+            return;
+        }
+    }
+</script>
+
+</body>
+</html>

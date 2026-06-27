@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${user.id == null} ? '新增用户' : '编辑用户'">用户表单</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .form-container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-container h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group small {
+            display: block;
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* 头像上传样式 */
+        .avatar-upload-area {
+            border: 2px dashed #dcdfe6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: #fafafa;
+        }
+
+        .avatar-upload-area:hover {
+            border-color: #409EFF;
+            background-color: #ecf5ff;
+        }
+
+        .avatar-upload-area.has-image {
+            padding: 10px;
+        }
+
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto;
+            display: block;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-placeholder {
+            color: #909399;
+        }
+
+        .upload-placeholder .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .upload-placeholder .text {
+            font-size: 14px;
+        }
+
+        .upload-actions {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-sm {
+            padding: 6px 15px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-success {
+            background-color: #67c23a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #85ce61;
+        }
+
+        .btn-danger {
+            background-color: #f56c6c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #f78989;
+        }
+
+        .upload-message {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .upload-message.success {
+            background-color: #f0f9ff;
+            color: #67c23a;
+            border: 1px solid #c6e2ff;
+            display: block;
+        }
+
+        .upload-message.error {
+            background-color: #fef0f0;
+            color: #f56c6c;
+            border: 1px solid #fde2e2;
+            display: block;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-submit {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: #909399;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-cancel:hover {
+            background: #a6a9ad;
+        }
+    </style>
+</head>
+<body>
+<div class="form-container">
+    <h1 th:text="${user.id == null} ? '新增用户' : '编辑用户'"></h1>
+    <form action="/admin/users/save" method="post" id="userForm">
+        <input type="hidden" name="id" th:value="${user.id}">
+        <input type="hidden" id="avatarPath" name="avatar" th:value="${user.avatar}">
+
+        <!-- 头像上传 -->
+        <div class="form-group">
+            <label>用户头像</label>
+            <div class="avatar-upload-area" id="avatarUploadArea"
+                 th:classappend="${user.avatar != null} ? 'has-image'">
+                <!-- 已有头像预览 -->
+                <div th:if="${user.avatar != null}" id="avatarPreviewContainer">
+                    <img th:src="${user.avatar}" alt="头像预览" class="avatar-preview" id="avatarPreview">
+                    <div class="upload-actions">
+                        <button type="button" class="btn-sm btn-success" onclick="triggerFileInput()">更换图片</button>
+                        <button type="button" class="btn-sm btn-danger" onclick="removeAvatar()">删除图片</button>
+                    </div>
+                </div>
+
+                <!-- 无头像时显示上传提示 -->
+                <div th:unless="${user.avatar != null}" class="upload-placeholder" id="uploadPlaceholder" onclick="triggerFileInput()">
+                    <div class="icon">📷</div>
+                    <div class="text">点击上传头像</div>
+                    <div class="form-tip">支持 JPG、PNG、GIF 格式，建议 200x200</div>
+                </div>
+            </div>
+
+            <!-- 隐藏的文件输入框 -->
+            <input type="file" id="avatarFile" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
+
+            <!-- 上传消息提示 -->
+            <div id="uploadMessage" class="upload-message"></div>
+        </div>
+
+        <div class="form-group">
+            <label>用户名 *</label>
+            <input type="text" name="username" th:value="${user.username}" required>
+        </div>
+
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" name="password" th:value="${user.password}" th:required="${user.id == null}">
+            <small th:if="${user.id != null}">留空则不修改密码</small>
+        </div>
+
+        <div class="form-group">
+            <label>昵称</label>
+            <input type="text" name="nickname" th:value="${user.nickname}">
+        </div>
+
+        <div class="form-group">
+            <label>邮箱</label>
+            <input type="email" name="email" th:value="${user.email}">
+        </div>
+
+        <div class="form-group">
+            <label>手机号</label>
+            <input type="text" name="phone" th:value="${user.phone}">
+        </div>
+
+        <div class="form-group">
+            <label>学校ID</label>
+            <input type="number" name="schoolId" th:value="${user.schoolId}">
+        </div>
+
+        <div class="form-group">
+            <label>角色</label>
+            <select name="role">
+                <option value="0" th:selected="${user.role == 0}">普通用户</option>
+                <option value="1" th:selected="${user.role == 1}">管理员</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>状态</label>
+            <select name="status">
+                <option value="1" th:selected="${user.status == 1}">正常</option>
+                <option value="0" th:selected="${user.status == 0}">禁用</option>
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn-submit">保存</button>
+            <a href="/admin/users" class="btn-cancel">取消</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // 获取当前用户ID
+    function getCurrentUserId() {
+        return document.querySelector('input[name="id"]').value;
+    }
+
+    // 触发文件选择
+    function triggerFileInput() {
+        document.getElementById('avatarFile').click();
+    }
+
+    // 处理文件选择
+    function handleFileSelect(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        // 验证文件类型
+        if (!file.type.startsWith('image/')) {
+            showMessage('只能上传图片文件', 'error');
+            return;
+        }
+
+        // 验证文件大小（限制 5MB）
+        if (file.size > 5 * 1024 * 1024) {
+            showMessage('图片大小不能超过 5MB', 'error');
+            return;
+        }
+
+        // 获取用户ID
+        const userId = getCurrentUserId();
+        if (!userId || userId === '') {
+            showMessage('请先保存用户信息后再上传头像', 'error');
+            return;
+        }
+
+        // 创建 FormData 对象
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('userId', userId);
+
+        // 显示上传中提示
+        showMessage('正在上传...', 'success');
+
+        // 发送 AJAX 请求上传
+        fetch('/admin/users/upload-avatar', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 上传成功，显示预览
+                    showAvatarPreview(data.avatarPath);
+                    // 设置隐藏字段值
+                    document.getElementById('avatarPath').value = data.avatarPath;
+                    showMessage('上传成功', 'success');
+                } else {
+                    showMessage(data.message || '上传失败', 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('上传失败：' + error.message, 'error');
+            });
+    }
+
+    // 显示头像预览
+    function showAvatarPreview(avatarPath) {
+        const uploadArea = document.getElementById('avatarUploadArea');
+        const placeholder = document.getElementById('uploadPlaceholder');
+        let previewContainer = document.getElementById('avatarPreviewContainer');
+        let preview = document.getElementById('avatarPreview');
+
+        // 如果预览容器不存在，创建它
+        if (!previewContainer) {
+            previewContainer = document.createElement('div');
+            previewContainer.id = 'avatarPreviewContainer';
+            preview = document.createElement('img');
+            preview.id = 'avatarPreview';
+            preview.className = 'avatar-preview';
+            previewContainer.appendChild(preview);
+
+            const actions = document.createElement('div');
+            actions.className = 'upload-actions';
+            actions.innerHTML = '<button type="button" class="btn-sm btn-success" onclick="triggerFileInput()">更换图片</button>' +
+                '<button type="button" class="btn-sm btn-danger" onclick="removeAvatar()">删除图片</button>';
+            previewContainer.appendChild(actions);
+            uploadArea.appendChild(previewContainer);
+        }
+
+        if (placeholder) placeholder.style.display = 'none';
+        preview.src = avatarPath;
+        previewContainer.style.display = 'block';
+        uploadArea.classList.add('has-image');
+    }
+
+    // 删除头像
+    function removeAvatar() {
+        const uploadArea = document.getElementById('avatarUploadArea');
+        const placeholder = document.getElementById('uploadPlaceholder');
+        const previewContainer = document.getElementById('avatarPreviewContainer');
+        const fileInput = document.getElementById('avatarFile');
+        const avatarPathInput = document.getElementById('avatarPath');
+
+        if (placeholder) placeholder.style.display = 'block';
+        if (previewContainer) previewContainer.style.display = 'none';
+        uploadArea.classList.remove('has-image');
+        if (fileInput) fileInput.value = '';
+        if (avatarPathInput) avatarPathInput.value = '';
+        showMessage('已删除头像', 'success');
+    }
+
+    // 显示消息提示
+    function showMessage(message, type) {
+        const messageEl = document.getElementById('uploadMessage');
+        messageEl.textContent = message;
+        messageEl.className = 'upload-message ' + type;
+
+        // 3秒后自动隐藏
+        setTimeout(() => {
+            messageEl.style.display = 'none';
+        }, 3000);
+        messageEl.style.display = 'block';
+    }
+</script>
+</body>
+</html>

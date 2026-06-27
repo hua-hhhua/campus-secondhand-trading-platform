@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="#{login.page.title}">登录 - 校园交易平台</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-header h1 {
+      color: #333;
+      font-size: 24px;
+      margin-top: 10px;
+    }
+
+    .login-logo {
+      font-size: 48px;
+    }
+
+    .login-message {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    /* 密码输入框包装 */
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper input {
+      padding-right: 45px;
+    }
+
+    /* 眼睛图标按钮 */
+    .toggle-password {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      padding: 8px;
+      color: #999;
+      line-height: 1;
+    }
+
+    .toggle-password:hover {
+      color: #667eea;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .checkbox-group input {
+      margin-right: 8px;
+      width: auto;
+    }
+
+    .checkbox-group label {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .error-message, .success-message {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #999;
+      font-size: 12px;
+    }
+
+    .footer p {
+      margin-bottom: 5px;
+    }
+
+    .language-switch {
+      margin-top: 15px;
+    }
+
+    .language-switch a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .language-switch a:hover {
+      text-decoration: underline;
+    }
+
+    .back-home {
+      display: block;
+      text-align: center;
+      margin-top: 15px;
+      color: #667eea;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-home:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+<div class="login-container">
+  <div class="login-header">
+    <div class="login-logo">🏫</div>
+    <h1 th:text="#{login.header}">校园交易平台登录</h1>
+  </div>
+
+  <div class="login-message" th:text="#{login.message}">
+    欢迎回来，请输入您的账号信息
+  </div>
+
+  <!-- 错误提示信息 -->
+  <div th:if="${errorMsg}" class="error-message" style="color: red; background: #ffe6e6;">
+    <span th:text="${errorMsg}"></span>
+  </div>
+
+  <!-- 退出成功提示 -->
+  <div th:if="${logoutMsg}" class="success-message" style="color: green; background: #e6ffe6;">
+    <span th:text="${logoutMsg}"></span>
+  </div>
+
+  <form action="/login" method="post" autocomplete="off">
+    <div class="form-group">
+      <label for="username" th:text="#{login.username.label}">用户名</label>
+      <input type="text" id="username" name="username"
+             th:placeholder="#{login.username.placeholder}"
+             autocomplete="off"
+             value=""
+             required>
+    </div>
+
+    <div class="form-group">
+      <label for="password" th:text="#{login.password.label}">密码</label>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password"
+               th:placeholder="#{login.password.placeholder}"
+               autocomplete="off"
+               value=""
+               required>
+        <button type="button" class="toggle-password" onclick="togglePassword()" title="显示/隐藏密码">
+          👁️
+        </button>
+      </div>
+    </div>
+
+    <div class="checkbox-group">
+      <input type="checkbox" id="rememberMe" name="remember-me">
+      <label for="rememberMe" th:text="#{login.remember.me}">记住我</label>
+    </div>
+
+    <button type="submit" class="login-btn" th:text="#{login.button}">登录</button>
+    <!-- 注册链接 -->
+    <div style="text-align: center; margin-top: 20px;">
+      <span style="color: #999; font-size: 14px;">还没有账号？</span>
+      <a href="/register" style="color: #667eea; text-decoration: none; font-size: 14px; font-weight: 600;">立即注册</a>
+    </div>
+  </form>
+
+  <a href="/" class="back-home">← 返回首页</a>
+
+  <div class="footer">
+    <p>&copy; <span th:text="${currentYear}"></span> <span th:text="#{login.footer.copyright}">校园交易平台版权所有。</span></p>
+    <p th:text="#{login.footer.company}">校园交易平台</p>
+
+    <div class="language-switch">
+      <a th:href="@{/toLoginPage(lang='zh_CN')}">中文</a> |
+      <a th:href="@{/toLoginPage(lang='en_US')}">English</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 切换密码显示/隐藏
+  function togglePassword() {
+    var passwordInput = document.getElementById('password');
+    var toggleBtn = document.querySelector('.toggle-password');
+
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      toggleBtn.innerHTML = '🙈';
+      toggleBtn.title = '隐藏密码';
+    } else {
+      passwordInput.type = 'password';
+      toggleBtn.innerHTML = '👁️';
+      toggleBtn.title = '显示密码';
+    }
+  }
+</script>
+</body>
+</html>

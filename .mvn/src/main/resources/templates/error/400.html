@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><!DOCTYPE html>
+      <html xmlns:th="http://www.thymeleaf.org">
+      <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>400 - 请求错误</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .error-container {
+      background: white;
+      border-radius: 12px;
+      padding: 60px 40px;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .error-code { font-size: 120px; font-weight: bold; color: #667eea; line-height: 1; margin-bottom: 20px; }
+    .error-title { font-size: 28px; color: #333; margin-bottom: 20px; font-weight: 600; }
+    .error-message { font-size: 16px; color: #666; margin-bottom: 15px; line-height: 1.6; }
+    .btn-group { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+    .btn-secondary { background-color: #f5f5f5; color: #666; border: 1px solid #ddd; }
+    .btn-secondary:hover { background-color: #e5e5e5; }
+    .icon { font-size: 80px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+<div class="error-container">
+  <div class="icon">⚠️</div>
+  <div class="error-code">400</div>
+  <h1 class="error-title" th:text="${errorMessage != null ? errorMessage : '请求参数错误'}">请求错误</h1>
+  <div class="btn-group">
+    <a href="/" class="btn btn-primary">返回首页</a>
+    <a href="javascript:history.back()" class="btn btn-secondary">返回上一页</a>
+  </div>
+</div>
+</body>
+</html></title>
+</head>
+<body>
+
+</body>
+</html>
