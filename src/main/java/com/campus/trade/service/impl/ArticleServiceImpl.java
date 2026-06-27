@@ -560,4 +560,36 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 5. 更新数据库
         return this.updateById(article);
     }
+
+    // ========== 按用户ID查询商品 ==========
+
+    @Override
+    public IPage<ArticleVO> getArticleVOPageByUserId(Integer page, Integer size, String keyword,
+                                                     Integer statusFilter, LocalDateTime startTime,
+                                                     LocalDateTime endTime, Integer userId) {
+        Page<ArticleVO> pageParam = new Page<>(page, size);
+        QueryWrapper<Article> wrapper = new QueryWrapper<>();
+
+        // ========== 关键：按用户ID过滤 ==========
+        wrapper.eq("user_id", userId);
+
+        if (StrUtil.isNotBlank(keyword)) {
+            wrapper.and(w -> w.like("title", keyword).or().like("content", keyword));
+        }
+
+        if (statusFilter != null) {
+            wrapper.eq("status", statusFilter);
+        }
+
+        if (startTime != null) {
+            wrapper.ge("create_time", startTime);
+        }
+        if (endTime != null) {
+            wrapper.le("create_time", endTime);
+        }
+
+        wrapper.orderByDesc("create_time");
+
+        return baseMapper.selectArticleVOPage(pageParam, wrapper);
+    }
 }

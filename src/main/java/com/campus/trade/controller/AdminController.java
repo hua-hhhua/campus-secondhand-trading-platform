@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -183,7 +184,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  3. 文章管理（使用联表查询）
+    //  3. 商品管理（文章管理）
     // ============================================================
 
     @GetMapping("/articles")
@@ -194,9 +195,19 @@ public class AdminController {
                                 @RequestParam(required = false) Integer categoryId,
                                 @RequestParam(required = false) String startTime,
                                 @RequestParam(required = false) String endTime,
+                                HttpSession session,
                                 Model model) {
+
+        User currentUser = (User) session.getAttribute("currentUser");
+
         Page<Article> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+
+        // ========== 根据角色过滤 ==========
+        if (currentUser != null && currentUser.getRole() != 1) {
+            // 普通用户只能看到自己的商品
+            wrapper.eq(Article::getUserId, currentUser.getId());
+        }
 
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.like(Article::getTitle, keyword)
@@ -262,7 +273,16 @@ public class AdminController {
     }
 
     @PostMapping("/articles/save")
-    public String saveArticle(Article article) {
+    public String saveArticle(Article article, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+
+        // 设置用户ID
+        article.setUserId(currentUser.getId());
+
         if (article.getId() == null) {
             article.setStatus(1);
             article.setViewCount(0);
@@ -271,25 +291,44 @@ public class AdminController {
             article.setSendEmail(0);
             article.setCreateTime(LocalDateTime.now());
             article.setUpdateTime(LocalDateTime.now());
+            // ========== 修复：设置发布时间，首页显示必须 ==========
+            if (article.getPublishedAt() == null) {
+                article.setPublishedAt(LocalDateTime.now());
+            }
             articleService.save(article);
         } else {
             article.setUpdateTime(LocalDateTime.now());
+            // 如果是更新，保留原有的 user_id
+            Article existing = articleService.getById(article.getId());
+            if (existing != null) {
+                article.setUserId(existing.getUserId());
+            }
             articleService.updateById(article);
         }
         return "redirect:/admin/articles";
     }
 
     @GetMapping("/articles/delete/{id}")
-    public String deleteArticle(@PathVariable Integer id) {
-        articleService.removeById(id);
+    public String deleteArticle(@PathVariable Integer id, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        Article article = articleService.getById(id);
+
+        // 管理员或作者本人才能删除
+        if (article != null && currentUser != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+            articleService.removeById(id);
+        }
         return "redirect:/admin/articles";
     }
 
     @GetMapping("/articles/batchDelete")
-    public String batchDeleteArticles(@RequestParam String ids) {
+    public String batchDeleteArticles(@RequestParam String ids, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
         String[] idArray = ids.split(",");
         for (String id : idArray) {
-            articleService.removeById(Integer.parseInt(id));
+            Article article = articleService.getById(Integer.parseInt(id));
+            if (article != null && currentUser != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+                articleService.removeById(Integer.parseInt(id));
+            }
         }
         return "redirect:/admin/articles";
     }

@@ -24,6 +24,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,9 @@ public class ArticleController {
     @Autowired
     private TagService tagService;
 
+    /**
+     * 我的商品列表（普通用户）/ 商品管理（管理员）
+     */
     @GetMapping("/manage")
     public String articlesEntry(
             Model model,
@@ -63,7 +67,18 @@ public class ArticleController {
 
         User currentUser = (User) session.getAttribute("currentUser");
 
-        IPage<ArticleVO> articlePage = articleService.getArticleVOPage(page, size, keyword, statusFilter, startTime, endTime);
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+
+        // ========== 根据角色查询不同数据 ==========
+        IPage<ArticleVO> articlePage;
+
+        if (currentUser.getRole() == 1) {
+            articlePage = articleService.getArticleVOPage(page, size, keyword, statusFilter, startTime, endTime);
+        } else {
+            articlePage = articleService.getArticleVOPageByUserId(page, size, keyword, statusFilter, startTime, endTime, currentUser.getId());
+        }
 
         model.addAttribute("articlePage", articlePage);
         model.addAttribute("keyword", keyword);
@@ -79,6 +94,9 @@ public class ArticleController {
         }
     }
 
+    /**
+     * 商品发布/编辑表单
+     */
     @GetMapping("/form")
     public String articleForm(@RequestParam(required = false) Integer id, Model model, HttpSession session) {
         List<Category> categories = categoryService.list();
@@ -113,9 +131,23 @@ public class ArticleController {
         return "admin/article-form";
     }
 
+    /**
+     * 保存商品 - 支持定时发布
+     */
     @PostMapping("/save")
-    public String saveArticle(Article article, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String saveArticle(
+            Article article,
+            @RequestParam(required = false) String scheduledTime,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
         User currentUser = (User) session.getAttribute("currentUser");
+
+        // ========== 校验用户是否登录 ==========
+        if (currentUser == null) {
+            redirectAttributes.addFlashAttribute("errorMsg", "请先登录后再发布商品");
+            return "redirect:/toLoginPage";
+        }
 
         // ========== 校验：至少填写一种联系方式 ==========
         boolean hasContact = (article.getWechat() != null && !article.getWechat().trim().isEmpty()) ||
@@ -128,6 +160,7 @@ public class ArticleController {
         }
 
         article.setSendEmail(0);
+        article.setUserId(currentUser.getId());
 
         if (article.getAllowComment() == null) {
             article.setAllowComment(0);
@@ -143,13 +176,44 @@ public class ArticleController {
             article.setIsTop(0);
         }
 
+        // ========== 处理定时发布逻辑 ==========
+        Integer status = article.getStatus();
+        LocalDateTime now = LocalDateTime.now();
+
+        if (status != null && status == ArticleStatus.SCHEDULED) {
+            // 定时发布：状态设为2，使用用户选择的时间
+            article.setStatus(ArticleStatus.SCHEDULED);
+
+            if (scheduledTime != null && !scheduledTime.isEmpty()) {
+                try {
+                    LocalDateTime publishTime = LocalDateTime.parse(scheduledTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                    article.setPublishedAt(publishTime);
+                } catch (Exception e) {
+                    // 解析失败，默认1小时后发布
+                    article.setPublishedAt(now.plusHours(1));
+                }
+            } else {
+                // 如果没有选择时间，默认1小时后
+                article.setPublishedAt(now.plusHours(1));
+            }
+        } else if (status != null && status == ArticleStatus.DRAFT) {
+            // 草稿：状态设为0
+            article.setStatus(ArticleStatus.DRAFT);
+            article.setPublishedAt(null);
+        } else {
+            // 立即发布：状态设为1，发布时间为当前时间
+            article.setStatus(ArticleStatus.PUBLISHED);
+            article.setPublishedAt(now);
+        }
+
+        // ========== 保存文章 ==========
         boolean result = articleService.saveOrUpdateArticle(article, currentUser.getId());
 
         if (result) {
             String statusDesc = "";
             if (article.getStatus() != null) {
                 if (article.getStatus() == ArticleStatus.SCHEDULED) {
-                    statusDesc = "定时发布";
+                    statusDesc = "定时发布（发布时间：" + article.getPublishedAt() + "）";
                 } else if (article.getStatus() == ArticleStatus.PUBLISHED) {
                     statusDesc = "发布商品";
                 } else {
@@ -163,12 +227,20 @@ public class ArticleController {
             }
         }
 
-        return "redirect:/admin/articles";
+        return "redirect:/article/manage";
     }
 
+    /**
+     * 删除商品
+     */
     @GetMapping("/delete/{id}")
     public String deleteArticle(@PathVariable Integer id, HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+
         Article article = articleService.getById(id);
 
         if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
@@ -176,37 +248,47 @@ public class ArticleController {
             articleService.deleteArticle(id);
             asyncService.asyncLogOperation(currentUser.getUsername(), "删除商品", "商品ID: " + id + ", 标题: " + articleTitle);
         }
-        return "redirect:/admin/articles";
+        return "redirect:/article/manage";
     }
 
     /**
-     * 下架商品（卖家自己操作）
+     * 下架商品
      */
     @GetMapping("/off-shelf/{id}")
     public String offShelf(@PathVariable Integer id, HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+
         Article article = articleService.getById(id);
 
         if (article != null && (article.getUserId().equals(currentUser.getId()) || currentUser.getRole() == 1)) {
-            article.setProductStatus(2);  // 2=已下架
+            article.setProductStatus(2);
             articleService.updateById(article);
         }
-        return "redirect:/admin/articles";
+        return "redirect:/article/manage";
     }
 
     /**
-     * 上架商品（卖家自己操作）
+     * 上架商品
      */
     @GetMapping("/on-shelf/{id}")
     public String onShelf(@PathVariable Integer id, HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+
         Article article = articleService.getById(id);
 
         if (article != null && (article.getUserId().equals(currentUser.getId()) || currentUser.getRole() == 1)) {
-            article.setProductStatus(0);  // 0=在售
+            article.setProductStatus(0);
             articleService.updateById(article);
         }
-        return "redirect:/admin/articles";
+        return "redirect:/article/manage";
     }
 
     /**
@@ -236,7 +318,6 @@ public class ArticleController {
                 return result;
             }
 
-            // 获取当前登录用户
             User currentUser = userService.getUserByUsername(
                     org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName()
             );
