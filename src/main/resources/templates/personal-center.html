@@ -241,8 +241,6 @@
             <span th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" class="role-badge role-admin">管理员</span>
             <span th:if="${userRole == 'USER' or session.userRole == 'USER'}" class="role-badge role-user">普通用户</span>
 
-            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/users" class="nav-link">👑 用户管理</a>
-            <a th:if="${userRole == 'ADMIN' or session.userRole == 'ADMIN'}" href="/admin/articles" class="nav-link">📝 商品管理</a>
             <a th:if="${userRole == 'USER' or session.userRole == 'USER'}" href="/admin/articles" class="nav-link">✏️ 发布商品</a>
 
             <form th:action="@{/logout}" method="post" style="display:inline;">

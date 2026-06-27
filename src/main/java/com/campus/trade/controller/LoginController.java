@@ -27,25 +27,35 @@ public class LoginController {
 
         model.addAttribute("currentYear", Calendar.getInstance().get(Calendar.YEAR));
 
-        // 处理被禁用的用户（直接参数）
         if (disabled != null) {
             model.addAttribute("errorMsg", "您的账号已被管理员禁用，请联系管理员恢复");
             session.invalidate();
             return "login";
         }
 
-        // 处理登录失败
         if (error != null) {
-            // 从session中获取登录失败时的用户名
             String username = (String) session.getAttribute("loginErrorUsername");
+
+            // 检查是否已被删除
+            Boolean isDeleted = (Boolean) session.getAttribute("loginErrorDeleted");
+            if (isDeleted != null && isDeleted) {
+                model.addAttribute("errorMsg", "您的账户因涉嫌违规已被删除，请联系管理员");
+                session.removeAttribute("loginErrorDeleted");
+                session.removeAttribute("loginErrorUsername");
+                return "login";
+            }
 
             if (username != null) {
                 try {
                     User user = userService.findByUsername(username);
-                    if (user != null && user.getStatus() == 0) {
+                    if (user == null) {
+                        model.addAttribute("errorMsg", "您的账户因涉嫌违规已被删除，请联系管理员");
+                        session.removeAttribute("loginErrorUsername");
+                        return "login";
+                    }
+                    if (user.getStatus() == 0) {
                         model.addAttribute("errorMsg", "您的账号已被管理员禁用，请联系管理员恢复");
                         session.removeAttribute("loginErrorUsername");
-                        session.removeAttribute("loginErrorDisabled");
                         return "login";
                     }
                 } catch (Exception e) {
@@ -55,6 +65,7 @@ public class LoginController {
             model.addAttribute("errorMsg", "用户名或密码错误！");
             session.removeAttribute("loginErrorUsername");
             session.removeAttribute("loginErrorDisabled");
+            session.removeAttribute("loginErrorDeleted");
         }
 
         if (logout != null) {
