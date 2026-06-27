@@ -113,6 +113,8 @@ public class AdminController {
     public String userManage(@RequestParam(defaultValue = "1") Integer pageNum,
                              @RequestParam(defaultValue = "10") Integer pageSize,
                              @RequestParam(required = false) String keyword,
+                             @RequestParam(required = false) String startTime,
+                             @RequestParam(required = false) String endTime,
                              Model model) {
         Page<User> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
@@ -125,10 +127,29 @@ public class AdminController {
                     .or()
                     .like(User::getPhone, keyword);
         }
+        // 时间范围查询
+        if (startTime != null && !startTime.isEmpty()) {
+            try {
+                LocalDateTime start = LocalDateTime.parse(startTime + "T00:00:00");
+                wrapper.ge(User::getCreatedAt, start);
+            } catch (Exception e) {
+                // 忽略格式错误
+            }
+        }
+        if (endTime != null && !endTime.isEmpty()) {
+            try {
+                LocalDateTime end = LocalDateTime.parse(endTime + "T23:59:59");
+                wrapper.le(User::getCreatedAt, end);
+            } catch (Exception e) {
+                // 忽略格式错误
+            }
+        }
         wrapper.orderByDesc(User::getCreatedAt);
         IPage<User> userPage = userService.page(page, wrapper);
         model.addAttribute("userPage", userPage);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("startTime", startTime);
+        model.addAttribute("endTime", endTime);
         return "admin/user-manage";
     }
 

@@ -322,17 +322,17 @@
 
     <div class="pagination" th:if="${reviewPage} and ${reviewPage.pages > 1}">
         <a th:if="${reviewPage.hasPrevious}"
-           th:href="@{/admin/review-manage(page=${reviewPage.current - 1}, size=${reviewPage.size}, rating=${ratingFilter})}">上一页</a>
+           th:href="@{/admin/review-manage(pageNum=${reviewPage.current - 1}, pageSize=${reviewPage.size}, ratingFilter=${ratingFilter})}">上一页</a>
         <span th:unless="${reviewPage.hasPrevious}" class="disabled">上一页</span>
 
         <span th:each="i : ${#numbers.sequence(1, reviewPage.pages)}"
               th:classappend="${i == reviewPage.current} ? 'active'"
               th:text="${i}"
               th:if="${i == 1 or i == reviewPage.pages or (i >= reviewPage.current - 2 and i <= reviewPage.current + 2)}"
-              th:href="@{/admin/review-manage(page=${i}, size=${reviewPage.size}, rating=${ratingFilter})}"></span>
+              th:href="@{/admin/review-manage(pageNum=${i}, pageSize=${reviewPage.size}, ratingFilter=${ratingFilter})}"></span>
 
         <a th:if="${reviewPage.hasNext}"
-           th:href="@{/admin/review-manage(page=${reviewPage.current + 1}, size=${reviewPage.size}, rating=${ratingFilter})}">下一页</a>
+           th:href="@{/admin/review-manage(pageNum=${reviewPage.current + 1}, pageSize=${reviewPage.size}, ratingFilter=${ratingFilter})}">下一页</a>
         <span th:unless="${reviewPage.hasNext}" class="disabled">下一页</span>
     </div>
 </div>
@@ -360,7 +360,7 @@
     function filterByRating() {
         var rating = document.getElementById('ratingFilter').value;
         if (rating) {
-            window.location.href = '/admin/review-manage?rating=' + rating;
+            window.location.href = '/admin/review-manage?ratingFilter=' + rating;
         } else {
             window.location.href = '/admin/review-manage';
         }
