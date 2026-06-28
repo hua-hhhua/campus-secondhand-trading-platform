@@ -3,6 +3,7 @@ package com.campus.trade.service;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.campus.trade.entity.Order;
+import com.campus.trade.entity.OrderReview;
 import com.campus.trade.mapper.OrderMapper;
 import java.math.BigDecimal;
 import java.util.List;
@@ -43,6 +44,13 @@ public interface OrderService extends IService<Order> {
     BigDecimal calculatePendingAmount(Integer buyerId);
 
     boolean payOrder(Long orderId, Integer buyerId);
+
+    // ========== 评价 ==========
+    boolean reviewOrder(OrderReview review);
+
+    OrderReview getOrderReview(Long orderId);
+
+    boolean replyReview(Long reviewId, String reply, Integer sellerId);
 
     // ========== 统计和搜索 ==========
     Map<String, Object> getOrderStats(Integer userId, String role);

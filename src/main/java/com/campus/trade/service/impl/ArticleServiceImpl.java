@@ -349,7 +349,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public IPage<ArticleVO> getArticleVOPage(Integer page, Integer size, String keyword, Integer statusFilter,
-            LocalDateTime startTime, LocalDateTime endTime) {
+                                             LocalDateTime startTime, LocalDateTime endTime) {
         Page<ArticleVO> pageParam = new Page<>(page, size);
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
@@ -373,7 +373,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return baseMapper.selectArticleVOPage(pageParam, wrapper);
     }
 
-    // ========== 按用户ID查询商品（远程版本新增） ==========
+    // ========== 按用户ID查询商品 ==========
 
     @Override
     public IPage<ArticleVO> getArticleVOPageByUserId(Integer page, Integer size, String keyword,
@@ -443,8 +443,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public IPage<ArticleResultMapVO> getArticleResultMapVOsByPage(Integer page, Integer size, String keyword,
-            Integer statusFilter, LocalDateTime startTime,
-            LocalDateTime endTime) {
+                                                                  Integer statusFilter, LocalDateTime startTime,
+                                                                  LocalDateTime endTime) {
         IPage<Article> pageParam = new Page<>(page, size);
         QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
 
@@ -677,39 +677,4 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 5. 更新数据库
         return this.updateById(article);
     }
-<<<<<<< HEAD
-=======
-
-    // ========== 按用户ID查询商品 ==========
-
-    @Override
-    public IPage<ArticleVO> getArticleVOPageByUserId(Integer page, Integer size, String keyword,
-            Integer statusFilter, LocalDateTime startTime,
-            LocalDateTime endTime, Integer userId) {
-        Page<ArticleVO> pageParam = new Page<>(page, size);
-        QueryWrapper<Article> wrapper = new QueryWrapper<>();
-
-        // ========== 关键：按用户ID过滤 ==========
-        wrapper.eq("a.user_id", userId);
-
-        if (StrUtil.isNotBlank(keyword)) {
-            wrapper.and(w -> w.like("a.title", keyword).or().like("a.content", keyword));
-        }
-
-        if (statusFilter != null) {
-            wrapper.eq("a.status", statusFilter);
-        }
-
-        if (startTime != null) {
-            wrapper.ge("a.create_time", startTime);
-        }
-        if (endTime != null) {
-            wrapper.le("a.create_time", endTime);
-        }
-
-        wrapper.orderByDesc("a.create_time");
-
-        return baseMapper.selectArticleVOPage(pageParam, wrapper);
-    }
->>>>>>> 6d90964bef2ef16a88394656b6e797fa81627c23
 }

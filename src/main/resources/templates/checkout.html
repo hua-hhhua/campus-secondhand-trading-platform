@@ -295,12 +295,11 @@
     </div>
 </div>
 
-<script th:inline="javascript">    var articleIds = /*[[${checkedItems.![id]}]]*/ [];
-
-// 页面加载时计算总金额
-document.addEventListener('DOMContentLoaded', function() {
-    calculateTotal();
-});
+<script>
+    // 页面加载时计算总金额
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateTotal();
+    });
 
     // 计算总金额
     function calculateTotal() {
@@ -322,7 +321,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-<<<<<<< HEAD
         var itemElements = document.querySelectorAll('.order-item');
         var articleIds = [];
         var quantities = [];
@@ -360,38 +358,6 @@ document.addEventListener('DOMContentLoaded', function() {
             quantities: quantities,
             address: '校园内交易'
         }));
-=======
-        if (!articleIds || articleIds.length === 0) {
-            alert('没有可提交的商品');
-            return;
-        }
-
-        var quantities = articleIds.map(function() { return 1; });
-
-        fetch('/api/orders/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                articleIds: articleIds,
-                quantities: quantities
-            })
-        })
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(result) {
-                if (result.success) {
-                    alert(result.message);
-                    window.location.href = '/user/my-orders';
-                } else {
-                    alert('提交失败：' + (result.message || '未知错误'));
-                }
-            })
-            .catch(function(error) {
-                console.error('Error:', error);
-                alert('提交订单失败，请稍后重试');
-            });
->>>>>>> 6d0a2858788e40766fbcff4448d740e65b1fe081
     }
 </script>
 
