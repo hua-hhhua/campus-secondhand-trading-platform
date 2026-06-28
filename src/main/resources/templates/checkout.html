@@ -317,28 +317,44 @@
 
     // 提交订单
     function submitOrder() {
+        console.log('submitOrder called');
+        
         if (!confirm('确认提交订单吗？')) {
+            console.log('User cancelled');
             return;
         }
 
         var itemElements = document.querySelectorAll('.order-item');
+        console.log('Found items:', itemElements.length);
+        
         var articleIds = [];
         var quantities = [];
 
         itemElements.forEach(function(item) {
             var articleId = item.getAttribute('data-article-id');
+            console.log('Found articleId:', articleId);
             if (articleId) {
                 articleIds.push(parseInt(articleId));
                 quantities.push(1);
             }
         });
 
+        if (articleIds.length === 0) {
+            alert('没有找到商品，请返回购物车选择商品');
+            return;
+        }
+
+        console.log('Sending request with articleIds:', articleIds);
+
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/api/orders/create', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
 
         xhr.onreadystatechange = function() {
+            console.log('xhr.readyState:', xhr.readyState);
             if (xhr.readyState === 4) {
+                console.log('xhr.status:', xhr.status);
+                console.log('xhr.responseText:', xhr.responseText);
                 try {
                     var response = JSON.parse(xhr.responseText);
                     if (response.success) {
@@ -348,9 +364,15 @@
                         alert('订单创建失败：' + response.message);
                     }
                 } catch (e) {
-                    alert('提交失败，请重试');
+                    console.error('Parse error:', e);
+                    alert('提交失败，请重试。错误信息：' + e.message);
                 }
             }
+        };
+
+        xhr.onerror = function() {
+            console.error('Network error');
+            alert('网络错误，请检查网络连接');
         };
 
         xhr.send(JSON.stringify({
@@ -358,6 +380,8 @@
             quantities: quantities,
             address: '校园内交易'
         }));
+        
+        console.log('Request sent');
     }
 </script>
 

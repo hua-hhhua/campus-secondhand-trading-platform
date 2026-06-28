@@ -2,8 +2,13 @@ package com.campus.trade.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.campus.trade.entity.*;
-import com.campus.trade.mapper.*;
+import com.campus.trade.entity.Article;
+import com.campus.trade.entity.Order;
+import com.campus.trade.entity.User;
+import com.campus.trade.mapper.ArticleMapper;
+import com.campus.trade.mapper.OrderMapper;
+import com.campus.trade.mapper.OrderStatusHistoryMapper;
+import com.campus.trade.mapper.UserMapper;
 import com.campus.trade.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -23,9 +28,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Autowired
     private OrderMapper orderMapper;
-
-    @Autowired
-    private OrderReviewMapper orderReviewMapper;
 
     @Autowired
     private ArticleMapper articleMapper;
@@ -81,7 +83,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return order;
     }
 
-    // ========== 多商品下单（支持不同卖家，每个商品独立成单） ==========
+    // ========== 多商品下单 ==========
     @Override
     @Transactional
     public List<Order> createOrder(Integer buyerId, List<Integer> articleIds, List<Integer> quantities, String address) {
@@ -267,10 +269,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (order == null) {
             return false;
         }
-        OrderReview review = orderReviewMapper.selectByOrderId(orderId);
-        if (review != null) {
-            orderReviewMapper.deleteById(review.getId());
-        }
         Article article = articleMapper.selectById(order.getArticleId());
         if (article != null) {
             article.setStock(article.getStock() + order.getQuantity());
@@ -305,46 +303,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new RuntimeException("当前状态无法支付，状态：" + order.getStatus());
         }
         return updateStatus(orderId, 1);
-    }
-
-    // ========== 评价 ==========
-    @Override
-    @Transactional
-    public boolean reviewOrder(OrderReview review) {
-        Order order = orderMapper.selectById(review.getOrderId());
-        if (order == null || order.getStatus() != 3) {
-            throw new RuntimeException("该订单不可评价");
-        }
-        if (!order.getBuyerId().equals(review.getBuyerId())) {
-            throw new RuntimeException("无权评价此订单");
-        }
-        OrderReview existingReview = orderReviewMapper.selectByOrderId(review.getOrderId());
-        if (existingReview != null) {
-            throw new RuntimeException("该订单已评价，不可重复评价");
-        }
-        review.setCreatedAt(LocalDateTime.now());
-        return orderReviewMapper.insert(review) > 0;
-    }
-
-    @Override
-    public OrderReview getOrderReview(Long orderId) {
-        return orderReviewMapper.selectByOrderId(orderId);
-    }
-
-    @Override
-    @Transactional
-    public boolean replyReview(Long reviewId, String reply, Integer sellerId) {
-        OrderReview review = orderReviewMapper.selectById(reviewId);
-        if (review == null) {
-            return false;
-        }
-        Order order = orderMapper.selectById(review.getOrderId());
-        if (order == null || !order.getSellerId().equals(sellerId)) {
-            throw new RuntimeException("无权回复此评价");
-        }
-        review.setReply(reply);
-        review.setReplyTime(LocalDateTime.now());
-        return orderReviewMapper.updateById(review) > 0;
     }
 
     // ========== 统计和搜索 ==========

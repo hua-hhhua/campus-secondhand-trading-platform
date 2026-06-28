@@ -1,8 +1,7 @@
 package com.campus.trade.controller;
 
-import com.campus.trade.entity.User;
 import com.campus.trade.entity.Order;
-import com.campus.trade.entity.OrderReview;
+import com.campus.trade.entity.User;
 import com.campus.trade.service.OrderService;
 import com.campus.trade.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +52,7 @@ public class OrderController {
     }
 
     /**
-     * 创建订单（支持多商品下单，不同卖家分别成单）
+     * 创建订单（支持多商品下单）
      */
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Map<String, Object> params) {
@@ -80,7 +79,6 @@ public class OrderController {
                 address = "校园内交易";
             }
 
-            // 调用多商品下单（返回订单列表）
             List<Order> orders = orderService.createOrder(user.getId(), articleIds, quantities, address);
 
             List<Long> orderIds = orders.stream().map(Order::getId).collect(Collectors.toList());
@@ -272,50 +270,7 @@ public class OrderController {
     }
 
     /**
-     * 评价订单
-     */
-    @PostMapping("/review")
-    public ResponseEntity<Map<String, Object>> reviewOrder(@RequestBody OrderReview review) {
-        Map<String, Object> result = new HashMap<>();
-        try {
-            User user = getCurrentUser();
-            if (user == null) {
-                result.put("success", false);
-                result.put("message", "请先登录");
-                return ResponseEntity.status(401).body(result);
-            }
-            review.setBuyerId(user.getId());
-            boolean success = orderService.reviewOrder(review);
-            result.put("success", success);
-            result.put("message", success ? "评价成功" : "评价失败");
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            result.put("success", false);
-            result.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(result);
-        }
-    }
-
-    /**
-     * 获取订单评价
-     */
-    @GetMapping("/{id}/review")
-    public ResponseEntity<Map<String, Object>> getOrderReview(@PathVariable Long id) {
-        Map<String, Object> result = new HashMap<>();
-        try {
-            OrderReview review = orderService.getOrderReview(id);
-            result.put("success", true);
-            result.put("data", review);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            result.put("success", false);
-            result.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(result);
-        }
-    }
-
-    /**
-     * 支付订单（买家支付，状态从待付款改为待发货）
+     * 支付订单
      */
     @PostMapping("/{id}/pay")
     public ResponseEntity<Map<String, Object>> payOrder(@PathVariable Long id) {
@@ -343,7 +298,7 @@ public class OrderController {
 
             if (order.getStatus() != 0) {
                 result.put("success", false);
-                result.put("message", "订单状态不正确，当前状态：" + order.getStatusText());
+                result.put("message", "订单状态不正确，当前状态：" + order.getStatus());
                 return ResponseEntity.badRequest().body(result);
             }
 
