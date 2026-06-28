@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -287,6 +288,7 @@ public class AdminController {
         }
         model.addAttribute("article", article);
         model.addAttribute("isEdit", isEdit);
+        model.addAttribute("isAdmin", true);
         model.addAttribute("categories", categoryService.list());
         model.addAttribute("schools", schoolService.list());
         model.addAttribute("tags", tagService.list());
@@ -305,6 +307,10 @@ public class AdminController {
         if (currentUser == null) {
             return "redirect:/toLoginPage";
         }
+
+        System.out.println("========== 编辑商品 DEBUG ==========");
+        System.out.println("商品ID: " + article.getId());
+        System.out.println("接收到的标签IDs: " + tagIds);
 
         ZoneId shanghaiZone = ZoneId.of("Asia/Shanghai");
         LocalDateTime now = LocalDateTime.now(shanghaiZone);
@@ -405,16 +411,17 @@ public class AdminController {
                     } else {
                         article.setProductStatus(existing.getProductStatus());
                     }
-                    if (article.getPublishedAt() == null && existing.getPublishedAt() == null) {
-                        article.setPublishedAt(now);
+                    if (article.getPublishedAt() == null) {
+                        article.setPublishedAt(existing.getPublishedAt() != null ? existing.getPublishedAt() : now);
                     }
                 }
             }
             articleService.updateById(article);
 
-            if (tagIds != null) {
-                articleService.saveArticleTags(article.getId(), tagIds);
+            if (tagIds == null) {
+                tagIds = new ArrayList<>();
             }
+            articleService.saveArticleTags(article.getId(), tagIds);
         }
         return "redirect:/admin/articles";
     }

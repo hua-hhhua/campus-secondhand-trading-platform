@@ -30,6 +30,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -77,7 +78,8 @@ public class ArticleController {
         if (currentUser.getRole() == 1) {
             articlePage = articleService.getArticleVOPage(page, size, keyword, statusFilter, startTime, endTime);
         } else {
-            articlePage = articleService.getArticleVOPageByUserId(page, size, keyword, statusFilter, startTime, endTime, currentUser.getId());
+            articlePage = articleService.getArticleVOPageByUserId(page, size, keyword, statusFilter, startTime, endTime,
+                    currentUser.getId());
         }
 
         model.addAttribute("articlePage", articlePage);
@@ -96,6 +98,10 @@ public class ArticleController {
 
     @GetMapping("/form")
     public String articleForm(@RequestParam(required = false) Integer id, Model model, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        boolean isAdmin = currentUser != null && currentUser.getRole() != null && currentUser.getRole() == 1;
+        model.addAttribute("isAdmin", isAdmin);
+
         List<Category> categories = categoryService.list();
         model.addAttribute("categories", categories);
 
@@ -286,9 +292,10 @@ public class ArticleController {
 
         if (result) {
             // 保存标签关联
-            if (tagIds != null && !tagIds.isEmpty()) {
-                articleService.saveArticleTags(article.getId(), tagIds);
+            if (tagIds == null) {
+                tagIds = new ArrayList<>();
             }
+            articleService.saveArticleTags(article.getId(), tagIds);
 
             String statusDesc = "";
             if (article.getStatus() != null) {
@@ -341,7 +348,8 @@ public class ArticleController {
         if (article != null && (article.getUserId().equals(currentUser.getId()) || currentUser.getRole() == 1)) {
             article.setProductStatus(2);
             articleService.updateById(article);
-            asyncService.asyncLogOperation(currentUser.getUsername(), "下架商品", "商品ID: " + id + ", 标题: " + article.getTitle());
+            asyncService.asyncLogOperation(currentUser.getUsername(), "下架商品",
+                    "商品ID: " + id + ", 标题: " + article.getTitle());
         }
         return "redirect:/article/manage";
     }
@@ -359,7 +367,8 @@ public class ArticleController {
         if (article != null && (article.getUserId().equals(currentUser.getId()) || currentUser.getRole() == 1)) {
             article.setProductStatus(0);
             articleService.updateById(article);
-            asyncService.asyncLogOperation(currentUser.getUsername(), "上架商品", "商品ID: " + id + ", 标题: " + article.getTitle());
+            asyncService.asyncLogOperation(currentUser.getUsername(), "上架商品",
+                    "商品ID: " + id + ", 标题: " + article.getTitle());
         }
         return "redirect:/article/manage";
     }
@@ -389,8 +398,8 @@ public class ArticleController {
             }
 
             User currentUser = userService.getUserByUsername(
-                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName()
-            );
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
+                            .getName());
 
             if (currentUser == null) {
                 result.put("success", false);

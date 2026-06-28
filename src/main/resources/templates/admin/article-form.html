@@ -1,40 +1,162 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>发布商品</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-    .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-    .header h1 { color: #333; font-size: 24px; }
-    .header a { color: #667eea; text-decoration: none; }
-    .form-group { margin-bottom: 18px; }
-    .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #555; font-size: 14px; }
-    .form-group label .required { color: #f56c6c; }
-    .form-group input, .form-group select, .form-group textarea {
-      width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-      outline: none; border-color: #667eea;
-    }
-    .form-group textarea { min-height: 150px; resize: vertical; }
-    .form-row { display: flex; gap: 20px; }
-    .form-row .form-group { flex: 1; }
-    .btn { padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-    .btn-primary { background: #667eea; color: white; }
-    .btn-primary:hover { background: #5a6fd6; }
-    .btn-secondary { background: #909399; color: white; }
-    .btn-secondary:hover { background: #a6a9ad; }
-    .btn-group { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
-    .checkbox-group { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-    .checkbox-group label { display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer; }
-    .checkbox-group input[type="checkbox"] { width: auto; cursor: pointer; }
-    .help-text { font-size: 12px; color: #999; margin-top: 4px; }
 
-    .tag-group { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 5px; }
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .header h1 {
+      color: #333;
+      font-size: 24px;
+    }
+
+    .header a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .form-group label .required {
+      color: #f56c6c;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-group textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 20px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5a6fd6;
+    }
+
+    .btn-secondary {
+      background: #909399;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #a6a9ad;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .checkbox-group {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: normal;
+      cursor: pointer;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    .tag-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-top: 5px;
+    }
+
     .tag-group .tag-item {
       display: inline-flex;
       align-items: center;
@@ -48,15 +170,28 @@
       user-select: none;
       border: 2px solid transparent;
     }
-    .tag-group .tag-item:hover { background: #e0e4ea; }
+
+    .tag-group .tag-item:hover {
+      background: #e0e4ea;
+    }
+
     .tag-group .tag-item.selected {
       background: #667eea;
       color: white;
       border-color: #667eea;
     }
-    .tag-group .tag-item input[type="checkbox"] { display: none; }
 
-    .upload-area { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+    .tag-group .tag-item input[type="checkbox"] {
+      display: none;
+    }
+
+    .upload-area {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
     .upload-area input[type="file"] {
       padding: 8px;
       border: 1px solid #ddd;
@@ -65,6 +200,7 @@
       min-width: 150px;
       cursor: pointer;
     }
+
     .upload-area .btn-upload {
       padding: 8px 20px;
       background: #67c23a;
@@ -74,9 +210,23 @@
       cursor: pointer;
       font-size: 14px;
     }
-    .upload-area .btn-upload:hover { background: #5daf34; }
-    .image-preview { margin-top: 10px; display: none; }
-    .image-preview img { max-width: 200px; max-height: 200px; border-radius: 6px; border: 1px solid #ddd; }
+
+    .upload-area .btn-upload:hover {
+      background: #5daf34;
+    }
+
+    .image-preview {
+      margin-top: 10px;
+      display: none;
+    }
+
+    .image-preview img {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
     .image-preview .remove-btn {
       padding: 4px 12px;
       background: #f56c6c;
@@ -87,7 +237,10 @@
       font-size: 12px;
       margin-top: 5px;
     }
-    .image-preview .remove-btn:hover { background: #e04a4a; }
+
+    .image-preview .remove-btn:hover {
+      background: #e04a4a;
+    }
 
     .schedule-time-group {
       display: none;
@@ -97,26 +250,54 @@
       border-left: 4px solid #667eea;
       margin-bottom: 18px;
     }
-    .schedule-time-group.show { display: block; }
-    .schedule-time-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #555; font-size: 14px; }
-    .schedule-time-group label .required { color: #f56c6c; }
+
+    .schedule-time-group.show {
+      display: block;
+    }
+
+    .schedule-time-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .schedule-time-group label .required {
+      color: #f56c6c;
+    }
+
     .schedule-time-group input[type="datetime-local"] {
-      width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
     }
+
     .schedule-time-group input[type="datetime-local"]:focus {
-      outline: none; border-color: #667eea;
+      outline: none;
+      border-color: #667eea;
     }
-    .schedule-time-hint { font-size: 12px; color: #999; margin-top: 4px; }
+
+    .schedule-time-hint {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
   </style>
 </head>
+
 <body>
 <div class="container">
   <div class="header">
     <h1>📝 <span th:text="${article.id != null} ? '编辑商品' : '发布商品'">发布商品</span></h1>
-    <a href="/admin/articles">← 返回列表</a>
+    <a th:if="${isAdmin}" href="/admin/articles">← 返回列表</a>
+    <a th:unless="${isAdmin}" href="/article/manage">← 返回列表</a>
   </div>
 
-  <form th:action="@{/admin/articles/save}" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+  <form th:action="${isAdmin} ? @{/admin/articles/save} : @{/article/save}" method="post"
+        enctype="multipart/form-data" onsubmit="return validateForm()">
     <input type="hidden" name="id" th:value="${article.id}">
     <!-- 隐藏字段：用于传递 status 值 -->
     <input type="hidden" name="status" id="hiddenStatus" value="1">
@@ -133,7 +314,8 @@
         <label>分类 <span class="required">*</span></label>
         <select name="categoryId" required>
           <option value="">请选择分类</option>
-          <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${cat.id == article.categoryId}"></option>
+          <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"
+                  th:selected="${cat.id == article.categoryId}"></option>
         </select>
       </div>
       <div class="form-group">
@@ -152,7 +334,8 @@
         <label>所在学校 <span class="required">*</span></label>
         <select name="schoolId" required>
           <option value="">请选择学校</option>
-          <option th:each="school : ${schools}" th:value="${school.id}" th:text="${school.name}" th:selected="${school.id == article.schoolId}"></option>
+          <option th:each="school : ${schools}" th:value="${school.id}" th:text="${school.name}"
+                  th:selected="${school.id == article.schoolId}"></option>
         </select>
       </div>
     </div>
@@ -178,7 +361,8 @@
         <input type="file" id="coverImageFile" accept="image/*">
         <button type="button" class="btn-upload" onclick="uploadImage()">📤 上传图片</button>
       </div>
-      <div class="image-preview" id="imagePreview" th:if="${article.coverImage != null and article.coverImage != ''}" style="display: block;">
+      <div class="image-preview" id="imagePreview" th:if="${article.coverImage != null and article.coverImage != ''}"
+           style="display: block;">
         <img id="previewImg" th:src="${article.coverImage}" alt="商品图片">
         <input type="hidden" id="coverImageInput" name="coverImage" th:value="${article.coverImage}">
         <div><button type="button" class="remove-btn" onclick="removeImage()">删除图片</button></div>
@@ -202,13 +386,19 @@
       <label>联系方式 <span class="required">*</span></label>
       <div style="display: flex; gap: 15px; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 150px;">
-          <input type="text" id="wechat" name="wechat" th:value="${article.wechat}" placeholder="微信号" style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" oninput="checkContact()">
+          <input type="text" id="wechat" name="wechat" th:value="${article.wechat}" placeholder="微信号"
+                 style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+                 oninput="checkContact()">
         </div>
         <div style="flex: 1; min-width: 150px;">
-          <input type="text" id="qq" name="qq" th:value="${article.qq}" placeholder="QQ号" style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" oninput="checkContact()">
+          <input type="text" id="qq" name="qq" th:value="${article.qq}" placeholder="QQ号"
+                 style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+                 oninput="checkContact()">
         </div>
         <div style="flex: 1; min-width: 150px;">
-          <input type="text" id="phone" name="phone" th:value="${article.phone}" placeholder="手机号" style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" oninput="checkContact()">
+          <input type="text" id="phone" name="phone" th:value="${article.phone}" placeholder="手机号"
+                 style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+                 oninput="checkContact()">
         </div>
       </div>
       <div id="contactError" class="help-text" style="color: #f56c6c; display: none;">请至少填写一种联系方式（微信/QQ/手机号）</div>
@@ -244,8 +434,10 @@
       <label>选项</label>
       <div class="checkbox-group">
         <label><input type="checkbox" name="isTop" value="1" th:checked="${article.isTop == 1}"> 🔝 置顶</label>
-        <label><input type="checkbox" name="allowComment" value="1" th:checked="${article.allowComment == 1 or article.allowComment == null}"> 💬 允许评论</label>
-        <label><input type="checkbox" name="sendEmail" value="1" th:checked="${article.sendEmail == 1}"> 📧 发送邮件通知</label>
+        <label><input type="checkbox" name="allowComment" value="1"
+                      th:checked="${article.allowComment == 1 or article.allowComment == null}"> 💬 允许评论</label>
+        <label><input type="checkbox" name="sendEmail" value="1" th:checked="${article.sendEmail == 1}"> 📧
+          发送邮件通知</label>
       </div>
       <div class="help-text">置顶后在你的商品列表中靠前显示；勾选发送邮件通知后，发布时会向关注用户发送邮件提醒</div>
     </div>
@@ -262,7 +454,7 @@
   // ============================================================
   //  页面初始化
   // ============================================================
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     // 1. 设置发布状态
     setPublishStatus();
 
@@ -312,7 +504,7 @@
     var tagGroup = document.getElementById('tagGroup');
     if (!tagGroup) return;
 
-    tagGroup.addEventListener('click', function(e) {
+    tagGroup.addEventListener('click', function (e) {
       var label = e.target.closest('.tag-item');
       if (!label) return;
       if (e.target.tagName === 'INPUT') return;
@@ -445,8 +637,8 @@
       method: 'POST',
       body: formData
     })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
               if (data.success) {
                 var previewNew = document.getElementById('imagePreviewNew');
                 var imgNew = document.getElementById('previewImgNew');
@@ -459,10 +651,10 @@
                 alert('上传失败：' + data.message);
               }
             })
-            .catch(function() {
+            .catch(function () {
               alert('上传失败，请重试');
             })
-            .finally(function() {
+            .finally(function () {
               if (btn) btn.textContent = originalText;
             });
   }
@@ -491,4 +683,5 @@
 </script>
 
 </body>
+
 </html>

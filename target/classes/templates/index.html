@@ -585,8 +585,12 @@
                                   th:text="${article.authorName != null ? article.authorName : '未知'}">作者名</strong></span>
             <span>📁 分类：<strong class="category-name"
                                  th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类名</strong></span>
-            <span th:if="${article.tagNames != null and not #lists.isEmpty(article.tagNames)}">🏷️ 标签：<span
-                    th:each="tag : ${article.tagNames}" class="tag-item" th:text="${tag}">标签</span></span>
+            <span th:if="${article.tagNames != null and not #lists.isEmpty(article.tagNames)}">🏷️ 标签：
+              <span th:each="tag, stat : ${article.tagNames}">
+                  <span class="tag-item" th:text="${tag}">标签</span>
+                  <span th:if="${not stat.last}">、</span>
+              </span>
+          </span>
             <span th:if="${article.allowComment == 1}">💬 允许评论</span>
             <span th:if="${article.allowComment == 0}" style="color: #ccc;">🔇 禁止评论</span>
           </div>

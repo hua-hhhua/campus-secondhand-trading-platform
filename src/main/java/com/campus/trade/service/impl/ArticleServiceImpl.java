@@ -418,10 +418,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional
     public void saveArticleTags(Integer articleId, List<Integer> tagIds) {
+        System.out.println("========== saveArticleTags DEBUG ==========");
+        System.out.println("商品ID: " + articleId);
+        System.out.println("标签IDs: " + tagIds);
+
         // 先删除旧的关联
         LambdaQueryWrapper<ArticleTag> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ArticleTag::getArticleId, articleId);
-        articleTagMapper.delete(wrapper);
+        int deleteCount = articleTagMapper.delete(wrapper);
+        System.out.println("删除旧关联数量: " + deleteCount);
 
         // 插入新的关联
         if (tagIds != null && !tagIds.isEmpty()) {
@@ -430,8 +435,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 articleTag.setArticleId(articleId);
                 articleTag.setTagId(tagId);
                 articleTagMapper.insert(articleTag);
+                System.out.println("插入新关联: article_id=" + articleId + ", tag_id=" + tagId);
             }
         }
+        System.out.println("========== saveArticleTags 完成 ==========");
     }
 
     // ========== 图片上传方法 ==========
