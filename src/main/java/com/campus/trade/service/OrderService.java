@@ -2,7 +2,7 @@ package com.campus.trade.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.campus.trade.entity.Order;
-import com.campus.trade.entity.OrderReview;
+
 import java.util.List;
 import java.util.Map;
 import java.math.BigDecimal;
@@ -41,13 +41,6 @@ public interface OrderService extends IService<Order> {
 
     // 确认支付
     boolean payOrder(Long orderId, Integer buyerId);
-
-    // ========== 评价 ==========
-    boolean reviewOrder(OrderReview review);
-
-    OrderReview getOrderReview(Long orderId);
-
-    boolean replyReview(Long reviewId, String reply, Integer sellerId);
 
     // ========== 统计和搜索 ==========
     Map<String, Object> getOrderStats(Integer userId, String role);

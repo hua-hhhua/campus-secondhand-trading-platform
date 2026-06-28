@@ -292,12 +292,11 @@
           <a href="/admin/users" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">👑 用户管理</a>
           <a href="/admin/articles" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">📝 商品管理</a>
           <a href="/admin/orders" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">📦 订单管理</a>
+          <a href="/admin/comment-manage" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">💬 评论管理</a>
           <a href="/admin/categories" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">📂 分类管理</a>
           <a href="/admin/tags" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">🏷️ 标签管理</a>
           <a href="/admin/schools" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">🏫 学校管理</a>
-          <a href="/admin/comment-manage" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">💬 评论管理</a>
-          <a href="/admin/review-manage" style="display:block;padding:10px 20px;color:#333;text-decoration:none;font-size:14px;transition:background 0.2s;">⭐ 评价管理</a>
-        </div>
+          </div>
       </div>
 
       <script>
@@ -361,12 +360,6 @@
       <div class="stat-number" th:text="${commentCount != null ? commentCount : '0'}">0</div>
       <div class="stat-label">用户评论</div>
       <div class="click-hint">点击进入评论管理 →</div>
-    </a>
-    <a href="/admin/review-manage" class="stat-card">
-      <div class="stat-icon">⭐</div>
-      <div class="stat-number" th:text="${reviewCount != null ? reviewCount : '0'}">0</div>
-      <div class="stat-label">好评数量</div>
-      <div class="click-hint">点击进入评价管理 →</div>
     </a>
   </div>
 

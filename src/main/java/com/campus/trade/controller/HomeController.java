@@ -85,8 +85,6 @@ public class HomeController {
             model.addAttribute("userCount", userCount);
             model.addAttribute("orderCount", orderCount);
             model.addAttribute("commentCount", commentCount);
-            model.addAttribute("reviewCount", 0);
-
         } catch (Exception e) {
             System.out.println("首页加载商品列表失败: " + e.getMessage());
             e.printStackTrace();
@@ -97,8 +95,7 @@ public class HomeController {
             model.addAttribute("userCount", 0);
             model.addAttribute("orderCount", 0);
             model.addAttribute("commentCount", 0);
-            model.addAttribute("reviewCount", 0);
-        }
+            }
 
         return "index";
     }

@@ -33,8 +33,4 @@ public class OrderStatusValidator {
     public boolean canConfirm(int status) {
         return status == OrderStatus.SHIPPED.getCode();
     }
-
-    public boolean canReview(int status) {
-        return status == OrderStatus.COMPLETED.getCode();
-    }
 }

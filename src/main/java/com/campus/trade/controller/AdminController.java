@@ -44,10 +44,6 @@ public class AdminController {
     @Autowired
     private CommentService commentService;
 
-    @Autowired
-    private com.campus.trade.mapper.OrderReviewMapper orderReviewMapper;
-
-
     // ============================================================
     //  1. 订单管理
     // ============================================================
@@ -605,50 +601,9 @@ public class AdminController {
         return commentService.removeById(id);
     }
 
-    // ============================================================
-    //  8. 评价管理
-    // ============================================================
-
-    @GetMapping("/review-manage")
-    public String reviewManage(@RequestParam(defaultValue = "1") Integer pageNum,
-                               @RequestParam(defaultValue = "10") Integer pageSize,
-                               @RequestParam(required = false) Integer ratingFilter,
-                               Model model) {
-        Page<OrderReview> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<OrderReview> wrapper = new LambdaQueryWrapper<>();
-
-        if (ratingFilter != null && ratingFilter > 0) {
-            wrapper.eq(OrderReview::getRating, ratingFilter);
-        }
-
-        wrapper.orderByDesc(OrderReview::getCreatedAt);
-        IPage<OrderReview> reviewPage = orderReviewMapper.selectPage(page, wrapper);
-
-        model.addAttribute("reviewPage", reviewPage);
-        model.addAttribute("ratingFilter", ratingFilter);
-        return "admin/review-manage";
-    }
-
-    @GetMapping("/review/delete/{id}")
-    @ResponseBody
-    public boolean deleteReview(@PathVariable Long id) {
-        return orderReviewMapper.deleteById(id) > 0;
-    }
-
-    @PostMapping("/review/reply")
-    @ResponseBody
-    public boolean replyReview(@RequestParam Long id, @RequestParam String reply) {
-        OrderReview review = orderReviewMapper.selectById(id);
-        if (review != null) {
-            review.setReply(reply);
-            review.setReplyTime(LocalDateTime.now());
-            return orderReviewMapper.updateById(review) > 0;
-        }
-        return false;
-    }
 
     // ============================================================
-    //  9. 仪表盘
+    //  8. 仪表盘
     // ============================================================
 
     @GetMapping("/dashboard")

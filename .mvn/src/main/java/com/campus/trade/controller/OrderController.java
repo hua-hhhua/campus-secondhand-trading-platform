@@ -2,7 +2,6 @@ package com.campus.trade.controller;
 
 import com.campus.trade.entity.User;
 import com.campus.trade.entity.Order;
-import com.campus.trade.entity.OrderReview;
 import com.campus.trade.service.OrderService;
 import com.campus.trade.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

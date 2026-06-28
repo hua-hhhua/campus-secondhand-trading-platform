@@ -236,7 +236,6 @@
             <thead>
             <tr>
                 <th><input type="checkbox" id="selectAll"></th>
-                <th>ID</th>
                 <th>评论内容</th>
                 <th>评论用户</th>
                 <th>文章ID</th>
@@ -250,7 +249,6 @@
             <tbody>
             <tr th:each="comment : ${commentPage.records}">
                 <td><input type="checkbox" class="itemCheckbox" th:value="${comment.id}"></td>
-                <td th:text="${comment.id}">?</td>
                 <td>
                     <div class="content-text" th:text="${comment.content}" th:title="${comment.content}">?</div>
                 </td>
