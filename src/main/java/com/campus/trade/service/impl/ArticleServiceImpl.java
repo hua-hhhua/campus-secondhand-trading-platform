@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import cn.hutool.core.util.StrUtil;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -92,6 +93,55 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
     }
 
+    // ========== 重写MyBatis-Plus方法，统一清除缓存 ==========
+
+    @Override
+    public boolean save(Article article) {
+        boolean result = super.save(article);
+        if (result) {
+            cacheService.deleteAllArticleList();
+            System.out.println("【Redis缓存】新增商品后清除商品列表缓存 - ID: " + article.getId());
+        }
+        return result;
+    }
+
+    @Override
+    public boolean updateById(Article article) {
+        boolean result = super.updateById(article);
+        if (result) {
+            cacheService.deleteAllArticleList();
+            if (article.getId() != null) {
+                cacheService.deleteArticleDetail(article.getId());
+            }
+            System.out.println("【Redis缓存】更新商品后清除缓存 - ID: " + article.getId());
+        }
+        return result;
+    }
+
+    @Override
+    public boolean removeById(Article article) {
+        boolean result = super.removeById(article);
+        if (result) {
+            cacheService.deleteAllArticleList();
+            if (article.getId() != null) {
+                cacheService.deleteArticleDetail(article.getId());
+            }
+            System.out.println("【Redis缓存】删除商品后清除缓存 - ID: " + article.getId());
+        }
+        return result;
+    }
+
+    @Override
+    public boolean removeById(Serializable id) {
+        boolean result = super.removeById(id);
+        if (result) {
+            cacheService.deleteAllArticleList();
+            cacheService.deleteArticleDetail((Integer) id);
+            System.out.println("【Redis缓存】删除商品后清除缓存 - ID: " + id);
+        }
+        return result;
+    }
+
     // ========== 消息中间件相关方法 ==========
 
     @Override
@@ -108,6 +158,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         boolean result = this.save(article);
 
         if (result) {
+            cacheService.deleteAllArticleList();
+            System.out.println("【Redis缓存】发布商品后清除商品列表缓存");
             asyncService.asyncSendArticleNotification(article, "publish");
         }
 
@@ -119,6 +171,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         boolean result = this.updateById(article);
 
         if (result) {
+            cacheService.deleteAllArticleList();
+            cacheService.deleteArticleDetail(article.getId());
+            System.out.println("【Redis缓存】更新商品后清除缓存 - ID: " + article.getId());
             asyncService.asyncSendArticleNotification(article, "update");
         }
 
@@ -131,6 +186,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         boolean result = this.removeById(id);
 
         if (result && article != null) {
+            cacheService.deleteAllArticleList();
+            cacheService.deleteArticleDetail(id);
+            System.out.println("【Redis缓存】删除商品后清除缓存 - ID: " + id);
             String currentUsername = getCurrentUsername();
             asyncService.asyncSendDeleteNotification(id, article.getTitle(), currentUsername);
         }
@@ -181,6 +239,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 this.updateById(article);
                 System.out.println("【定时发布】文章已发布 - ID: " + article.getId() + ", 标题: " + article.getTitle());
             }
+
+            // 定时发布后清除缓存
+            cacheService.deleteAllArticleList();
+            System.out.println("【Redis缓存】定时发布商品后清除商品列表缓存，数量: " + scheduledArticles.size());
         }
     }
 
@@ -675,6 +737,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         // 5. 更新数据库
-        return this.updateById(article);
+        boolean result = this.updateById(article);
+        if (result) {
+            cacheService.deleteAllArticleList();
+            cacheService.deleteArticleDetail(articleId);
+            System.out.println("【Redis缓存】库存扣减后清除缓存 - ID: " + articleId);
+        }
+        return result;
     }
 }
