@@ -16,6 +16,7 @@ import com.campus.trade.mapper.TagMapper;
 import com.campus.trade.service.ArticleNotificationProducer;
 import com.campus.trade.service.ArticleService;
 import com.campus.trade.service.AsyncService;
+import com.campus.trade.service.CacheService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Autowired
     private TagMapper tagMapper;
+
+    @Autowired
+    private CacheService cacheService;
 
     @Value("${file.upload.path:./uploads}")
     private String uploadPath;
@@ -241,6 +245,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         boolean result = this.save(article);
 
         if (result) {
+            // 清除商品列表缓存
+            cacheService.deleteAllArticleList();
+            System.out.println("【Redis缓存】创建商品后清除商品列表缓存");
+
             if (article.getStatus() == ArticleStatus.SCHEDULED) {
                 System.out.println("【文章保存】定时发布文章已保存 - ID: " + article.getId()
                         + ", 标题: " + article.getTitle()
@@ -276,6 +284,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         boolean result = this.updateById(article);
 
         if (result) {
+            // 清除商品列表缓存
+            cacheService.deleteAllArticleList();
+            // 清除该商品详情缓存
+            cacheService.deleteArticleDetail(article.getId());
+            System.out.println("【Redis缓存】更新商品后清除缓存 - ID: " + article.getId());
+
             System.out.println("【文章保存】文章已更新 - ID: " + article.getId() + ", 标题: " + article.getTitle());
             asyncService.asyncSendArticleNotification(article, "update");
         }
@@ -335,7 +349,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public IPage<ArticleVO> getArticleVOPage(Integer page, Integer size, String keyword, Integer statusFilter,
-                                             LocalDateTime startTime, LocalDateTime endTime) {
+            LocalDateTime startTime, LocalDateTime endTime) {
         Page<ArticleVO> pageParam = new Page<>(page, size);
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
@@ -429,8 +443,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public IPage<ArticleResultMapVO> getArticleResultMapVOsByPage(Integer page, Integer size, String keyword,
-                                                                  Integer statusFilter, LocalDateTime startTime,
-                                                                  LocalDateTime endTime) {
+            Integer statusFilter, LocalDateTime startTime,
+            LocalDateTime endTime) {
         IPage<Article> pageParam = new Page<>(page, size);
         QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
 
@@ -487,6 +501,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 System.out.println("插入新关联: article_id=" + articleId + ", tag_id=" + tagId);
             }
         }
+
+        // 清除商品列表缓存
+        cacheService.deleteAllArticleList();
+        System.out.println("【Redis缓存】保存标签后清除商品列表缓存");
+
+        // 清除商品详情缓存
+        cacheService.deleteArticleDetail(articleId);
+        System.out.println("【Redis缓存】保存标签后清除商品详情缓存: " + articleId);
         System.out.println("========== saveArticleTags 完成 ==========");
     }
 
@@ -547,6 +569,18 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public List<ArticleVO> getArticlesByConditions(String keyword, Integer schoolId, Integer categoryId) {
+        // 构建缓存key
+        String cacheKey = buildArticleListCacheKey(keyword, schoolId, categoryId);
+
+        // 尝试从缓存获取
+        List<ArticleVO> cachedList = cacheService.getArticleList(cacheKey);
+        if (cachedList != null) {
+            System.out.println("【Redis缓存命中】商品列表 - " + cacheKey + "，数量: " + cachedList.size());
+            return cachedList;
+        }
+
+        System.out.println("【Redis缓存未命中】商品列表 - " + cacheKey + "，从数据库查询");
+
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
         wrapper.eq("a.status", ArticleStatus.PUBLISHED);
@@ -587,7 +621,28 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             }
         }
 
+        // 存入缓存
+        cacheService.setArticleList(cacheKey, articles);
+        System.out.println("【Redis缓存】商品列表已存入缓存 - " + cacheKey + "，数量: " + articles.size());
+
         return articles;
+    }
+
+    /**
+     * 构建商品列表缓存key
+     */
+    private String buildArticleListCacheKey(String keyword, Integer schoolId, Integer categoryId) {
+        StringBuilder key = new StringBuilder("home:");
+        if (StrUtil.isNotBlank(keyword)) {
+            key.append("kw_").append(keyword.hashCode()).append(":");
+        }
+        if (schoolId != null && schoolId > 0) {
+            key.append("school_").append(schoolId).append(":");
+        }
+        if (categoryId != null && categoryId > 0) {
+            key.append("cat_").append(categoryId);
+        }
+        return key.toString();
     }
 
     // ========== 库存管理方法 ==========
@@ -622,4 +677,39 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 5. 更新数据库
         return this.updateById(article);
     }
+<<<<<<< HEAD
+=======
+
+    // ========== 按用户ID查询商品 ==========
+
+    @Override
+    public IPage<ArticleVO> getArticleVOPageByUserId(Integer page, Integer size, String keyword,
+            Integer statusFilter, LocalDateTime startTime,
+            LocalDateTime endTime, Integer userId) {
+        Page<ArticleVO> pageParam = new Page<>(page, size);
+        QueryWrapper<Article> wrapper = new QueryWrapper<>();
+
+        // ========== 关键：按用户ID过滤 ==========
+        wrapper.eq("a.user_id", userId);
+
+        if (StrUtil.isNotBlank(keyword)) {
+            wrapper.and(w -> w.like("a.title", keyword).or().like("a.content", keyword));
+        }
+
+        if (statusFilter != null) {
+            wrapper.eq("a.status", statusFilter);
+        }
+
+        if (startTime != null) {
+            wrapper.ge("a.create_time", startTime);
+        }
+        if (endTime != null) {
+            wrapper.le("a.create_time", endTime);
+        }
+
+        wrapper.orderByDesc("a.create_time");
+
+        return baseMapper.selectArticleVOPage(pageParam, wrapper);
+    }
+>>>>>>> 6d90964bef2ef16a88394656b6e797fa81627c23
 }
