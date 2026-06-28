@@ -32,17 +32,35 @@ public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, Sho
         if (quantity <= 0) {
             return false;
         }
-        
+
+        // 查询商品信息，校验库存
+        Article article = articleMapper.selectById(articleId);
+        if (article == null || article.getStock() == null) {
+            return false;
+        }
+
+        // 不能将自己发布的商品加入购物车
+        if (article.getUserId().equals(userId)) {
+            throw new RuntimeException("不能将自己发布的商品加入购物车");
+        }
+
         LambdaQueryWrapper<ShoppingCart> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ShoppingCart::getUserId, userId)
                .eq(ShoppingCart::getArticleId, articleId);
-        
+
         ShoppingCart existing = this.getOne(wrapper);
-        
+
         if (existing != null) {
-            existing.setQuantity(existing.getQuantity() + quantity);
+            int newQuantity = existing.getQuantity() + quantity;
+            if (newQuantity > article.getStock()) {
+                throw new RuntimeException("购买数量不能超过库存数量（" + article.getStock() + "）");
+            }
+            existing.setQuantity(newQuantity);
             return this.updateById(existing);
         } else {
+            if (quantity > article.getStock()) {
+                throw new RuntimeException("购买数量不能超过库存数量（" + article.getStock() + "）");
+            }
             ShoppingCart cart = new ShoppingCart();
             cart.setUserId(userId);
             cart.setArticleId(articleId);

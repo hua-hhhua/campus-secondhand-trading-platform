@@ -280,6 +280,8 @@ public class AdminController {
         if (id != null) {
             article = articleService.getById(id);
             isEdit = true;
+            List<Integer> tagIds = articleService.getTagIdsByArticleId(id);
+            article.setTagIds(tagIds);
         } else {
             article = new Article();
         }
@@ -287,6 +289,7 @@ public class AdminController {
         model.addAttribute("isEdit", isEdit);
         model.addAttribute("categories", categoryService.list());
         model.addAttribute("schools", schoolService.list());
+        model.addAttribute("tags", tagService.list());
         return "admin/article-form";
     }
 
