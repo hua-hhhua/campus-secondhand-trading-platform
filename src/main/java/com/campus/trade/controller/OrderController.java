@@ -1,7 +1,7 @@
 package com.campus.trade.controller;
 
-import com.campus.trade.entity.User;
 import com.campus.trade.entity.Order;
+import com.campus.trade.entity.User;
 import com.campus.trade.service.OrderService;
 import com.campus.trade.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +52,7 @@ public class OrderController {
     }
 
     /**
-     * 创建订单（支持多商品下单，不同卖家分别成单）
+     * 创建订单（支持多商品下单）
      */
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Map<String, Object> params) {
@@ -79,7 +79,6 @@ public class OrderController {
                 address = "校园内交易";
             }
 
-            // 调用多商品下单（返回订单列表）
             List<Order> orders = orderService.createOrder(user.getId(), articleIds, quantities, address);
 
             List<Long> orderIds = orders.stream().map(Order::getId).collect(Collectors.toList());
@@ -271,7 +270,7 @@ public class OrderController {
     }
 
     /**
-     * 支付订单（买家支付，状态从待付款改为待发货）
+     * 支付订单
      */
     @PostMapping("/{id}/pay")
     public ResponseEntity<Map<String, Object>> payOrder(@PathVariable Long id) {

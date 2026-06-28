@@ -410,7 +410,7 @@
         const statusFilter = document.getElementById('statusFilter').value;
         let url = '/admin/orders?';
         if (keyword) url += 'keyword=' + encodeURIComponent(keyword) + '&';
-        if (statusFilter) url += 'statusFilter=' + statusFilter + '&';
+        if (statusFilter) url += 'status=' + statusFilter + '&';
         window.location.href = url;
     }
 
@@ -525,9 +525,9 @@
     function goToPage(page) {
         const keyword = document.getElementById('keyword').value;
         const statusFilter = document.getElementById('statusFilter').value;
-        let url = '/admin/orders?pageNum=' + page + '&';
+        let url = '/admin/orders?page=' + page + '&';
         if (keyword) url += 'keyword=' + encodeURIComponent(keyword) + '&';
-        if (statusFilter) url += 'statusFilter=' + statusFilter + '&';
+        if (statusFilter) url += 'status=' + statusFilter + '&';
         window.location.href = url;
     }
 </script>

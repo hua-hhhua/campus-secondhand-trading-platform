@@ -349,7 +349,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public IPage<ArticleVO> getArticleVOPage(Integer page, Integer size, String keyword, Integer statusFilter,
-            LocalDateTime startTime, LocalDateTime endTime) {
+                                             LocalDateTime startTime, LocalDateTime endTime) {
         Page<ArticleVO> pageParam = new Page<>(page, size);
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
@@ -373,7 +373,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return baseMapper.selectArticleVOPage(pageParam, wrapper);
     }
 
-    // ========== 按用户ID查询商品（远程版本新增） ==========
+    // ========== 按用户ID查询商品 ==========
 
     @Override
     public IPage<ArticleVO> getArticleVOPageByUserId(Integer page, Integer size, String keyword,
@@ -443,8 +443,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public IPage<ArticleResultMapVO> getArticleResultMapVOsByPage(Integer page, Integer size, String keyword,
-            Integer statusFilter, LocalDateTime startTime,
-            LocalDateTime endTime) {
+                                                                  Integer statusFilter, LocalDateTime startTime,
+                                                                  LocalDateTime endTime) {
         IPage<Article> pageParam = new Page<>(page, size);
         QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
 
@@ -677,6 +677,4 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 5. 更新数据库
         return this.updateById(article);
     }
-
-
 }

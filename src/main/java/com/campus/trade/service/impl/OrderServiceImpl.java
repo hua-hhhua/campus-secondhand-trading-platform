@@ -2,8 +2,13 @@ package com.campus.trade.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.campus.trade.entity.*;
-import com.campus.trade.mapper.*;
+import com.campus.trade.entity.Article;
+import com.campus.trade.entity.Order;
+import com.campus.trade.entity.User;
+import com.campus.trade.mapper.ArticleMapper;
+import com.campus.trade.mapper.OrderMapper;
+import com.campus.trade.mapper.OrderStatusHistoryMapper;
+import com.campus.trade.mapper.UserMapper;
 import com.campus.trade.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -78,7 +83,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return order;
     }
 
-    // ========== 多商品下单（支持不同卖家，每个商品独立成单） ==========
+    // ========== 多商品下单 ==========
     @Override
     @Transactional
     public List<Order> createOrder(Integer buyerId, List<Integer> articleIds, List<Integer> quantities, String address) {
