@@ -24,7 +24,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +66,19 @@ public class ArticleController {
 
         User currentUser = (User) session.getAttribute("currentUser");
 
-        IPage<ArticleVO> articlePage = articleService.getArticleVOPage(page, size, keyword, statusFilter, startTime, endTime);
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+
+        IPage<ArticleVO> articlePage;
+
+        // 管理员可以看到所有文章，普通用户只能看到自己的
+        if (currentUser.getRole() == 1) {
+            articlePage = articleService.getArticleVOPage(page, size, keyword, statusFilter, startTime, endTime);
+        } else {
+            articlePage = articleService.getArticleVOPageByUserId(page, size, keyword, statusFilter, startTime, endTime,
+                    currentUser.getId());
+        }
 
         model.addAttribute("articlePage", articlePage);
         model.addAttribute("keyword", keyword);
@@ -81,6 +96,10 @@ public class ArticleController {
 
     @GetMapping("/form")
     public String articleForm(@RequestParam(required = false) Integer id, Model model, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        boolean isAdmin = currentUser != null && currentUser.getRole() != null && currentUser.getRole() == 1;
+        model.addAttribute("isAdmin", isAdmin);
+
         List<Category> categories = categoryService.list();
         model.addAttribute("categories", categories);
 
@@ -114,8 +133,22 @@ public class ArticleController {
     }
 
     @PostMapping("/save")
-    public String saveArticle(Article article, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String saveArticle(
+            Article article,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String scheduledTime,
+            @RequestParam(required = false) Integer sendEmail,
+            @RequestParam(required = false) Integer allowComment,
+            @RequestParam(required = false) Integer isTop,
+            @RequestParam(required = false) List<Integer> tagIds,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
         User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
 
         // ========== 校验：至少填写一种联系方式 ==========
         boolean hasContact = (article.getWechat() != null && !article.getWechat().trim().isEmpty()) ||
@@ -127,25 +160,80 @@ public class ArticleController {
             return "redirect:/article/form";
         }
 
-        article.setSendEmail(0);
+        // 设置基本属性
+        article.setUserId(currentUser.getId());
+        article.setSendEmail(sendEmail != null ? sendEmail : 0);
+        article.setAllowComment(allowComment != null ? allowComment : 1);
+        article.setIsTop(isTop != null && isTop == 1 ? 1 : 0);
+        article.setUpdateTime(LocalDateTime.now());
+        article.setTagIds(tagIds);
+
+        // ========== 处理发布状态 ==========
+        LocalDateTime now = LocalDateTime.now();
+        ZoneId shanghaiZone = ZoneId.of("Asia/Shanghai");
+
+        System.out.println("========== 接收到的 status 值: " + status);
 
         if (article.getAllowComment() == null) {
             article.setAllowComment(0);
         }
 
-        if (article.getIsTop() == null) {
-            article.setIsTop(0);
-        }
-        if (article.getIsTop() == 2) {
-            article.setIsTop(0);
-        }
-        if (article.getIsTop() != 0 && article.getIsTop() != 1) {
-            article.setIsTop(0);
+        // 直接设置 status
+        article.setStatus(status != null ? status : 0);
+        System.out.println("========== 设置 article.status = " + article.getStatus());
+
+        // ========== 根据发布状态设置商品状态 ==========
+        if (status != null && status == 0) {
+            // 草稿：设置为已下架，不在首页显示
+            article.setProductStatus(2);
+            article.setPublishedAt(null);
+            System.out.println("========== 保存为草稿，商品状态设为已下架");
+        } else if (status != null && status == 2) {
+            // 定时发布：先设置为已下架，等定时任务触发时再上架
+            article.setProductStatus(2);
+
+            // 修复：保留或更新 publishedAt
+            if (scheduledTime != null && !scheduledTime.isEmpty()) {
+                try {
+                    DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+                    LocalDateTime parsedTime = LocalDateTime.parse(scheduledTime, inputFormatter);
+                    article.setPublishedAt(parsedTime.atZone(shanghaiZone).toLocalDateTime());
+                    System.out.println("========== 使用前端传入的定时发布时间: " + article.getPublishedAt());
+                } catch (Exception e) {
+                    System.out.println("========== 时间解析失败: " + e.getMessage());
+                    if (article.getPublishedAt() == null) {
+                        article.setPublishedAt(now.plusHours(1));
+                        System.out.println("========== 解析失败，使用默认发布时间: " + article.getPublishedAt());
+                    } else {
+                        System.out.println("========== 解析失败，保留原有发布时间: " + article.getPublishedAt());
+                    }
+                }
+            } else {
+                if (article.getPublishedAt() == null) {
+                    article.setPublishedAt(now.plusHours(1));
+                    System.out.println("========== 未传发布时间，使用默认: " + article.getPublishedAt());
+                } else {
+                    System.out.println("========== 编辑文章，保留原有发布时间: " + article.getPublishedAt());
+                }
+            }
+            System.out.println("========== 保存为定时发布，发布时间: " + article.getPublishedAt() + "，商品状态设为已下架");
+        } else {
+            // 立即发布：设置为在售
+            article.setProductStatus(0);
+            article.setPublishedAt(now);
+            System.out.println("========== 保存为立即发布，商品状态设为在售");
         }
 
+        // 保存或更新文章
         boolean result = articleService.saveOrUpdateArticle(article, currentUser.getId());
 
         if (result) {
+            // 保存标签关联
+            if (tagIds == null) {
+                tagIds = new ArrayList<>();
+            }
+            articleService.saveArticleTags(article.getId(), tagIds);
+
             String statusDesc = "";
             if (article.getStatus() != null) {
                 if (article.getStatus() == ArticleStatus.SCHEDULED) {
@@ -190,6 +278,8 @@ public class ArticleController {
         if (article != null && (article.getUserId().equals(currentUser.getId()) || currentUser.getRole() == 1)) {
             article.setProductStatus(2);  // 2=已下架
             articleService.updateById(article);
+            asyncService.asyncLogOperation(currentUser.getUsername(), "下架商品",
+                    "商品ID: " + id + ", 标题: " + article.getTitle());
         }
         return "redirect:/admin/articles";
     }
@@ -205,6 +295,8 @@ public class ArticleController {
         if (article != null && (article.getUserId().equals(currentUser.getId()) || currentUser.getRole() == 1)) {
             article.setProductStatus(0);  // 0=在售
             articleService.updateById(article);
+            asyncService.asyncLogOperation(currentUser.getUsername(), "上架商品",
+                    "商品ID: " + id + ", 标题: " + article.getTitle());
         }
         return "redirect:/admin/articles";
     }
@@ -238,8 +330,8 @@ public class ArticleController {
 
             // 获取当前登录用户
             User currentUser = userService.getUserByUsername(
-                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName()
-            );
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
+                            .getName());
 
             if (currentUser == null) {
                 result.put("success", false);

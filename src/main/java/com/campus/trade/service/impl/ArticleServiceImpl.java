@@ -12,6 +12,7 @@ import com.campus.trade.entity.ArticleTag;
 import com.campus.trade.entity.ArticleVO;
 import com.campus.trade.mapper.ArticleMapper;
 import com.campus.trade.mapper.ArticleTagMapper;
+import com.campus.trade.mapper.TagMapper;
 import com.campus.trade.service.ArticleNotificationProducer;
 import com.campus.trade.service.ArticleService;
 import com.campus.trade.service.AsyncService;
@@ -27,6 +28,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,6 +44,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Autowired
     private ArticleTagMapper articleTagMapper;
+
+    @Autowired
+    private TagMapper tagMapper;
 
     @Value("${file.upload.path:./uploads}")
     private String uploadPath;
@@ -148,29 +154,30 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return this.list(wrapper);
     }
 
+    private static final Object PUBLISH_LOCK = new Object();
+
     @Override
-    public void publishScheduledArticles() {
-        List<Article> scheduledArticles = getScheduledArticlesToPublish();
+    @Transactional(rollbackFor = Exception.class)
+    public void publishScheduledArticles(LocalDateTime now) {
+        synchronized (PUBLISH_LOCK) {
+            LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(Article::getStatus, ArticleStatus.SCHEDULED)
+                    .le(Article::getPublishedAt, now);
 
-        if (scheduledArticles.isEmpty()) {
-            return;
-        }
+            List<Article> scheduledArticles = this.list(wrapper);
 
-        for (Article article : scheduledArticles) {
-            article.setStatus(ArticleStatus.PUBLISHED);
-            article.setUpdateTime(LocalDateTime.now());
-            this.updateById(article);
-            System.out.println("【定时发布】文章已发布 - ID: " + article.getId() + ", 标题: " + article.getTitle());
+            if (scheduledArticles.isEmpty()) {
+                return;
+            }
 
-            if (article.getSendEmail() != null && article.getSendEmail() == 1) {
-                asyncService.asyncSendArticleNotification(article, "publish");
-                System.out.println("【邮件通知】定时发布文章已发送邮件通知 - ID: " + article.getId());
-            } else {
-                System.out.println("【邮件通知】定时发布文章未勾选邮件通知，跳过发送 - ID: " + article.getId());
+            for (Article article : scheduledArticles) {
+                article.setStatus(ArticleStatus.PUBLISHED);
+                article.setProductStatus(0);
+                article.setUpdateTime(now);
+                this.updateById(article);
+                System.out.println("【定时发布】文章已发布 - ID: " + article.getId() + ", 标题: " + article.getTitle());
             }
         }
-
-        System.out.println("【定时发布任务执行】共发布了 " + scheduledArticles.size() + " 篇文章");
     }
 
     // ========== 新增方法 ==========
@@ -219,7 +226,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private boolean doCreateArticle(Article article) {
         article.setCreateTime(LocalDateTime.now());
         article.setUpdateTime(LocalDateTime.now());
-        handlePublishedAt(article);
+
+        // 如果状态为空或为null，默认设置为草稿
+        if (article.getStatus() == null) {
+            article.setStatus(ArticleStatus.DRAFT);
+        }
+
+        // 如果是定时发布但没有设置发布时间，自动设置为1小时后
+        if (article.getStatus() == ArticleStatus.SCHEDULED && article.getPublishedAt() == null) {
+            article.setPublishedAt(LocalDateTime.now().plusHours(1));
+            System.out.println("【发布时间处理】定时发布未设置时间，已自动设置为1小时后");
+        }
 
         boolean result = this.save(article);
 
@@ -246,7 +263,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     private boolean doUpdateArticle(Article article) {
         article.setUpdateTime(LocalDateTime.now());
-        handlePublishedAt(article);
+
+        // 如果是定时发布但没有设置发布时间，保留原有的发布时间
+        if (article.getStatus() == ArticleStatus.SCHEDULED && article.getPublishedAt() == null) {
+            Article existing = this.getById(article.getId());
+            if (existing != null && existing.getPublishedAt() != null) {
+                article.setPublishedAt(existing.getPublishedAt());
+                System.out.println("【发布时间处理】保留原有定时发布时间: " + article.getPublishedAt());
+            }
+        }
 
         boolean result = this.updateById(article);
 
@@ -256,20 +281,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         return result;
-    }
-
-    private void handlePublishedAt(Article article) {
-        if (article.getStatus() == ArticleStatus.SCHEDULED) {
-            if (article.getPublishedAt() == null) {
-                article.setPublishedAt(LocalDateTime.now().plusHours(1));
-                System.out.println("【发布时间处理】定时发布未设置时间，已自动设置为1小时后");
-            }
-        } else if (article.getStatus() == ArticleStatus.DRAFT && article.getPublishedAt() != null) {
-            article.setStatus(ArticleStatus.SCHEDULED);
-            System.out.println("【发布时间处理】草稿含有发布时间，已自动转为定时发布");
-        } else if (article.getStatus() == ArticleStatus.PUBLISHED) {
-            article.setPublishedAt(LocalDateTime.now());
-        }
     }
 
     @Override
@@ -289,6 +300,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 System.out.println("【文章校验失败】定时发布必须设置发布时间");
                 return false;
             }
+            // 允许发布时间等于当前时间（允许立即定时发布）
+            // 只检查发布时间不能早于当前时间
             if (article.getPublishedAt().isBefore(LocalDateTime.now())) {
                 System.out.println("【文章校验失败】定时发布时间不能早于当前时间");
                 return false;
@@ -321,26 +334,59 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     // ========== 多表查询方法（支持时间范围） ==========
 
     @Override
-    public IPage<ArticleVO> getArticleVOPage(Integer page, Integer size, String keyword, Integer statusFilter, LocalDateTime startTime, LocalDateTime endTime) {
+    public IPage<ArticleVO> getArticleVOPage(Integer page, Integer size, String keyword, Integer statusFilter,
+                                             LocalDateTime startTime, LocalDateTime endTime) {
         Page<ArticleVO> pageParam = new Page<>(page, size);
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
         if (StrUtil.isNotBlank(keyword)) {
-            wrapper.and(w -> w.like("title", keyword).or().like("content", keyword));
+            wrapper.and(w -> w.like("a.title", keyword).or().like("a.content", keyword));
         }
 
         if (statusFilter != null) {
-            wrapper.eq("status", statusFilter);
+            wrapper.eq("a.status", statusFilter);
         }
 
         if (startTime != null) {
-            wrapper.ge("create_time", startTime);
+            wrapper.ge("a.create_time", startTime);
         }
         if (endTime != null) {
-            wrapper.le("create_time", endTime);
+            wrapper.le("a.create_time", endTime);
         }
 
-        wrapper.orderByDesc("create_time");
+        wrapper.orderByDesc("a.create_time");
+
+        return baseMapper.selectArticleVOPage(pageParam, wrapper);
+    }
+
+    // ========== 按用户ID查询商品（远程版本新增） ==========
+
+    @Override
+    public IPage<ArticleVO> getArticleVOPageByUserId(Integer page, Integer size, String keyword,
+                                                     Integer statusFilter, LocalDateTime startTime,
+                                                     LocalDateTime endTime, Integer userId) {
+        Page<ArticleVO> pageParam = new Page<>(page, size);
+        QueryWrapper<Article> wrapper = new QueryWrapper<>();
+
+        // ========== 关键：按用户ID过滤 ==========
+        wrapper.eq("a.user_id", userId);
+
+        if (StrUtil.isNotBlank(keyword)) {
+            wrapper.and(w -> w.like("a.title", keyword).or().like("a.content", keyword));
+        }
+
+        if (statusFilter != null) {
+            wrapper.eq("a.status", statusFilter);
+        }
+
+        if (startTime != null) {
+            wrapper.ge("a.create_time", startTime);
+        }
+        if (endTime != null) {
+            wrapper.le("a.create_time", endTime);
+        }
+
+        wrapper.orderByDesc("a.create_time");
 
         return baseMapper.selectArticleVOPage(pageParam, wrapper);
     }
@@ -355,7 +401,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         wrapper.eq("a.status", ArticleStatus.PUBLISHED);
 
         // ========== 只查询在售商品 ==========
-        wrapper.eq("a.product_status", 0);  // 0=在售
+        wrapper.eq("a.product_status", 0); // 0=在售
 
         // 发布时间不超过当前时间
         wrapper.le("a.published_at", LocalDateTime.now());
@@ -421,10 +467,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional
     public void saveArticleTags(Integer articleId, List<Integer> tagIds) {
+        System.out.println("========== saveArticleTags DEBUG ==========");
+        System.out.println("商品ID: " + articleId);
+        System.out.println("标签IDs: " + tagIds);
+
         // 先删除旧的关联
         LambdaQueryWrapper<ArticleTag> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ArticleTag::getArticleId, articleId);
-        articleTagMapper.delete(wrapper);
+        int deleteCount = articleTagMapper.delete(wrapper);
+        System.out.println("删除旧关联数量: " + deleteCount);
 
         // 插入新的关联
         if (tagIds != null && !tagIds.isEmpty()) {
@@ -433,8 +484,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 articleTag.setArticleId(articleId);
                 articleTag.setTagId(tagId);
                 articleTagMapper.insert(articleTag);
+                System.out.println("插入新关联: article_id=" + articleId + ", tag_id=" + tagId);
             }
         }
+        System.out.println("========== saveArticleTags 完成 ==========");
     }
 
     // ========== 图片上传方法 ==========
@@ -472,14 +525,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     // ========== 私有辅助方法 ==========
 
     private String getSummary(String content) {
-        if (content == null) return "";
+        if (content == null)
+            return "";
         return content.length() > 200 ? content.substring(0, 200) : content;
     }
 
     private String getCurrentUsername() {
         try {
-            org.springframework.security.core.Authentication auth =
-                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated()) {
                 return auth.getName();
             }
@@ -495,38 +549,45 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public List<ArticleVO> getArticlesByConditions(String keyword, Integer schoolId, Integer categoryId) {
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
-        // 只查询已发布且在售的商品
         wrapper.eq("a.status", ArticleStatus.PUBLISHED);
         wrapper.eq("a.product_status", 0);
+        wrapper.le("a.published_at", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
 
-        // 发布时间不超过当前时间
-        wrapper.le("a.published_at", LocalDateTime.now());
-
-        // 关键词搜索（标题、内容）
         if (StrUtil.isNotBlank(keyword)) {
             wrapper.and(w -> w.like("a.title", keyword)
                     .or()
                     .like("a.content", keyword));
         }
 
-        // 学校筛选
         if (schoolId != null && schoolId > 0) {
             wrapper.eq("a.school_id", schoolId);
         }
 
-        // 分类筛选
         if (categoryId != null && categoryId > 0) {
             wrapper.eq("a.category_id", categoryId);
         }
 
-        // 排序：置顶降序、发布时间降序
         wrapper.orderByDesc("a.is_top")
                 .orderByDesc("a.published_at");
 
         Page<ArticleVO> page = new Page<>(1, 100);
         IPage<ArticleVO> result = baseMapper.selectArticleVOPage(page, wrapper);
+        List<ArticleVO> articles = result.getRecords();
 
-        return result.getRecords();
+        for (ArticleVO articleVO : articles) {
+            List<Integer> tagIds = articleTagMapper.selectTagIdsByArticleId(articleVO.getId());
+            if (tagIds != null && !tagIds.isEmpty()) {
+                LambdaQueryWrapper<com.campus.trade.entity.Tag> tagWrapper = new LambdaQueryWrapper<>();
+                tagWrapper.in(com.campus.trade.entity.Tag::getId, tagIds);
+                List<com.campus.trade.entity.Tag> tags = tagMapper.selectList(tagWrapper);
+                List<String> tagNames = tags.stream()
+                        .map(com.campus.trade.entity.Tag::getName)
+                        .toList();
+                articleVO.setTagNames(tagNames);
+            }
+        }
+
+        return articles;
     }
 
     // ========== 库存管理方法 ==========
@@ -543,7 +604,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         // 2. 校验库存是否充足
         if (article.getStock() < quantity) {
-            System.out.println("【库存扣减】库存不足 - articleId: " + articleId + ", 当前库存: " + article.getStock() + ", 需要: " + quantity);
+            System.out.println(
+                    "【库存扣减】库存不足 - articleId: " + articleId + ", 当前库存: " + article.getStock() + ", 需要: " + quantity);
             return false;
         }
 
@@ -553,7 +615,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         // 4. 库存为0时自动下架
         if (article.getStock() == 0) {
-            article.setProductStatus(2);  // 2=已下架
+            article.setProductStatus(2); // 2=已下架
             System.out.println("【库存扣减】库存为0，商品已自动下架 - articleId: " + articleId);
         }
 

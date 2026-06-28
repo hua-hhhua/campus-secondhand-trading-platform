@@ -366,13 +366,13 @@
 
         <div class="form-group">
             <label for="startTime">注册时间起始：</label>
-            <input type="date" id="startTime" name="startDate" class="form-control"
+            <input type="date" id="startTime" name="startTime" class="form-control"
                    th:value="${startTime}">
         </div>
 
         <div class="form-group">
             <label for="endTime">注册时间截止：</label>
-            <input type="date" id="endTime" name="endDate" class="form-control"
+            <input type="date" id="endTime" name="endTime" class="form-control"
                    th:value="${endTime}">
             <span id="dateError" class="error-message"></span>
         </div>
@@ -396,7 +396,7 @@
             <thead>
             <tr>
                 <th><input type="checkbox" id="selectAll"></th>
-                <th>ID</th>
+
                 <th>头像</th>
                 <th>用户名</th>
                 <th>昵称</th>
@@ -459,7 +459,7 @@
     <div class="pagination" th:if="${userPage} and ${userPage.pages > 1}">
         <!-- 上一页 -->
         <a th:if="${userPage.hasPrevious}"
-           th:href="@{/admin/users(page=${userPage.current - 1}, size=${userPage.size}, keyword=${keyword}, startDate=${startTime}, endDate=${endTime})}">
+           th:href="@{/admin/users(pageNum=${userPage.current - 1}, pageSize=${userPage.size}, keyword=${keyword}, startTime=${startTime}, endTime=${endTime})}">
             上一页
         </a>
         <span th:unless="${userPage.hasPrevious}" class="disabled">上一页</span>
@@ -468,12 +468,12 @@
         <a th:each="i : ${#numbers.sequence(1, userPage.pages)}"
            th:classappend="${i == userPage.current} ? 'active'"
            th:text="${i}"
-           th:href="@{/admin/users(page=${i}, size=${userPage.size}, keyword=${keyword}, startDate=${startTime}, endDate=${endTime})}">
+           th:href="@{/admin/users(pageNum=${i}, pageSize=${userPage.size}, keyword=${keyword}, startTime=${startTime}, endTime=${endTime})}">
         </a>
 
         <!-- 下一页 -->
         <a th:if="${userPage.hasNext}"
-           th:href="@{/admin/users(page=${userPage.current + 1}, size=${userPage.size}, keyword=${keyword}, startDate=${startTime}, endDate=${endTime})}">
+           th:href="@{/admin/users(pageNum=${userPage.current + 1}, pageSize=${userPage.size}, keyword=${keyword}, startTime=${startTime}, endTime=${endTime})}">
             下一页
         </a>
         <span th:unless="${userPage.hasNext}" class="disabled">下一页</span>

@@ -100,10 +100,10 @@ NEW_FILE_CODE
     </div>
 
     <div class="pagination" th:if="${tagPage} and ${tagPage.pages > 1}">
-        <a th:if="${tagPage.hasPrevious}" th:href="@{/admin/tags(page=${tagPage.current - 1}, size=${tagPage.size}, keyword=${keyword})}">上一页</a>
+        <a th:if="${tagPage.hasPrevious}" th:href="@{/admin/tags(pageNum=${tagPage.current - 1}, pageSize=${tagPage.size}, keyword=${keyword})}">上一页</a>
         <span th:unless="${tagPage.hasPrevious}" class="disabled">上一页</span>
-        <a th:each="i : ${#numbers.sequence(1, tagPage.pages)}" th:classappend="${i == tagPage.current} ? 'active'" th:text="${i}" th:href="@{/admin/tags(page=${i}, size=${tagPage.size}, keyword=${keyword})}"></a>
-        <a th:if="${tagPage.hasNext}" th:href="@{/admin/tags(page=${tagPage.current + 1}, size=${tagPage.size}, keyword=${keyword})}">下一页</a>
+        <a th:each="i : ${#numbers.sequence(1, tagPage.pages)}" th:classappend="${i == tagPage.current} ? 'active'" th:text="${i}" th:href="@{/admin/tags(pageNum=${i}, pageSize=${tagPage.size}, keyword=${keyword})}"></a>
+        <a th:if="${tagPage.hasNext}" th:href="@{/admin/tags(pageNum=${tagPage.current + 1}, pageSize=${tagPage.size}, keyword=${keyword})}">下一页</a>
         <span th:unless="${tagPage.hasNext}" class="disabled">下一页</span>
     </div>
 </div>

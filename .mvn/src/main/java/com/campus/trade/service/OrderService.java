@@ -2,7 +2,7 @@ package com.campus.trade.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.campus.trade.entity.Order;
-import com.campus.trade.entity.OrderReview;
+
 import java.util.List;
 import java.util.Map;
 

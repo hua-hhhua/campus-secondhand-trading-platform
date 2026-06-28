@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,6 +32,13 @@ public class GlobalExceptionHandler {
         model.addAttribute("errorDetail", e.getRequestURL());
         return "error/404";
     }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public String handleNoResourceFoundException(NoResourceFoundException e, Model model) {
+        logger.debug("静态资源未找到: {}", e.getResourcePath());
+        return null;
+    }
+
 
     @ExceptionHandler(Exception.class)
     public String handleException(Exception e, Model model) {

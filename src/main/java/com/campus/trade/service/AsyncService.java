@@ -6,8 +6,12 @@ import com.campus.trade.service.ArticleNotificationProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class AsyncService {
@@ -16,6 +20,12 @@ public class AsyncService {
 
     @Autowired
     private ArticleNotificationProducer articleNotificationProducer;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Value("${blog.notification.emails:admin@example.com}")
+    private String defaultNotificationEmails;
 
     /**
      * 异步记录操作日志（耗时2秒）
@@ -66,7 +76,10 @@ public class AsyncService {
     public void asyncSendArticleNotification(Article article, String type) {
         try {
             logger.info("【异步任务开始】异步发送文章通知 - 文章ID: {}, 类型: {}, 开始时间: {}", article.getId(), type, System.currentTimeMillis());
-            Thread.sleep(3000);  // 模拟耗时3秒
+
+            if ("publish".equals(type)) {
+                sendNotificationEmailsDirectly(article);
+            }
 
             ArticleNotificationMessage notification = new ArticleNotificationMessage();
             notification.setArticleId(article.getId());
@@ -79,6 +92,35 @@ public class AsyncService {
             logger.info("【异步任务完成】异步发送文章通知 - 文章ID: {}, 类型: {}", article.getId(), type);
         } catch (Exception e) {
             logger.error("异步发送文章通知失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 直接发送邮件通知（不依赖 RabbitMQ）
+     */
+    private void sendNotificationEmailsDirectly(Article article) {
+        try {
+            String[] emails = defaultNotificationEmails.split(",");
+            List<String> recipients = Arrays.asList(emails);
+            String author = article.getUserId() != null ? "用户ID:" + article.getUserId() : "匿名用户";
+
+            for (String recipient : recipients) {
+                if (recipient != null && !recipient.trim().isEmpty()) {
+                    try {
+                        emailService.sendArticleNotificationEmail(
+                                recipient.trim(),
+                                article.getTitle(),
+                                getSummary(article.getContent()),
+                                author
+                        );
+                        logger.info("✅ 邮件已直接发送至: {}", recipient);
+                    } catch (Exception e) {
+                        logger.error("❌ 发送至 {} 失败: {}", recipient, e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("发送邮件通知失败: {}", e.getMessage());
         }
     }
 

@@ -4,12 +4,14 @@ import com.campus.trade.entity.Article;
 import com.campus.trade.entity.Category;
 import com.campus.trade.entity.Comment;
 import com.campus.trade.entity.School;
+import com.campus.trade.entity.Tag;
 import com.campus.trade.entity.User;
 import com.campus.trade.service.ArticleService;
 import com.campus.trade.service.CategoryService;
 import com.campus.trade.service.CommentService;
 import com.campus.trade.service.FavoriteService;
 import com.campus.trade.service.SchoolService;
+import com.campus.trade.service.TagService;
 import com.campus.trade.service.UserService;
 import com.campus.trade.service.BrowseHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,9 @@ public class ArticleDetailController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private TagService tagService;
 
     @Autowired
     private FavoriteService favoriteService;
@@ -126,6 +131,14 @@ public class ArticleDetailController {
             }
         }
 
+        // 获取标签名称列表
+        List<Integer> tagIds = articleService.getTagIdsByArticleId(id);
+        List<String> tagNames = null;
+        if (tagIds != null && !tagIds.isEmpty()) {
+            List<Tag> tags = tagService.listByIds(tagIds);
+            tagNames = tags.stream().map(Tag::getName).toList();
+        }
+
         // 获取评论列表（草稿不显示评论）
         List<Comment> comments = null;
         if (article.getStatus() != 0) {
@@ -162,6 +175,7 @@ public class ArticleDetailController {
         model.addAttribute("authorName", author != null ? author.getNickname() : "未知");
         model.addAttribute("schoolName", schoolName);
         model.addAttribute("categoryName", categoryName);
+        model.addAttribute("tagNames", tagNames);
         model.addAttribute("isFavorited", isFavorited);
 
         return "article-detail";

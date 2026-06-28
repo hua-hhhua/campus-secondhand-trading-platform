@@ -71,6 +71,10 @@ public class ShoppingCartController {
                 result.put("cartCount", cartCount);
             }
             
+        } catch (RuntimeException e) {
+            logger.error("加入购物车失败：{}", e.getMessage());
+            result.put("success", false);
+            result.put("message", e.getMessage());
         } catch (Exception e) {
             logger.error("加入购物车异常：", e);
             result.put("success", false);

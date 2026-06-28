@@ -11,8 +11,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -44,11 +47,13 @@ public class AdminController {
     private CommentService commentService;
 
     @Autowired
-    private com.campus.trade.mapper.OrderReviewMapper orderReviewMapper;
+    private AsyncService asyncService;
 
+    @Autowired
+    private EmailService emailService;
 
     // ============================================================
-    //  1. 订单管理
+    // 1. 订单管理
     // ============================================================
 
     @GetMapping("/orders")
@@ -66,8 +71,7 @@ public class AdminController {
                         .or()
                         .like(keyword != null && !keyword.isEmpty(), "seller_name", keyword)
                         .eq(statusFilter != null, "status", statusFilter)
-                        .orderByDesc("created_at")
-        );
+                        .orderByDesc("created_at"));
         model.addAttribute("orderPage", orderPage);
         model.addAttribute("keyword", keyword);
         model.addAttribute("statusFilter", statusFilter);
@@ -105,13 +109,15 @@ public class AdminController {
     }
 
     // ============================================================
-    //  2. 用户管理
+    // 2. 用户管理
     // ============================================================
 
     @GetMapping("/users")
     public String userManage(@RequestParam(defaultValue = "1") Integer pageNum,
                              @RequestParam(defaultValue = "10") Integer pageSize,
                              @RequestParam(required = false) String keyword,
+                             @RequestParam(required = false) String startTime,
+                             @RequestParam(required = false) String endTime,
                              Model model) {
         Page<User> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
@@ -124,10 +130,28 @@ public class AdminController {
                     .or()
                     .like(User::getPhone, keyword);
         }
+        if (startTime != null && !startTime.isEmpty()) {
+            try {
+                LocalDateTime start = LocalDateTime.parse(startTime + "T00:00:00");
+                wrapper.ge(User::getCreatedAt, start);
+            } catch (Exception e) {
+                // 忽略格式错误
+            }
+        }
+        if (endTime != null && !endTime.isEmpty()) {
+            try {
+                LocalDateTime end = LocalDateTime.parse(endTime + "T23:59:59");
+                wrapper.le(User::getCreatedAt, end);
+            } catch (Exception e) {
+                // 忽略格式错误
+            }
+        }
         wrapper.orderByDesc(User::getCreatedAt);
         IPage<User> userPage = userService.page(page, wrapper);
         model.addAttribute("userPage", userPage);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("startTime", startTime);
+        model.addAttribute("endTime", endTime);
         return "admin/user-manage";
     }
 
@@ -183,7 +207,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  3. 文章管理（使用联表查询）
+    // 3. 商品管理（文章管理）- 合并版本，支持权限控制
     // ============================================================
 
     @GetMapping("/articles")
@@ -194,27 +218,33 @@ public class AdminController {
                                 @RequestParam(required = false) Integer categoryId,
                                 @RequestParam(required = false) String startTime,
                                 @RequestParam(required = false) String endTime,
+                                HttpSession session,
                                 Model model) {
+        User currentUser = (User) session.getAttribute("currentUser");
         Page<Article> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Article> wrapper = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+
+        // 非管理员只能看到自己的商品
+        if (currentUser != null && currentUser.getRole() != 1) {
+            wrapper.eq("a.user_id", currentUser.getId());
+        }
 
         if (keyword != null && !keyword.isEmpty()) {
-            wrapper.like(Article::getTitle, keyword)
+            wrapper.like("a.title", keyword)
                     .or()
-                    .like(Article::getContent, keyword);
+                    .like("a.content", keyword);
         }
         if (statusFilter != null) {
-            wrapper.eq(Article::getStatus, statusFilter);
+            wrapper.eq("a.status", statusFilter);
         }
         if (categoryId != null) {
-            wrapper.eq(Article::getCategoryId, categoryId);
+            wrapper.eq("a.category_id", categoryId);
         }
 
-        // 时间范围查询
         if (startTime != null && !startTime.isEmpty()) {
             try {
                 LocalDateTime start = LocalDateTime.parse(startTime + "T00:00:00");
-                wrapper.ge(Article::getCreateTime, start);
+                wrapper.ge("a.create_time", start);
             } catch (Exception e) {
                 // 忽略格式错误
             }
@@ -222,16 +252,15 @@ public class AdminController {
         if (endTime != null && !endTime.isEmpty()) {
             try {
                 LocalDateTime end = LocalDateTime.parse(endTime + "T23:59:59");
-                wrapper.le(Article::getCreateTime, end);
+                wrapper.le("a.create_time", end);
             } catch (Exception e) {
                 // 忽略格式错误
             }
         }
 
-        wrapper.orderByDesc(Article::getIsTop)
-                .orderByDesc(Article::getCreateTime);
+        wrapper.orderByDesc("a.is_top")
+                .orderByDesc("a.create_time");
 
-        // 使用联表查询，直接填充 authorName 和 categoryName
         IPage<Article> articlePage = articleMapper.selectArticlePageWithInfo(page, wrapper);
 
         model.addAttribute("articlePage", articlePage);
@@ -245,51 +274,196 @@ public class AdminController {
     }
 
     @GetMapping("/articles/form")
-    public String articleForm(@RequestParam(required = false) Integer id, Model model) {
+    public String articleForm(@RequestParam(required = false) Integer id, HttpSession session, Model model) {
+        User currentUser = (User) session.getAttribute("currentUser");
         Article article;
         boolean isEdit = false;
+
         if (id != null) {
             article = articleService.getById(id);
             isEdit = true;
+            // 检查权限：管理员或本人
+            if (article != null && currentUser != null
+                    && currentUser.getRole() != 1
+                    && !article.getUserId().equals(currentUser.getId())) {
+                return "redirect:/admin/articles";
+            }
+            List<Integer> tagIds = articleService.getTagIdsByArticleId(id);
+            article.setTagIds(tagIds);
         } else {
             article = new Article();
         }
+
         model.addAttribute("article", article);
         model.addAttribute("isEdit", isEdit);
+        model.addAttribute("isAdmin", true);
         model.addAttribute("categories", categoryService.list());
         model.addAttribute("schools", schoolService.list());
+        model.addAttribute("tags", tagService.list());
         return "admin/article-form";
     }
 
     @PostMapping("/articles/save")
-    public String saveArticle(Article article) {
+    public String saveArticle(Article article,
+                              @RequestParam(required = false) Integer status,
+                              @RequestParam(required = false) String scheduledTime,
+                              @RequestParam(required = false) Integer sendEmail,
+                              @RequestParam(required = false) List<Integer> tagIds,
+                              HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+
+        System.out.println("========== 编辑商品 DEBUG ==========");
+        System.out.println("商品ID: " + article.getId());
+        System.out.println("接收到的标签IDs: " + tagIds);
+
+        ZoneId shanghaiZone = ZoneId.of("Asia/Shanghai");
+        LocalDateTime now = LocalDateTime.now(shanghaiZone);
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
+        article.setUserId(currentUser.getId());
+
         if (article.getId() == null) {
-            article.setStatus(1);
+            // 新增文章
             article.setViewCount(0);
             article.setIsTop(0);
             article.setAllowComment(1);
-            article.setSendEmail(0);
-            article.setCreateTime(LocalDateTime.now());
-            article.setUpdateTime(LocalDateTime.now());
+            article.setSendEmail(sendEmail != null ? sendEmail : 0);
+            article.setCreateTime(now);
+            article.setUpdateTime(now);
+
+            if (status != null) {
+                article.setStatus(status);
+            } else if (article.getStatus() == null) {
+                article.setStatus(1);
+            }
+
+            // 处理商品状态
+            if (article.getStatus() == 0) {
+                article.setProductStatus(2);
+                article.setPublishedAt(null);
+            } else if (article.getStatus() == 2) {
+                article.setProductStatus(2);
+                if (scheduledTime != null && !scheduledTime.isEmpty()) {
+                    try {
+                        LocalDateTime parsedTime = LocalDateTime.parse(scheduledTime, inputFormatter);
+                        article.setPublishedAt(parsedTime.atZone(shanghaiZone).toLocalDateTime());
+                    } catch (Exception e) {
+                        article.setPublishedAt(now.plusHours(1));
+                    }
+                } else {
+                    article.setPublishedAt(now.plusHours(1));
+                }
+            } else {
+                article.setProductStatus(0);
+                if (article.getPublishedAt() == null) {
+                    article.setPublishedAt(now);
+                }
+            }
+
             articleService.save(article);
+
+            if (tagIds != null && !tagIds.isEmpty()) {
+                articleService.saveArticleTags(article.getId(), tagIds);
+            }
+
+            if (article.getStatus() == 1 && article.getSendEmail() != null && article.getSendEmail() == 1) {
+                asyncService.asyncSendArticleNotification(article, "publish");
+                System.out.println("【邮件通知】立即发布文章已触发邮件发送 - ID: " + article.getId());
+            }
         } else {
-            article.setUpdateTime(LocalDateTime.now());
+            // 更新文章
+            article.setUpdateTime(now);
+            Article existing = articleService.getById(article.getId());
+            if (existing != null) {
+                // 权限检查
+                if (currentUser.getRole() != 1 && !existing.getUserId().equals(currentUser.getId())) {
+                    return "redirect:/admin/articles";
+                }
+
+                article.setUserId(existing.getUserId());
+
+                if (status != null) {
+                    article.setStatus(status);
+                } else if (article.getStatus() == null) {
+                    article.setStatus(existing.getStatus());
+                }
+
+                if (sendEmail != null) {
+                    article.setSendEmail(sendEmail);
+                } else if (article.getSendEmail() == null) {
+                    article.setSendEmail(existing.getSendEmail());
+                }
+
+                if (article.getStatus() == 0) {
+                    article.setProductStatus(2);
+                    article.setPublishedAt(null);
+                } else if (article.getStatus() == 2) {
+                    article.setProductStatus(2);
+                    if (scheduledTime != null && !scheduledTime.isEmpty()) {
+                        try {
+                            LocalDateTime parsedTime = LocalDateTime.parse(scheduledTime, inputFormatter);
+                            article.setPublishedAt(parsedTime.atZone(shanghaiZone).toLocalDateTime());
+                        } catch (Exception e) {
+                            if (existing.getPublishedAt() != null) {
+                                article.setPublishedAt(existing.getPublishedAt());
+                            } else {
+                                article.setPublishedAt(now.plusHours(1));
+                            }
+                        }
+                    } else {
+                        if (existing.getPublishedAt() != null) {
+                            article.setPublishedAt(existing.getPublishedAt());
+                        } else {
+                            article.setPublishedAt(now.plusHours(1));
+                        }
+                    }
+                } else {
+                    if (existing.getProductStatus() == 2) {
+                        article.setProductStatus(0);
+                    } else {
+                        article.setProductStatus(existing.getProductStatus());
+                    }
+                    if (article.getPublishedAt() == null) {
+                        article.setPublishedAt(existing.getPublishedAt() != null ? existing.getPublishedAt() : now);
+                    }
+                }
+            }
             articleService.updateById(article);
+
+            if (tagIds == null) {
+                tagIds = new ArrayList<>();
+            }
+            articleService.saveArticleTags(article.getId(), tagIds);
         }
         return "redirect:/admin/articles";
     }
 
     @GetMapping("/articles/delete/{id}")
-    public String deleteArticle(@PathVariable Integer id) {
-        articleService.removeById(id);
+    public String deleteArticle(@PathVariable Integer id, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        Article article = articleService.getById(id);
+
+        if (article != null && currentUser != null
+                && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+            articleService.removeById(id);
+        }
         return "redirect:/admin/articles";
     }
 
     @GetMapping("/articles/batchDelete")
-    public String batchDeleteArticles(@RequestParam String ids) {
+    public String batchDeleteArticles(@RequestParam String ids, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
         String[] idArray = ids.split(",");
         for (String id : idArray) {
-            articleService.removeById(Integer.parseInt(id));
+            Article article = articleService.getById(Integer.parseInt(id));
+            if (article != null && currentUser != null
+                    && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+                articleService.removeById(Integer.parseInt(id));
+            }
         }
         return "redirect:/admin/articles";
     }
@@ -304,8 +478,44 @@ public class AdminController {
         return articleService.updateById(article);
     }
 
+    @GetMapping("/articles/off-shelf/{id}")
+    public String offShelf(@PathVariable Integer id, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+
+        Article article = articleService.getById(id);
+
+        if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+            article.setProductStatus(2);
+            article.setUpdateTime(LocalDateTime.now());
+            articleService.updateById(article);
+        }
+        return "redirect:/admin/articles";
+    }
+
+    @GetMapping("/articles/on-shelf/{id}")
+    public String onShelf(@PathVariable Integer id, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null) {
+            return "redirect:/toLoginPage";
+        }
+
+        Article article = articleService.getById(id);
+
+        if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+            article.setProductStatus(0);
+            article.setUpdateTime(LocalDateTime.now());
+            articleService.updateById(article);
+        }
+        return "redirect:/admin/articles";
+    }
+
     // ============================================================
-    //  4. 分类管理
+    // 4. 分类管理
     // ============================================================
 
     @GetMapping("/categories")
@@ -346,7 +556,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  5. 学校管理
+    // 5. 学校管理
     // ============================================================
 
     @GetMapping("/schools")
@@ -383,8 +593,9 @@ public class AdminController {
     public boolean deleteSchools(@RequestBody List<Integer> ids) {
         return schoolService.deleteSchools(ids);
     }
+
     // ============================================================
-    //  6. 标签管理
+    // 6. 标签管理
     // ============================================================
 
     @GetMapping("/tags")
@@ -423,7 +634,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  7. 评论管理
+    // 7. 评论管理
     // ============================================================
 
     @GetMapping("/comment-manage")
@@ -460,49 +671,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  8. 评价管理
-    // ============================================================
-
-    @GetMapping("/review-manage")
-    public String reviewManage(@RequestParam(defaultValue = "1") Integer pageNum,
-                               @RequestParam(defaultValue = "10") Integer pageSize,
-                               @RequestParam(required = false) Integer ratingFilter,
-                               Model model) {
-        Page<OrderReview> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<OrderReview> wrapper = new LambdaQueryWrapper<>();
-
-        if (ratingFilter != null && ratingFilter > 0) {
-            wrapper.eq(OrderReview::getRating, ratingFilter);
-        }
-
-        wrapper.orderByDesc(OrderReview::getCreatedAt);
-        IPage<OrderReview> reviewPage = orderReviewMapper.selectPage(page, wrapper);
-
-        model.addAttribute("reviewPage", reviewPage);
-        model.addAttribute("ratingFilter", ratingFilter);
-        return "admin/review-manage";
-    }
-
-    @GetMapping("/review/delete/{id}")
-    @ResponseBody
-    public boolean deleteReview(@PathVariable Long id) {
-        return orderReviewMapper.deleteById(id) > 0;
-    }
-
-    @PostMapping("/review/reply")
-    @ResponseBody
-    public boolean replyReview(@RequestParam Long id, @RequestParam String reply) {
-        OrderReview review = orderReviewMapper.selectById(id);
-        if (review != null) {
-            review.setReply(reply);
-            review.setReplyTime(LocalDateTime.now());
-            return orderReviewMapper.updateById(review) > 0;
-        }
-        return false;
-    }
-
-    // ============================================================
-    //  9. 仪表盘
+    // 8. 仪表盘
     // ============================================================
 
     @GetMapping("/dashboard")
@@ -517,5 +686,43 @@ public class AdminController {
         model.addAttribute("orderCount", orderCount);
         model.addAttribute("commentCount", commentCount);
         return "admin/dashboard";
+    }
+
+    @GetMapping("/test-email")
+    public String testEmail(Model model) {
+        try {
+            System.out.println("【测试邮件】开始发送测试邮件...");
+            emailService.sendArticleNotificationEmail(
+                    "1538292542@qq.com",
+                    "测试邮件标题",
+                    "这是一封测试邮件，用于验证邮件发送功能是否正常工作。",
+                    "测试用户");
+            System.out.println("【测试邮件】发送成功！");
+            model.addAttribute("message", "邮件发送成功！请检查收件箱。");
+        } catch (Exception e) {
+            System.out.println("【测试邮件】发送失败: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("message", "邮件发送失败: " + e.getMessage());
+        }
+        return "admin/dashboard";
+    }
+
+    @GetMapping("/api/test-email")
+    @ResponseBody
+    public String testEmailApi() {
+        try {
+            System.out.println("【测试邮件API】开始发送测试邮件...");
+            emailService.sendArticleNotificationEmail(
+                    "1538292542@qq.com",
+                    "测试邮件标题",
+                    "这是一封测试邮件，用于验证邮件发送功能是否正常工作。",
+                    "测试用户");
+            System.out.println("【测试邮件API】发送成功！");
+            return "邮件发送成功！请检查收件箱。";
+        } catch (Exception e) {
+            System.out.println("【测试邮件API】发送失败: " + e.getMessage());
+            e.printStackTrace();
+            return "邮件发送失败: " + e.getMessage();
+        }
     }
 }

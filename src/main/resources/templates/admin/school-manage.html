@@ -73,6 +73,7 @@
             <thead>
             <tr>
                 <th><input type="checkbox" id="selectAll"></th>
+                <th>ID</th>
                 <th>学校名称</th>
                 <th>所在城市</th>
                 <th>创建时间</th>
@@ -83,6 +84,7 @@
             <tbody>
             <tr th:each="school : ${schoolPage.records}">
                 <td><input type="checkbox" class="itemCheckbox" th:value="${school.id}"></td>
+                <td th:text="${school.id}">?</td>
                 <td th:text="${school.name}" style="font-weight: 500;">?</td>
                 <td th:text="${school.city}">?</td>
                 <td th:text="${#temporals.format(school.createTime, 'yyyy-MM-dd HH:mm:ss')}">?</td>
@@ -98,10 +100,10 @@
     </div>
 
     <div class="pagination" th:if="${schoolPage} and ${schoolPage.pages > 1}">
-        <a th:if="${schoolPage.hasPrevious}" th:href="@{/admin/schools(page=${schoolPage.current - 1}, size=${schoolPage.size}, keyword=${keyword})}">上一页</a>
+        <a th:if="${schoolPage.hasPrevious}" th:href="@{/admin/schools(pageNum=${schoolPage.current - 1}, pageSize=${schoolPage.size}, keyword=${keyword})}">上一页</a>
         <span th:unless="${schoolPage.hasPrevious}" class="disabled">上一页</span>
-        <a th:each="i : ${#numbers.sequence(1, schoolPage.pages)}" th:classappend="${i == schoolPage.current} ? 'active'" th:text="${i}" th:href="@{/admin/schools(page=${i}, size=${schoolPage.size}, keyword=${keyword})}"></a>
-        <a th:if="${schoolPage.hasNext}" th:href="@{/admin/schools(page=${schoolPage.current + 1}, size=${schoolPage.size}, keyword=${keyword})}">下一页</a>
+        <a th:each="i : ${#numbers.sequence(1, schoolPage.pages)}" th:classappend="${i == schoolPage.current} ? 'active'" th:text="${i}" th:href="@{/admin/schools(pageNum=${i}, pageSize=${schoolPage.size}, keyword=${keyword})}"></a>
+        <a th:if="${schoolPage.hasNext}" th:href="@{/admin/schools(pageNum=${schoolPage.current + 1}, pageSize=${schoolPage.size}, keyword=${keyword})}">下一页</a>
         <span th:unless="${schoolPage.hasNext}" class="disabled">下一页</span>
     </div>
 </div>

@@ -236,7 +236,6 @@
             <thead>
             <tr>
                 <th><input type="checkbox" id="selectAll"></th>
-                <th>ID</th>
                 <th>评论内容</th>
                 <th>评论用户</th>
                 <th>文章ID</th>
@@ -250,7 +249,6 @@
             <tbody>
             <tr th:each="comment : ${commentPage.records}">
                 <td><input type="checkbox" class="itemCheckbox" th:value="${comment.id}"></td>
-                <td th:text="${comment.id}">?</td>
                 <td>
                     <div class="content-text" th:text="${comment.content}" th:title="${comment.content}">?</div>
                 </td>
@@ -278,17 +276,17 @@
 
     <div class="pagination" th:if="${commentPage} and ${commentPage.pages > 1}">
         <a th:if="${commentPage.hasPrevious}"
-           th:href="@{/admin/comment-manage(page=${commentPage.current - 1}, size=${commentPage.size}, status=${statusFilter})}">上一页</a>
+           th:href="@{/admin/comment-manage(pageNum=${commentPage.current - 1}, pageSize=${commentPage.size}, statusFilter=${statusFilter})}">上一页</a>
         <span th:unless="${commentPage.hasPrevious}" class="disabled">上一页</span>
 
         <span th:each="i : ${#numbers.sequence(1, commentPage.pages)}"
               th:classappend="${i == commentPage.current} ? 'active'"
               th:text="${i}"
               th:if="${i == 1 or i == commentPage.pages or (i >= commentPage.current - 2 and i <= commentPage.current + 2)}"
-              th:href="@{/admin/comment-manage(page=${i}, size=${commentPage.size}, status=${statusFilter})}"></span>
+              th:href="@{/admin/comment-manage(pageNum=${i}, pageSize=${commentPage.size}, statusFilter=${statusFilter})}"></span>
 
         <a th:if="${commentPage.hasNext}"
-           th:href="@{/admin/comment-manage(page=${commentPage.current + 1}, size=${commentPage.size}, status=${statusFilter})}">下一页</a>
+           th:href="@{/admin/comment-manage(pageNum=${commentPage.current + 1}, pageSize=${commentPage.size}, statusFilter=${statusFilter})}">下一页</a>
         <span th:unless="${commentPage.hasNext}" class="disabled">下一页</span>
     </div>
 </div>
@@ -306,7 +304,7 @@
     function filterByStatus() {
         var status = document.getElementById('statusFilter').value;
         if (status) {
-            window.location.href = '/admin/comment-manage?status=' + status;
+            window.location.href = '/admin/comment-manage?statusFilter=' + status;
         } else {
             window.location.href = '/admin/comment-manage';
         }

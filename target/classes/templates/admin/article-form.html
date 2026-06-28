@@ -1,493 +1,652 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>发布商品</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-    .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-    .header h1 { color: #333; font-size: 24px; }
-    .header a { color: #667eea; text-decoration: none; }
-    .form-group { margin-bottom: 18px; }
-    .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #555; font-size: 14px; }
-    .form-group label .required { color: #f56c6c; }
-    .form-group input, .form-group select, .form-group textarea {
-      width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;
-    }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-      outline: none; border-color: #667eea;
-    }
-    .form-group textarea { min-height: 150px; resize: vertical; }
-    .form-row { display: flex; gap: 20px; }
-    .form-row .form-group { flex: 1; }
-    .btn { padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-    .btn-primary { background: #667eea; color: white; }
-    .btn-primary:hover { background: #5a6fd6; }
-    .btn-secondary { background: #909399; color: white; }
-    .btn-secondary:hover { background: #a6a9ad; }
-    .btn-group { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
-    .checkbox-group { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-    .checkbox-group label { display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer; }
-    .checkbox-group input[type="checkbox"] { width: auto; cursor: pointer; }
-    .help-text { font-size: 12px; color: #999; margin-top: 4px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布商品</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .tag-group { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 5px; }
-    .tag-group .tag-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 16px;
-      background: #f0f2f5;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 14px;
-      user-select: none;
-      border: 2px solid transparent;
-    }
-    .tag-group .tag-item:hover { background: #e0e4ea; }
-    .tag-group .tag-item.selected {
-      background: #667eea;
-      color: white;
-      border-color: #667eea;
-    }
-    .tag-group .tag-item input[type="checkbox"] { display: none; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
 
-    .upload-area { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-    .upload-area input[type="file"] {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      flex: 1;
-      min-width: 150px;
-      cursor: pointer;
-    }
-    .upload-area .btn-upload {
-      padding: 8px 20px;
-      background: #67c23a;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .upload-area .btn-upload:hover { background: #5daf34; }
-    .image-preview { margin-top: 10px; display: none; }
-    .image-preview img { max-width: 200px; max-height: 200px; border-radius: 6px; border: 1px solid #ddd; }
-    .image-preview .remove-btn {
-      padding: 4px 12px;
-      background: #f56c6c;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      margin-top: 5px;
-    }
-    .image-preview .remove-btn:hover { background: #e04a4a; }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
 
-    .schedule-time-group {
-      display: none;
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
-      margin-bottom: 18px;
-    }
-    .schedule-time-group.show { display: block; }
-    .schedule-time-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #555; font-size: 14px; }
-    .schedule-time-group label .required { color: #f56c6c; }
-    .schedule-time-group input[type="datetime-local"] {
-      width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;
-    }
-    .schedule-time-group input[type="datetime-local"]:focus {
-      outline: none; border-color: #667eea;
-    }
-    .schedule-time-hint { font-size: 12px; color: #999; margin-top: 4px; }
-  </style>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        .header a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .form-group label .required {
+            color: #f56c6c;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd6;
+        }
+
+        .btn-secondary {
+            background: #909399;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #a6a9ad;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .tag-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding-top: 5px;
+        }
+
+        .tag-group .tag-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            background: #f0f2f5;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            user-select: none;
+            border: 2px solid transparent;
+        }
+
+        .tag-group .tag-item:hover {
+            background: #e0e4ea;
+        }
+
+        .tag-group .tag-item.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tag-group .tag-item input[type="checkbox"] {
+            display: none;
+        }
+
+        .upload-area {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .upload-area input[type="file"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            flex: 1;
+            min-width: 150px;
+            cursor: pointer;
+        }
+
+        .upload-area .btn-upload {
+            padding: 8px 20px;
+            background: #67c23a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .upload-area .btn-upload:hover {
+            background: #5daf34;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .image-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .image-preview .remove-btn {
+            padding: 4px 12px;
+            background: #f56c6c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .image-preview .remove-btn:hover {
+            background: #e04a4a;
+        }
+
+        .schedule-time-group {
+            display: none;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 18px;
+        }
+
+        .schedule-time-group.show {
+            display: block;
+        }
+
+        .schedule-time-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .schedule-time-group label .required {
+            color: #f56c6c;
+        }
+
+        .schedule-time-group input[type="datetime-local"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .schedule-time-group input[type="datetime-local"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .schedule-time-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+    </style>
 </head>
+
 <body>
 <div class="container">
-  <div class="header">
-    <h1>📝 <span th:text="${article.id != null} ? '编辑商品' : '发布商品'">发布商品</span></h1>
-    <a href="/admin/articles">← 返回列表</a>
-  </div>
-
-  <form th:action="@{/admin/articles/save}" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
-    <input type="hidden" name="id" th:value="${article.id}">
-    <!-- 隐藏字段：用于传递 status 值 -->
-    <input type="hidden" name="status" id="hiddenStatus" value="1">
-
-    <!-- 商品标题 -->
-    <div class="form-group">
-      <label>商品标题 <span class="required">*</span></label>
-      <input type="text" name="title" th:value="${article.title}" placeholder="请输入商品标题" required>
+    <div class="header">
+        <h1>📝 <span th:text="${article.id != null} ? '编辑商品' : '发布商品'">发布商品</span></h1>
+        <a th:if="${isAdmin}" href="/admin/articles">← 返回列表</a>
+        <a th:unless="${isAdmin}" href="/article/manage">← 返回列表</a>
     </div>
 
-    <!-- 分类 + 价格 -->
-    <div class="form-row">
-      <div class="form-group">
-        <label>分类 <span class="required">*</span></label>
-        <select name="categoryId" required>
-          <option value="">请选择分类</option>
-          <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${cat.id == article.categoryId}"></option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>价格（元） <span class="required">*</span></label>
-        <input type="number" name="price" th:value="${article.price}" step="0.01" min="0" placeholder="0.00" required>
-      </div>
-    </div>
+    <form th:action="${isAdmin} ? @{/admin/articles/save} : @{/article/save}" method="post"
+          enctype="multipart/form-data" onsubmit="return validateForm()">
+        <input type="hidden" name="id" th:value="${article.id}">
 
-    <!-- 库存 + 学校 -->
-    <div class="form-row">
-      <div class="form-group">
-        <label>库存 <span class="required">*</span></label>
-        <input type="number" name="stock" th:value="${article.stock}" min="1" placeholder="数量" required>
-      </div>
-      <div class="form-group">
-        <label>所在学校 <span class="required">*</span></label>
-        <select name="schoolId" required>
-          <option value="">请选择学校</option>
-          <option th:each="school : ${schools}" th:value="${school.id}" th:text="${school.name}" th:selected="${school.id == article.schoolId}"></option>
-        </select>
-      </div>
-    </div>
+        <!-- 隐藏字段用于提交状态 -->
+        <input type="hidden" id="hiddenStatus" name="status" th:value="${article.status != null ? article.status : 1}">
 
-    <!-- 标签选择 -->
-    <div class="form-group">
-      <label>商品标签</label>
-      <div class="tag-group" id="tagGroup">
-        <label th:each="tag : ${tags}" class="tag-item"
-               th:classappend="${article.tagIds != null and article.tagIds.contains(tag.id)} ? 'selected' : ''">
-          <input type="checkbox" name="tagIds" th:value="${tag.id}"
-                 th:checked="${article.tagIds != null and article.tagIds.contains(tag.id)}">
-          <span th:text="${tag.name}"></span>
-        </label>
-      </div>
-      <div class="help-text">点击选择标签，可多选</div>
-    </div>
-
-    <!-- 商品图片 -->
-    <div class="form-group">
-      <label>商品图片</label>
-      <div class="upload-area">
-        <input type="file" id="coverImageFile" accept="image/*">
-        <button type="button" class="btn-upload" onclick="uploadImage()">📤 上传图片</button>
-      </div>
-      <div class="image-preview" id="imagePreview" th:if="${article.coverImage != null and article.coverImage != ''}" style="display: block;">
-        <img id="previewImg" th:src="${article.coverImage}" alt="商品图片">
-        <input type="hidden" id="coverImageInput" name="coverImage" th:value="${article.coverImage}">
-        <div><button type="button" class="remove-btn" onclick="removeImage()">删除图片</button></div>
-      </div>
-      <div class="image-preview" id="imagePreviewNew" style="display: none;">
-        <img id="previewImgNew" src="" alt="商品图片">
-        <input type="hidden" id="coverImageInputNew" name="coverImage">
-        <div><button type="button" class="remove-btn" onclick="removeNewImage()">删除图片</button></div>
-      </div>
-      <div class="help-text">支持 jpg、png、gif 格式，建议尺寸 800x800，大小不超过 5MB</div>
-    </div>
-
-    <!-- 交易地点 -->
-    <div class="form-group">
-      <label>交易地点</label>
-      <input type="text" name="location" th:value="${article.location}" placeholder="如：信息学部学生宿舍">
-    </div>
-
-    <!-- 联系方式 -->
-    <div class="form-group">
-      <label>联系方式 <span class="required">*</span></label>
-      <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 150px;">
-          <input type="text" id="wechat" name="wechat" th:value="${article.wechat}" placeholder="微信号" style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" oninput="checkContact()">
+        <div class="form-group">
+            <label>商品标题 <span class="required">*</span></label>
+            <input type="text" name="title" th:value="${article.title}" placeholder="请输入商品标题" required>
         </div>
-        <div style="flex: 1; min-width: 150px;">
-          <input type="text" id="qq" name="qq" th:value="${article.qq}" placeholder="QQ号" style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" oninput="checkContact()">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>分类 <span class="required">*</span></label>
+                <select name="categoryId" required>
+                    <option value="">请选择分类</option>
+                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"
+                            th:selected="${cat.id == article.categoryId}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>价格（元） <span class="required">*</span></label>
+                <input type="number" name="price" th:value="${article.price}" step="0.01" min="0" placeholder="0.00" required>
+            </div>
         </div>
-        <div style="flex: 1; min-width: 150px;">
-          <input type="text" id="phone" name="phone" th:value="${article.phone}" placeholder="手机号" style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" oninput="checkContact()">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>库存 <span class="required">*</span></label>
+                <input type="number" name="stock" th:value="${article.stock}" min="1" placeholder="数量" required>
+            </div>
+            <div class="form-group">
+                <label>所在学校 <span class="required">*</span></label>
+                <select name="schoolId" required>
+                    <option value="">请选择学校</option>
+                    <option th:each="school : ${schools}" th:value="${school.id}" th:text="${school.name}"
+                            th:selected="${school.id == article.schoolId}"></option>
+                </select>
+            </div>
         </div>
-      </div>
-      <div id="contactError" class="help-text" style="color: #f56c6c; display: none;">请至少填写一种联系方式（微信/QQ/手机号）</div>
-      <div class="help-text">微信、QQ、手机号至少填写一个，方便买家联系您</div>
-    </div>
 
-    <!-- 商品描述 -->
-    <div class="form-group">
-      <label>商品描述 <span class="required">*</span></label>
-      <textarea name="content" placeholder="请详细描述商品情况" required th:text="${article.content}"></textarea>
-    </div>
+        <!-- 标签选择 -->
+        <div class="form-group">
+            <label>商品标签</label>
+            <div class="tag-group" id="tagGroup">
+                <label th:each="tag : ${tags}" class="tag-item"
+                       th:classappend="${article.tagIds != null and article.tagIds.contains(tag.id)} ? 'selected' : ''">
+                    <input type="checkbox" name="tagIds" th:value="${tag.id}"
+                           th:checked="${article.tagIds != null and article.tagIds.contains(tag.id)}">
+                    <span th:text="${tag.name}"></span>
+                </label>
+            </div>
+            <div class="help-text">点击选择标签，可多选</div>
+        </div>
 
-    <!-- 发布状态（只用于显示，实际值由隐藏字段传递） -->
-    <div class="form-group">
-      <label>发布状态</label>
-      <select id="publishStatus" onchange="togglePublishTime()">
-        <option value="1">立即发布</option>
-        <option value="0">保存草稿</option>
-        <option value="2">定时发布</option>
-      </select>
-    </div>
+        <!-- ========== 商品图片上传 ========== -->
+        <div class="form-group">
+            <label>商品图片</label>
+            <div class="upload-area">
+                <input type="file" id="coverImageFile" accept="image/*">
+                <button type="button" class="btn-upload" onclick="uploadImage()">📤 上传图片</button>
+            </div>
+            <div class="image-preview" id="imagePreview" th:if="${article.coverImage != null and article.coverImage != ''}"
+                 style="display: block;">
+                <img id="previewImg" th:src="${article.coverImage}" alt="商品图片">
+                <input type="hidden" id="coverImageInput" name="coverImage" th:value="${article.coverImage}">
+                <div style="margin-top: 5px;">
+                    <button type="button" class="remove-btn" onclick="removeImage()">删除图片</button>
+                </div>
+            </div>
+            <div class="image-preview" id="imagePreviewNew" style="display: none;">
+                <img id="previewImgNew" style="max-width: 200px; max-height: 200px; border-radius: 6px; border: 1px solid #ddd;">
+                <input type="hidden" id="coverImageInputNew" name="coverImage">
+                <div style="margin-top: 5px;">
+                    <button type="button" class="remove-btn" onclick="removeNewImage()">删除图片</button>
+                </div>
+            </div>
+            <div class="help-text">支持 jpg、png、gif 格式，建议尺寸 800x800，大小不超过 5MB</div>
+        </div>
 
-    <!-- 定时发布时间 -->
-    <div class="schedule-time-group" id="scheduleTimeGroup">
-      <label>选择定时发布时间 <span class="required">*</span></label>
-      <input type="datetime-local" id="scheduledTime" name="scheduledTime"
-             th:value="${article.publishedAt != null ? #temporals.format(article.publishedAt, 'yyyy-MM-dd''T''HH:mm') : ''}">
-      <div class="schedule-time-hint">⏰ 请选择商品自动发布的时间，必须晚于当前时间</div>
-    </div>
+        <div class="form-group">
+            <label>交易地点</label>
+            <input type="text" name="location" th:value="${article.location}" placeholder="如：信息学部学生宿舍">
+        </div>
 
-    <!-- 选项 -->
-    <div class="form-group">
-      <label>选项</label>
-      <div class="checkbox-group">
-        <label><input type="checkbox" name="isTop" value="1" th:checked="${article.isTop == 1}"> 🔝 置顶</label>
-        <label><input type="checkbox" name="allowComment" value="1" th:checked="${article.allowComment == 1 or article.allowComment == null}"> 💬 允许评论</label>
-      </div>
-      <div class="help-text">置顶后在你的商品列表中靠前显示</div>
-    </div>
+        <!-- ========== 联系方式 ========== -->
+        <div class="form-group">
+            <label>联系方式 <span class="required">*</span></label>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 150px;">
+                    <input type="text" id="wechat" name="wechat" th:value="${article.wechat}" placeholder="微信号"
+                           style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+                           oninput="checkContact()">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <input type="text" id="qq" name="qq" th:value="${article.qq}" placeholder="QQ号"
+                           style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+                           oninput="checkContact()">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <input type="text" id="phone" name="phone" th:value="${article.phone}" placeholder="手机号"
+                           style="width:100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+                           oninput="checkContact()">
+                </div>
+            </div>
+            <div id="contactError" class="help-text" style="color: #f56c6c; display: none;">请至少填写一种联系方式（微信/QQ/手机号）</div>
+            <div class="help-text">微信、QQ、手机号至少填写一个，方便买家联系您</div>
+        </div>
 
-    <!-- 按钮 -->
-    <div class="btn-group">
-      <button type="submit" class="btn btn-primary">✅ 确定</button>
-      <a href="/admin/articles" class="btn btn-secondary">取消</a>
-    </div>
-  </form>
+        <div class="form-group">
+            <label>商品描述 <span class="required">*</span></label>
+            <textarea name="content" placeholder="请详细描述商品情况" required th:text="${article.content}"></textarea>
+        </div>
+
+        <!-- 发布状态选择 -->
+        <div class="form-group">
+            <label>发布状态 <span class="required">*</span></label>
+            <select id="publishStatus" onchange="togglePublishTime()">
+                <option value="1" th:selected="${article.status == 1 || article.status == null}">立即发布</option>
+                <option value="0" th:selected="${article.status == 0}">保存草稿</option>
+                <option value="2" th:selected="${article.status == 2}">定时发布</option>
+            </select>
+            <div class="help-text">选择"定时发布"后，商品将在指定时间自动上架</div>
+        </div>
+
+        <!-- 定时发布时间（默认隐藏） -->
+        <div id="scheduleTimeGroup" class="schedule-time-group"
+             th:classappend="${article.status == 2} ? 'show' : ''">
+            <label>定时发布时间 <span class="required">*</span></label>
+            <input type="datetime-local" id="scheduledTime" name="scheduledTime"
+                   th:value="${article.publishedAt != null ? #temporals.format(article.publishedAt, 'yyyy-MM-dd\'T\'HH:mm') : ''}">
+            <div class="schedule-time-hint">⏰ 商品将在设定的时间自动发布上架</div>
+        </div>
+
+        <!-- 选项：置顶 + 允许评论 + 邮件通知 -->
+        <div class="form-group">
+            <label>选项</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="isTop" value="1" th:checked="${article.isTop == 1}"> 🔝 置顶</label>
+                <label><input type="checkbox" name="allowComment" value="1"
+                              th:checked="${article.allowComment == 1 or article.allowComment == null}"> 💬 允许评论</label>
+                <label><input type="checkbox" name="sendEmail" value="1" th:checked="${article.sendEmail == 1}"> 📧 发送邮件通知</label>
+            </div>
+            <div class="help-text">置顶后在你的商品列表中靠前显示；勾选发送邮件通知后，发布时会向关注用户发送邮件提醒</div>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">✅ 确定</button>
+            <a th:href="${isAdmin} ? '/admin/articles' : '/article/manage'" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
 </div>
 
 <script>
-  // ============================================================
-  //  页面初始化
-  // ============================================================
-  document.addEventListener('DOMContentLoaded', function() {
-    // 1. 设置发布状态
-    setPublishStatus();
+    // ============================================================
+    //  页面初始化
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function () {
+        // 1. 设置发布状态
+        setPublishStatus();
 
-    // 2. 其他初始化
-    checkContact();
-    togglePublishTime();
-    initTagClick();
-  });
-
-  // ============================================================
-  //  设置发布状态
-  // ============================================================
-  function setPublishStatus() {
-    var statusSelect = document.getElementById('publishStatus');
-    var hiddenStatus = document.getElementById('hiddenStatus');
-    if (!statusSelect || !hiddenStatus) return;
-
-    // 获取后端传入的 article.status
-    var currentStatus = /*[[${article.status}]]*/ null;
-
-    // 如果是新建文章（status为null或undefined），默认选中"立即发布"(1)
-    if (currentStatus == null || currentStatus === undefined || currentStatus === '') {
-      statusSelect.value = 1;
-      hiddenStatus.value = 1;
-    } else {
-      var statusNum = parseInt(currentStatus);
-      if (!isNaN(statusNum)) {
-        statusSelect.value = statusNum;
-        hiddenStatus.value = statusNum;
-      } else {
-        statusSelect.value = 1;
-        hiddenStatus.value = 1;
-      }
-    }
-
-    console.log('========== 页面初始化，设置 status = ' + hiddenStatus.value);
-
-    // 触发一次 change 事件，控制定时发布时间显示
-    var event = new Event('change');
-    statusSelect.dispatchEvent(event);
-  }
-
-  // ============================================================
-  //  标签点击切换（使用事件委托）
-  // ============================================================
-  function initTagClick() {
-    var tagGroup = document.getElementById('tagGroup');
-    if (!tagGroup) return;
-
-    tagGroup.addEventListener('click', function(e) {
-      var label = e.target.closest('.tag-item');
-      if (!label) return;
-      if (e.target.tagName === 'INPUT') return;
-
-      var checkbox = label.querySelector('input[type="checkbox"]');
-      if (!checkbox) return;
-
-      checkbox.checked = !checkbox.checked;
-      label.classList.toggle('selected');
+        // 2. 其他初始化
+        checkContact();
+        togglePublishTime();
+        initTagClick();
     });
-  }
 
-  // ============================================================
-  //  定时发布时间切换
-  // ============================================================
-  function togglePublishTime() {
-    var statusSelect = document.getElementById('publishStatus');
-    var scheduleGroup = document.getElementById('scheduleTimeGroup');
-    var hiddenStatus = document.getElementById('hiddenStatus');
+    // ============================================================
+    //  设置发布状态
+    // ============================================================
+    function setPublishStatus() {
+        var statusSelect = document.getElementById('publishStatus');
+        var hiddenStatus = document.getElementById('hiddenStatus');
+        if (!statusSelect || !hiddenStatus) return;
 
-    if (!statusSelect || !scheduleGroup || !hiddenStatus) return;
+        // 获取后端传入的 article.status
+        var currentStatus = /*[[${article.status}]]*/ null;
 
-    // 同步隐藏字段的值
-    hiddenStatus.value = statusSelect.value;
-    console.log('========== 切换状态，设置隐藏字段 status = ' + hiddenStatus.value);
+        // 如果是新建文章（status为null或undefined），默认选中"立即发布"(1)
+        if (currentStatus == null || currentStatus === undefined || currentStatus === '') {
+            statusSelect.value = 1;
+            hiddenStatus.value = 1;
+        } else {
+            var statusNum = parseInt(currentStatus);
+            if (!isNaN(statusNum)) {
+                statusSelect.value = statusNum;
+                hiddenStatus.value = statusNum;
+            } else {
+                statusSelect.value = 1;
+                hiddenStatus.value = 1;
+            }
+        }
 
-    if (statusSelect.value === '2') {
-      scheduleGroup.classList.add('show');
-      var timeInput = document.getElementById('scheduledTime');
-      if (timeInput && timeInput.value === '') {
-        var now = new Date();
-        now.setHours(now.getHours() + 1);
-        var formatted = now.toISOString().slice(0, 16);
-        timeInput.value = formatted;
-      }
-    } else {
-      scheduleGroup.classList.remove('show');
-    }
-  }
+        console.log('========== 页面初始化，设置 status = ' + hiddenStatus.value);
 
-  // ============================================================
-  //  联系方式校验
-  // ============================================================
-  function checkContact() {
-    var wechat = document.getElementById('wechat');
-    var qq = document.getElementById('qq');
-    var phone = document.getElementById('phone');
-    var errorEl = document.getElementById('contactError');
-
-    if (!wechat || !qq || !phone || !errorEl) return;
-
-    var hasContact = wechat.value.trim() || qq.value.trim() || phone.value.trim();
-    errorEl.style.display = hasContact ? 'none' : 'block';
-  }
-
-  // ============================================================
-  //  表单提交校验
-  // ============================================================
-  function validateForm() {
-    var wechat = document.getElementById('wechat');
-    var qq = document.getElementById('qq');
-    var phone = document.getElementById('phone');
-    var statusSelect = document.getElementById('publishStatus');
-    var hiddenStatus = document.getElementById('hiddenStatus');
-
-    // ========== 关键：提交前确保隐藏字段的值正确 ==========
-    if (hiddenStatus && statusSelect) {
-      hiddenStatus.value = statusSelect.value;
-      console.log('========== 提交前设置隐藏字段 status = ' + hiddenStatus.value);
+        // 触发一次 change 事件，控制定时发布时间显示
+        var event = new Event('change');
+        statusSelect.dispatchEvent(event);
     }
 
-    if (!wechat || !qq || !phone) return true;
+    // ============================================================
+    //  标签点击切换（使用事件委托）
+    // ============================================================
+    function initTagClick() {
+        var tagGroup = document.getElementById('tagGroup');
+        if (!tagGroup) return;
 
-    var hasContact = wechat.value.trim() || qq.value.trim() || phone.value.trim();
-    if (!hasContact) {
-      document.getElementById('contactError').style.display = 'block';
-      alert('请至少填写一种联系方式（微信/QQ/手机号）');
-      return false;
+        tagGroup.addEventListener('click', function (e) {
+            var label = e.target.closest('.tag-item');
+            if (!label) return;
+            if (e.target.tagName === 'INPUT') return;
+
+            var checkbox = label.querySelector('input[type="checkbox"]');
+            if (!checkbox) return;
+
+            checkbox.checked = !checkbox.checked;
+            label.classList.toggle('selected');
+        });
     }
 
-    if (statusSelect && statusSelect.value === '2') {
-      var timeInput = document.getElementById('scheduledTime');
-      if (!timeInput || !timeInput.value) {
-        alert('请选择定时发布时间');
-        if (timeInput) timeInput.focus();
-        return false;
-      }
-      var selectedDate = new Date(timeInput.value);
-      if (selectedDate <= new Date()) {
-        alert('定时发布时间必须晚于当前时间，请重新选择');
-        if (timeInput) timeInput.focus();
-        return false;
-      }
+    // ============================================================
+    //  切换定时发布时间显示
+    // ============================================================
+    function togglePublishTime() {
+        var statusSelect = document.getElementById('publishStatus');
+        var hiddenStatus = document.getElementById('hiddenStatus');
+        var scheduleGroup = document.getElementById('scheduleTimeGroup');
+
+        if (!statusSelect || !hiddenStatus || !scheduleGroup) return;
+
+        var selectedValue = parseInt(statusSelect.value);
+
+        // 更新隐藏字段
+        hiddenStatus.value = selectedValue;
+
+        // 显示/隐藏定时发布时间
+        if (selectedValue === 2) {
+            scheduleGroup.classList.add('show');
+        } else {
+            scheduleGroup.classList.remove('show');
+        }
+
+        console.log('========== 切换发布状态为: ' + selectedValue);
     }
 
-    return true;
-  }
+    // ========== 联系方式校验 ==========
+    function checkContact() {
+        var wechat = document.getElementById('wechat').value.trim();
+        var qq = document.getElementById('qq').value.trim();
+        var phone = document.getElementById('phone').value.trim();
+        var errorEl = document.getElementById('contactError');
 
-  // ============================================================
-  //  图片上传
-  // ============================================================
-  function uploadImage() {
-    var fileInput = document.getElementById('coverImageFile');
-    if (!fileInput) return;
-
-    var file = fileInput.files[0];
-    if (!file) {
-      alert('请先选择图片文件');
-      return;
+        if (wechat || qq || phone) {
+            errorEl.style.display = 'none';
+        } else {
+            errorEl.style.display = 'block';
+        }
     }
 
-    if (!file.type.startsWith('image/')) {
-      alert('请上传图片文件');
-      return;
+    // ========== 表单提交校验 ==========
+    function validateForm() {
+        var wechat = document.getElementById('wechat').value.trim();
+        var qq = document.getElementById('qq').value.trim();
+        var phone = document.getElementById('phone').value.trim();
+
+        if (!wechat && !qq && !phone) {
+            document.getElementById('contactError').style.display = 'block';
+            alert('请至少填写一种联系方式（微信/QQ/手机号）');
+            return false;
+        }
+
+        // 如果是定时发布，检查是否填写了发布时间
+        var statusSelect = document.getElementById('publishStatus');
+        if (statusSelect && parseInt(statusSelect.value) === 2) {
+            var scheduledTime = document.getElementById('scheduledTime').value;
+            if (!scheduledTime) {
+                alert('请选择定时发布时间');
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('图片大小不能超过5MB');
-      return;
-    }
+    // ========== 图片上传 ==========
+    function uploadImage() {
+        var fileInput = document.getElementById('coverImageFile');
+        var file = fileInput.files[0];
+        if (!file) {
+            alert('请先选择图片文件');
+            return;
+        }
 
-    var formData = new FormData();
-    formData.append('file', file);
+        if (!file.type.startsWith('image/')) {
+            alert('请上传图片文件');
+            return;
+        }
 
-    var btn = document.querySelector('.btn-upload');
-    var originalText = btn ? btn.textContent : '上传图片';
-    if (btn) btn.textContent = '上传中...';
+        if (file.size > 5 * 1024 * 1024) {
+            alert('图片大小不能超过5MB');
+            return;
+        }
 
-    fetch('/article/upload-image', {
-      method: 'POST',
-      body: formData
-    })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-              if (data.success) {
-                var previewNew = document.getElementById('imagePreviewNew');
-                var imgNew = document.getElementById('previewImgNew');
-                var inputNew = document.getElementById('coverImageInputNew');
-                if (previewNew) previewNew.style.display = 'block';
-                if (imgNew) imgNew.src = data.imagePath;
-                if (inputNew) inputNew.value = data.imagePath;
-                alert('图片上传成功！');
-              } else {
-                alert('上传失败：' + data.message);
-              }
+        var formData = new FormData();
+        formData.append('file', file);
+
+        var btn = event.target;
+        var originalText = btn.textContent;
+        btn.textContent = '上传中...';
+        btn.disabled = true;
+
+        fetch('/article/upload-image', {
+            method: 'POST',
+            body: formData
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    document.getElementById('coverImageInputNew').value = data.imagePath;
+                    document.getElementById('previewImgNew').src = data.imagePath;
+                    document.getElementById('imagePreviewNew').style.display = 'block';
+                    // 隐藏旧的预览
+                    document.getElementById('imagePreview').style.display = 'none';
+                    alert('图片上传成功！');
+                } else {
+                    alert('上传失败：' + data.message);
+                }
             })
-            .catch(function() {
-              alert('上传失败，请重试');
+            .catch(function () {
+                alert('上传失败，请重试');
             })
-            .finally(function() {
-              if (btn) btn.textContent = originalText;
+            .finally(function () {
+                btn.textContent = originalText;
+                btn.disabled = false;
             });
-  }
+    }
 
-  function removeNewImage() {
-    var inputNew = document.getElementById('coverImageInputNew');
-    var imgNew = document.getElementById('previewImgNew');
-    var previewNew = document.getElementById('imagePreviewNew');
-    var fileInput = document.getElementById('coverImageFile');
+    function removeNewImage() {
+        document.getElementById('coverImageInputNew').value = '';
+        document.getElementById('previewImgNew').src = '';
+        document.getElementById('imagePreviewNew').style.display = 'none';
+        document.getElementById('coverImageFile').value = '';
+    }
 
-    if (inputNew) inputNew.value = '';
-    if (imgNew) imgNew.src = '';
-    if (previewNew) previewNew.style.display = 'none';
-    if (fileInput) fileInput.value = '';
-  }
-
-  function removeImage() {
-    var input = document.getElementById('coverImageInput');
-    var img = document.getElementById('previewImg');
-    var preview = document.getElementById('imagePreview');
-
-    if (input) input.value = '';
-    if (img) img.src = '';
-    if (preview) preview.style.display = 'none';
-  }
+    function removeImage() {
+        document.getElementById('coverImageInput').value = '';
+        document.getElementById('previewImg').src = '';
+        document.getElementById('imagePreview').style.display = 'none';
+    }
 </script>
-
 </body>
+
 </html>

@@ -43,10 +43,6 @@
         .status-draft { color: #e6a23c; background: #fdf6ec; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
         .status-scheduled { color: #e6a23c; background: #fdf6ec; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
 
-        .status-in-sale { color: #67c23a; background: #e1f3d8; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
-        .status-sold { color: #909399; background: #f4f4f5; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
-        .status-off-shelf { color: #e6a23c; background: #fdf6ec; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
-
         .top-badge { background-color: #ff9800; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 6px; display: inline-block; vertical-align: middle; }
 
         .search-area { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -77,9 +73,9 @@
                     <option value="0" th:selected="${statusFilter == 0}">草稿</option>
                     <option value="2" th:selected="${statusFilter == 2}">定时发布</option>
                 </select>
-                <input type="date" name="startTime" class="date-input" th:value="${startTime != null ? #temporals.format(startTime, 'yyyy-MM-dd') : ''}" placeholder="开始时间">
+                <input type="date" name="startTime" class="date-input" th:value="${startTime != null ? startTime : ''}" placeholder="开始时间">
                 <span>至</span>
-                <input type="date" name="endTime" class="date-input" th:value="${endTime != null ? #temporals.format(endTime, 'yyyy-MM-dd') : ''}" placeholder="结束时间">
+                <input type="date" name="endTime" class="date-input" th:value="${endTime != null ? endTime : ''}" placeholder="结束时间">
                 <button type="submit" class="btn btn-primary">搜索</button>
                 <a href="/admin/articles" class="btn" style="background: #909399; color: white;">重置</a>
             </form>
@@ -100,7 +96,6 @@
                 <th>库存</th>
                 <th>浏览量</th>
                 <th>状态</th>
-                <th>商品状态</th>
                 <th>发布时间</th>
                 <th>操作</th>
             </tr>
@@ -122,23 +117,19 @@
                     <span th:if="${article.status == 1}" class="status-published">✅ 已发布</span>
                     <span th:if="${article.status == 0}" class="status-draft">📝 草稿</span>
                     <span th:if="${article.status == 2}" class="status-scheduled">⏰ 定时发布</span>
-                </td>
-                <td style="white-space: nowrap;">
-                    <span th:if="${article.productStatus == 0 or article.productStatus == null}" class="status-in-sale">✅ 在售</span>
-                    <span th:if="${article.productStatus == 1}" class="status-sold">已售</span>
-                    <span th:if="${article.productStatus == 2}" class="status-off-shelf">⏸️ 已下架</span>
+                    <span th:if="${article.productStatus == 2}" style="color: #f56c6c; background: #fde2e2; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; margin-left: 4px;">已下架</span>
                 </td>
                 <td th:text="${#temporals.format(article.createTime, 'yyyy-MM-dd HH:mm')}">?</td>
                 <td class="action-buttons">
                     <a th:href="@{/admin/articles/form(id=${article.id})}" class="btn btn-edit btn-sm">编辑</a>
                     <a th:href="@{/admin/articles/delete/{id}(id=${article.id})}" class="btn btn-delete btn-sm" onclick="return confirm('确定删除？')">删除</a>
-                    
+
                     <!-- 下架按钮：在售状态显示 -->
                     <a th:if="${article.productStatus == 0 or article.productStatus == null}"
                        th:href="@{/admin/articles/off-shelf/{id}(id=${article.id})}"
                        class="btn btn-warning btn-sm"
                        onclick="return confirm('确定要下架该商品吗？下架后买家将看不到此商品')">下架</a>
-                    
+
                     <!-- 上架按钮：已下架状态显示 -->
                     <a th:if="${article.productStatus == 2}"
                        th:href="@{/admin/articles/on-shelf/{id}(id=${article.id})}"
@@ -147,23 +138,23 @@
                 </td>
             </tr>
             <tr th:if="${articlePage == null or articlePage.records.isEmpty()}">
-                <td colspan="12" style="text-align: center; color: #999; padding: 40px;">暂无商品数据</td>
+                <td colspan="11" style="text-align: center; color: #999; padding: 40px;">暂无商品数据</td>
             </tr>
             </tbody>
         </table>
     </div>
 
     <div class="pagination" th:if="${articlePage != null and articlePage.pages > 1}">
-        <a th:if="${articlePage.hasPrevious}" th:href="@{/admin/articles(page=${articlePage.current-1}, size=10, keyword=${keyword}, statusFilter=${statusFilter}, startTime=${startTime}, endTime=${endTime})}">上一页</a>
+        <a th:if="${articlePage.hasPrevious}" th:href="@{/admin/articles(pageNum=${articlePage.current-1}, pageSize=${articlePage.size}, keyword=${keyword}, statusFilter=${statusFilter}, categoryId=${categoryId}, startTime=${startTime}, endTime=${endTime})}">上一页</a>
         <span th:unless="${articlePage.hasPrevious}" class="disabled" style="color:#ccc;">上一页</span>
 
         <a th:each="i : ${#numbers.sequence(1, articlePage.pages)}"
            th:classappend="${i == articlePage.current} ? 'active'"
            th:text="${i}"
-           th:href="@{/admin/articles(page=${i}, size=10, keyword=${keyword}, statusFilter=${statusFilter}, startTime=${startTime}, endTime=${endTime})}">
+           th:href="@{/admin/articles(pageNum=${i}, pageSize=${articlePage.size}, keyword=${keyword}, statusFilter=${statusFilter}, categoryId=${categoryId}, startTime=${startTime}, endTime=${endTime})}">
         </a>
 
-        <a th:if="${articlePage.hasNext}" th:href="@{/admin/articles(page=${articlePage.current+1}, size=10, keyword=${keyword}, statusFilter=${statusFilter}, startTime=${startTime}, endTime=${endTime})}">下一页</a>
+        <a th:if="${articlePage.hasNext}" th:href="@{/admin/articles(pageNum=${articlePage.current+1}, pageSize=${articlePage.size}, keyword=${keyword}, statusFilter=${statusFilter}, categoryId=${categoryId}, startTime=${startTime}, endTime=${endTime})}">下一页</a>
         <span th:unless="${articlePage.hasNext}" class="disabled" style="color:#ccc;">下一页</span>
     </div>
 </div>

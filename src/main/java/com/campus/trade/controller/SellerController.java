@@ -1,7 +1,6 @@
 package com.campus.trade.controller;
 
 import com.campus.trade.entity.Order;
-import com.campus.trade.entity.OrderReview;
 import com.campus.trade.entity.User;
 import com.campus.trade.service.OrderService;
 import jakarta.servlet.http.HttpSession;
@@ -109,31 +108,4 @@ public class SellerController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/{id}/review")
-    public ResponseEntity<Map<String, Object>> replyReview(
-            @PathVariable Long id,
-            @RequestBody OrderReview review) {
-
-        Map<String, Object> result = new HashMap<>();
-        User user = getCurrentUser();
-        if (user == null) {
-            result.put("success", false);
-            result.put("message", "请先登录");
-            return ResponseEntity.status(401).body(result);
-        }
-
-        boolean success = orderService.replyReview(review.getId(), review.getReply(), user.getId());
-        result.put("success", success);
-        result.put("message", success ? "回复成功" : "回复失败");
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping("/{id}/review")
-    public ResponseEntity<Map<String, Object>> getOrderReview(@PathVariable Long id) {
-        Map<String, Object> result = new HashMap<>();
-        OrderReview review = orderService.getOrderReview(id);
-        result.put("success", true);
-        result.put("data", review);
-        return ResponseEntity.ok(result);
-    }
 }
