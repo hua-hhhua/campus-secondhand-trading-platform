@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
+@RequestMapping("/user")
 public class UserController {
 
     @Autowired
@@ -43,7 +44,7 @@ public class UserController {
 
     // ========== 个人信息 ==========
 
-    @GetMapping("/user/profile")
+    @GetMapping("/profile")
     public String profile(Model model, Authentication authentication) {
         // 检查是否已登录
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -58,7 +59,7 @@ public class UserController {
         return "user/profile";
     }
 
-    @PostMapping("/user/update")
+    @PostMapping("/update")
     @ResponseBody
     public Result updateProfile(@RequestBody UserUpdateDTO dto, Authentication authentication) {
         String username = authentication.getName();
@@ -103,10 +104,10 @@ public class UserController {
     /**
      * 上传头像
      */
-    @PostMapping("/users/upload-avatar")
+    @PostMapping("/uploadAvatar")
     @ResponseBody
     public Map<String, Object> uploadAvatar(@RequestParam("file") MultipartFile file,
-                                            @RequestParam("userId") Integer userId) {
+                                            Authentication authentication) {
         Map<String, Object> result = new HashMap<>();
         try {
             if (file.isEmpty()) {
@@ -125,9 +126,15 @@ public class UserController {
                 result.put("message", "图片大小不能超过 5MB");
                 return result;
             }
+
+            // 从 Authentication 获取当前用户ID
+            String username = authentication.getName();
+            User user = userService.findByUsername(username);
+            Integer userId = user.getId();
+
             String avatarPath = userService.uploadAvatar(file, userId);
             result.put("success", true);
-            result.put("avatarPath", avatarPath);
+            result.put("data", avatarPath);
             result.put("message", "上传成功");
             asyncService.asyncLogOperation("user_" + userId, "上传头像", "头像路径: " + avatarPath);
         } catch (Exception e) {
@@ -251,7 +258,7 @@ public class UserController {
 
     // ========== 我的订单 ==========
 
-    @GetMapping("/user/my-orders")
+    @GetMapping("/my-orders")
     public String myOrders(@RequestParam(defaultValue = "1") Integer pageNum,
                            @RequestParam(defaultValue = "10") Integer pageSize,
                            @RequestParam(required = false) Integer statusFilter,
@@ -288,7 +295,7 @@ public class UserController {
         return "user/my-orders";
     }
 
-    @PostMapping("/user/orders/{id}/cancel")
+    @PostMapping("/orders/{id}/cancel")
     @ResponseBody
     public Result cancelOrder(@PathVariable Long id, @RequestParam(required = false) String reason,
                               Authentication authentication) {
@@ -303,7 +310,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/user/orders/{id}/confirm")
+    @PostMapping("/orders/{id}/confirm")
     @ResponseBody
     public Result confirmReceipt(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -317,7 +324,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/user/orders/{id}/delete")
+    @PostMapping("/orders/{id}/delete")
     @ResponseBody
     public Result deleteOrder(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -331,7 +338,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/user/orders/{id}")
+    @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Long id, Model model, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
@@ -354,7 +361,7 @@ public class UserController {
         return "user/order-detail";
     }
 
-    @GetMapping("/user/seller-orders")
+    @GetMapping("/seller-orders")
     public String sellerOrders(@RequestParam(defaultValue = "1") Integer pageNum,
                                @RequestParam(defaultValue = "10") Integer pageSize,
                                @RequestParam(required = false) Integer statusFilter,
@@ -391,7 +398,7 @@ public class UserController {
         return "user/seller-orders";
     }
 
-    @PostMapping("/user/orders/{id}/ship")
+    @PostMapping("/orders/{id}/ship")
     @ResponseBody
     public Result shipOrder(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
