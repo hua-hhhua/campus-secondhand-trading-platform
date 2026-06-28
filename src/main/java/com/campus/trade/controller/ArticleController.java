@@ -26,6 +26,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -216,6 +217,7 @@ public class ArticleController {
 
         // ========== 处理发布状态 ==========
         LocalDateTime now = LocalDateTime.now();
+        ZoneId shanghaiZone = ZoneId.of("Asia/Shanghai");
 
         System.out.println("========== 接收到的 status 值: " + status);
 
@@ -237,15 +239,40 @@ public class ArticleController {
         } else if (status == 2) {
             // 定时发布：先设置为已下架，等定时任务触发时再上架
             article.setProductStatus(2);
+
+            // ========== 修复：保留或更新 publishedAt ==========
             if (scheduledTime != null && !scheduledTime.isEmpty()) {
+                // 前端传了新的发布时间，使用它
                 try {
-                    article.setPublishedAt(LocalDateTime.parse(scheduledTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    // 前端 datetime-local 格式: yyyy-MM-dd'T'HH:mm
+                    DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+                    LocalDateTime parsedTime = LocalDateTime.parse(scheduledTime, inputFormatter);
+                    // 转换为上海时区的 LocalDateTime
+                    article.setPublishedAt(parsedTime.atZone(shanghaiZone).toLocalDateTime());
+                    System.out.println("========== 使用前端传入的定时发布时间: " + article.getPublishedAt());
                 } catch (Exception e) {
-                    article.setPublishedAt(now.plusHours(1));
+                    System.out.println("========== 时间解析失败: " + e.getMessage());
+                    // 解析失败，保留原有值或设置默认值
+                    if (article.getPublishedAt() == null) {
+                        article.setPublishedAt(now.plusHours(1));
+                        System.out.println("========== 解析失败，使用默认发布时间: " + article.getPublishedAt());
+                    } else {
+                        System.out.println("========== 解析失败，保留原有发布时间: " + article.getPublishedAt());
+                    }
                 }
             } else {
-                article.setPublishedAt(now.plusHours(1));
+                // 前端没有传 scheduledTime
+                if (article.getPublishedAt() == null) {
+                    // 新建文章且没有传发布时间，设置默认值
+                    article.setPublishedAt(now.plusHours(1));
+                    System.out.println("========== 未传发布时间，使用默认: " + article.getPublishedAt());
+                } else {
+                    // 编辑文章，保留原有的发布时间
+                    System.out.println("========== 编辑文章，保留原有发布时间: " + article.getPublishedAt());
+                }
             }
+            // ========== 修复结束 ==========
+
             System.out.println("========== 保存为定时发布，发布时间: " + article.getPublishedAt() + "，商品状态设为已下架");
         } else {
             // 立即发布：设置为在售

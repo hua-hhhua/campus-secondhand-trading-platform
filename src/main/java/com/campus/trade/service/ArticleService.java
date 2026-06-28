@@ -58,8 +58,9 @@ public interface ArticleService extends IService<Article> {
 
     /**
      * 定时发布到期的文章
+     * @param now 当前时间（带时区）
      */
-    void publishScheduledArticles();
+    void publishScheduledArticles(LocalDateTime now);
 
     // ========== 新增方法 ==========
 

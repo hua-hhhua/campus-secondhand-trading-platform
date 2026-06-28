@@ -65,6 +65,11 @@ spring:
   mvc:
     throw-exception-if-no-handler-found: true
 
+  jackson:
+    time-zone: Asia/Shanghai
+  jdbc:
+    time-zone: Asia/Shanghai
+
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

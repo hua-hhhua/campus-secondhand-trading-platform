@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -148,30 +149,29 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return this.list(wrapper);
     }
 
+    private static final Object PUBLISH_LOCK = new Object();
+
     @Override
-    public void publishScheduledArticles() {
-        List<Article> scheduledArticles = getScheduledArticlesToPublish();
+    @Transactional(rollbackFor = Exception.class)
+    public void publishScheduledArticles(LocalDateTime now) {
+        synchronized (PUBLISH_LOCK) {
+            LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(Article::getStatus, ArticleStatus.SCHEDULED)
+                    .le(Article::getPublishedAt, now);
 
-        if (scheduledArticles.isEmpty()) {
-            return;
-        }
+            List<Article> scheduledArticles = this.list(wrapper);
 
-        for (Article article : scheduledArticles) {
-            article.setStatus(ArticleStatus.PUBLISHED);
-            article.setProductStatus(0);  // 设置为在售
-            article.setUpdateTime(LocalDateTime.now());
-            this.updateById(article);
-            System.out.println("【定时发布】文章已发布 - ID: " + article.getId() + ", 标题: " + article.getTitle() + "，商品状态设为在售");
+            if (scheduledArticles.isEmpty()) {
+                return;
+            }
 
-            if (article.getSendEmail() != null && article.getSendEmail() == 1) {
-                asyncService.asyncSendArticleNotification(article, "publish");
-                System.out.println("【邮件通知】定时发布文章已发送邮件通知 - ID: " + article.getId());
-            } else {
-                System.out.println("【邮件通知】定时发布文章未勾选邮件通知，跳过发送 - ID: " + article.getId());
+            for (Article article : scheduledArticles) {
+                article.setStatus(ArticleStatus.PUBLISHED);
+                article.setProductStatus(0);
+                article.setUpdateTime(now);
+                this.updateById(article);
             }
         }
-
-        System.out.println("【定时发布任务执行】共发布了 " + scheduledArticles.size() + " 篇文章");
     }
 
     // ========== 新增方法 ==========
@@ -221,7 +221,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setCreateTime(LocalDateTime.now());
         article.setUpdateTime(LocalDateTime.now());
         // 直接使用 Controller 已设置好的 status 和 publishedAt，不再额外处理
-        // handlePublishedAt(article) 已移除
 
         boolean result = this.save(article);
 
@@ -248,8 +247,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     private boolean doUpdateArticle(Article article) {
         article.setUpdateTime(LocalDateTime.now());
-        // 直接使用 Controller 已设置好的 status 和 publishedAt，不再额外处理
-        // handlePublishedAt(article) 已移除
+        // 注意：publishedAt 由 Controller 传入，这里直接保留
+        // 如果前端没有传 publishedAt（比如编辑草稿时），则保留数据库原有的值
+        // 这里不做任何覆盖，由 MyBatis-Plus 的 updateById 自动处理（null 字段不更新）
 
         boolean result = this.updateById(article);
 
@@ -260,11 +260,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         return result;
     }
-
-    // ========== 已废弃：不再使用此方法，防止覆盖 status ==========
-    // private void handlePublishedAt(Article article) {
-    //     此方法已废弃，不再使用
-    // }
 
     @Override
     public boolean validateArticleForPublish(Article article) {
@@ -283,6 +278,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 System.out.println("【文章校验失败】定时发布必须设置发布时间");
                 return false;
             }
+            // 允许发布时间等于当前时间（允许立即定时发布）
+            // 只检查发布时间不能早于当前时间
             if (article.getPublishedAt().isBefore(LocalDateTime.now())) {
                 System.out.println("【文章校验失败】定时发布时间不能早于当前时间");
                 return false;

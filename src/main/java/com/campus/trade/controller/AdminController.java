@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -44,8 +45,14 @@ public class AdminController {
     @Autowired
     private CommentService commentService;
 
+<<<<<<< Updated upstream
+=======
+    @Autowired
+    private com.campus.trade.mapper.OrderReviewMapper orderReviewMapper;
+
+>>>>>>> Stashed changes
     // ============================================================
-    //  1. 订单管理
+    // 1. 订单管理
     // ============================================================
 
     @GetMapping("/orders")
@@ -63,8 +70,7 @@ public class AdminController {
                         .or()
                         .like(keyword != null && !keyword.isEmpty(), "seller_name", keyword)
                         .eq(statusFilter != null, "status", statusFilter)
-                        .orderByDesc("created_at")
-        );
+                        .orderByDesc("created_at"));
         model.addAttribute("orderPage", orderPage);
         model.addAttribute("keyword", keyword);
         model.addAttribute("statusFilter", statusFilter);
@@ -102,7 +108,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  2. 用户管理
+    // 2. 用户管理
     // ============================================================
 
     @GetMapping("/users")
@@ -201,7 +207,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  3. 商品管理（文章管理）
+    // 3. 商品管理（文章管理）
     // ============================================================
 
     @GetMapping("/articles")
@@ -290,12 +296,20 @@ public class AdminController {
     }
 
     @PostMapping("/articles/save")
-    public String saveArticle(Article article, HttpSession session) {
+    public String saveArticle(Article article,
+                              @RequestParam(required = false) Integer status,
+                              @RequestParam(required = false) String scheduledTime,
+                              @RequestParam(required = false) List<Integer> tagIds,
+                              HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
 
         if (currentUser == null) {
             return "redirect:/toLoginPage";
         }
+
+        ZoneId shanghaiZone = ZoneId.of("Asia/Shanghai");
+        LocalDateTime now = LocalDateTime.now(shanghaiZone);
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
         // 设置用户ID
         article.setUserId(currentUser.getId());
@@ -306,46 +320,77 @@ public class AdminController {
             article.setIsTop(0);
             article.setAllowComment(1);
             article.setSendEmail(0);
-            article.setCreateTime(LocalDateTime.now());
-            article.setUpdateTime(LocalDateTime.now());
-            
+            article.setCreateTime(now);
+            article.setUpdateTime(now);
+
             // ========== 根据 status 设置 productStatus ==========
-            if (article.getStatus() == null) {
+            System.out.println("【保存前】@RequestParam 接收的 status = " + status);
+            System.out.println("【保存前】article.status = " + article.getStatus());
+            System.out.println("【保存前】接收到的 scheduledTime = " + scheduledTime);
+
+            // 使用 @RequestParam 接收的 status，优先级更高
+            if (status != null) {
+                article.setStatus(status);
+            } else if (article.getStatus() == null) {
                 article.setStatus(1); // 默认立即发布
+                System.out.println("【保存前】status 为 null，设置为默认值 1");
             }
-            
+
             if (article.getStatus() == 0) {
                 // 草稿：设置为已下架，不在首页显示
                 article.setProductStatus(2);
                 article.setPublishedAt(null);
+                System.out.println("【保存前】状态为草稿，productStatus=2");
             } else if (article.getStatus() == 2) {
                 // 定时发布：先设置为已下架，等定时任务触发时再上架
                 article.setProductStatus(2);
-                if (article.getPublishedAt() == null) {
-                    article.setPublishedAt(LocalDateTime.now().plusHours(1));
+                if (scheduledTime != null && !scheduledTime.isEmpty()) {
+                    try {
+                        LocalDateTime parsedTime = LocalDateTime.parse(scheduledTime, inputFormatter);
+                        article.setPublishedAt(parsedTime.atZone(shanghaiZone).toLocalDateTime());
+                        System.out.println("【定时发布】解析成功，发布时间: " + article.getPublishedAt());
+                    } catch (Exception e) {
+                        System.out.println("【定时发布】时间解析失败: " + e.getMessage());
+                        article.setPublishedAt(now.plusHours(1));
+                    }
+                } else {
+                    article.setPublishedAt(now.plusHours(1));
                 }
             } else {
                 // 立即发布：设置为在售
                 article.setProductStatus(0);
                 if (article.getPublishedAt() == null) {
-                    article.setPublishedAt(LocalDateTime.now());
+                    article.setPublishedAt(now);
                 }
+                System.out.println("【保存前】状态为立即发布，productStatus=0");
             }
-            
+
+            System.out.println("【保存前】最终 article.status = " + article.getStatus());
+            System.out.println("【保存前】最终 article.productStatus = " + article.getProductStatus());
+            System.out.println("【保存前】最终 article.publishedAt = " + article.getPublishedAt());
+
             articleService.save(article);
+
+            // 保存标签关联
+            if (tagIds != null && !tagIds.isEmpty()) {
+                articleService.saveArticleTags(article.getId(), tagIds);
+            }
         } else {
             // 更新文章
-            article.setUpdateTime(LocalDateTime.now());
+            article.setUpdateTime(now);
             // 如果是更新，保留原有的 user_id
             Article existing = articleService.getById(article.getId());
             if (existing != null) {
                 article.setUserId(existing.getUserId());
-                
+
                 // ========== 更新时也需要同步设置 productStatus ==========
-                if (article.getStatus() == null) {
+                // 使用 @RequestParam 接收的 status，优先级更高
+                if (status != null) {
+                    article.setStatus(status);
+                } else if (article.getStatus() == null) {
                     article.setStatus(existing.getStatus());
                 }
-                
+
                 if (article.getStatus() == 0) {
                     // 草稿：设置为已下架
                     article.setProductStatus(2);
@@ -353,8 +398,25 @@ public class AdminController {
                 } else if (article.getStatus() == 2) {
                     // 定时发布：保持已下架状态
                     article.setProductStatus(2);
-                    if (article.getPublishedAt() == null && existing.getPublishedAt() == null) {
-                        article.setPublishedAt(LocalDateTime.now().plusHours(1));
+                    if (scheduledTime != null && !scheduledTime.isEmpty()) {
+                        try {
+                            LocalDateTime parsedTime = LocalDateTime.parse(scheduledTime, inputFormatter);
+                            article.setPublishedAt(parsedTime.atZone(shanghaiZone).toLocalDateTime());
+                            System.out.println("【定时发布-更新】解析成功，发布时间: " + article.getPublishedAt());
+                        } catch (Exception e) {
+                            System.out.println("【定时发布-更新】时间解析失败: " + e.getMessage());
+                            if (existing.getPublishedAt() != null) {
+                                article.setPublishedAt(existing.getPublishedAt());
+                            } else {
+                                article.setPublishedAt(now.plusHours(1));
+                            }
+                        }
+                    } else {
+                        if (existing.getPublishedAt() != null) {
+                            article.setPublishedAt(existing.getPublishedAt());
+                        } else {
+                            article.setPublishedAt(now.plusHours(1));
+                        }
                     }
                 } else {
                     // 立即发布：如果之前是下架状态，则恢复为在售
@@ -364,11 +426,16 @@ public class AdminController {
                         article.setProductStatus(existing.getProductStatus());
                     }
                     if (article.getPublishedAt() == null && existing.getPublishedAt() == null) {
-                        article.setPublishedAt(LocalDateTime.now());
+                        article.setPublishedAt(now);
                     }
                 }
             }
             articleService.updateById(article);
+
+            // 更新标签关联
+            if (tagIds != null) {
+                articleService.saveArticleTags(article.getId(), tagIds);
+            }
         }
         return "redirect:/admin/articles";
     }
@@ -379,7 +446,8 @@ public class AdminController {
         Article article = articleService.getById(id);
 
         // 管理员或作者本人才能删除
-        if (article != null && currentUser != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+        if (article != null && currentUser != null
+                && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
             articleService.removeById(id);
         }
         return "redirect:/admin/articles";
@@ -391,7 +459,8 @@ public class AdminController {
         String[] idArray = ids.split(",");
         for (String id : idArray) {
             Article article = articleService.getById(Integer.parseInt(id));
-            if (article != null && currentUser != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
+            if (article != null && currentUser != null
+                    && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
                 articleService.removeById(Integer.parseInt(id));
             }
         }
@@ -412,13 +481,13 @@ public class AdminController {
     @GetMapping("/articles/off-shelf/{id}")
     public String offShelf(@PathVariable Integer id, HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null) {
             return "redirect:/toLoginPage";
         }
-        
+
         Article article = articleService.getById(id);
-        
+
         if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
             article.setProductStatus(2); // 2=已下架
             article.setUpdateTime(LocalDateTime.now());
@@ -431,13 +500,13 @@ public class AdminController {
     @GetMapping("/articles/on-shelf/{id}")
     public String onShelf(@PathVariable Integer id, HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null) {
             return "redirect:/toLoginPage";
         }
-        
+
         Article article = articleService.getById(id);
-        
+
         if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
             article.setProductStatus(0); // 0=在售
             article.setUpdateTime(LocalDateTime.now());
@@ -447,7 +516,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  4. 分类管理
+    // 4. 分类管理
     // ============================================================
 
     @GetMapping("/categories")
@@ -488,7 +557,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  5. 学校管理
+    // 5. 学校管理
     // ============================================================
 
     @GetMapping("/schools")
@@ -526,7 +595,7 @@ public class AdminController {
         return schoolService.deleteSchools(ids);
     }
     // ============================================================
-    //  6. 标签管理
+    // 6. 标签管理
     // ============================================================
 
     @GetMapping("/tags")
@@ -565,7 +634,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  7. 评论管理
+    // 7. 评论管理
     // ============================================================
 
     @GetMapping("/comment-manage")
@@ -601,9 +670,56 @@ public class AdminController {
         return commentService.removeById(id);
     }
 
+<<<<<<< Updated upstream
 
     // ============================================================
     //  8. 仪表盘
+=======
+    // ============================================================
+    // 8. 评价管理
+    // ============================================================
+
+    @GetMapping("/review-manage")
+    public String reviewManage(@RequestParam(defaultValue = "1") Integer pageNum,
+                               @RequestParam(defaultValue = "10") Integer pageSize,
+                               @RequestParam(required = false) Integer ratingFilter,
+                               Model model) {
+        Page<OrderReview> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<OrderReview> wrapper = new LambdaQueryWrapper<>();
+
+        if (ratingFilter != null && ratingFilter > 0) {
+            wrapper.eq(OrderReview::getRating, ratingFilter);
+        }
+
+        wrapper.orderByDesc(OrderReview::getCreatedAt);
+        IPage<OrderReview> reviewPage = orderReviewMapper.selectPage(page, wrapper);
+
+        model.addAttribute("reviewPage", reviewPage);
+        model.addAttribute("ratingFilter", ratingFilter);
+        return "admin/review-manage";
+    }
+
+    @GetMapping("/review/delete/{id}")
+    @ResponseBody
+    public boolean deleteReview(@PathVariable Long id) {
+        return orderReviewMapper.deleteById(id) > 0;
+    }
+
+    @PostMapping("/review/reply")
+    @ResponseBody
+    public boolean replyReview(@RequestParam Long id, @RequestParam String reply) {
+        OrderReview review = orderReviewMapper.selectById(id);
+        if (review != null) {
+            review.setReply(reply);
+            review.setReplyTime(LocalDateTime.now());
+            return orderReviewMapper.updateById(review) > 0;
+        }
+        return false;
+    }
+
+    // ============================================================
+    // 9. 仪表盘
+>>>>>>> Stashed changes
     // ============================================================
 
     @GetMapping("/dashboard")

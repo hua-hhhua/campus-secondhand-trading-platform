@@ -9,11 +9,23 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.LocaleResolver;
 
+import jakarta.annotation.PostConstruct;
+import java.util.TimeZone;
+
 @SpringBootApplication
 @MapperScan("com.campus.trade.mapper")
 @EnableAsync      // 异步任务支持
 @EnableScheduling // 定时任务支持
 public class CampusTradeApplication {
+
+    /**
+     * 设置默认时区为中国时区（东八区）
+     * 解决定时发布时间差1小时的问题
+     */
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
+    }
 
     @Bean
     public LocaleResolver localeResolver() {
