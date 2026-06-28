@@ -38,10 +38,10 @@ spring:
       password:
 
   mail:
-    host: smtp.163.com
+    host: smtp.qq.com
     port: 465
-    username: 18071545193@163.com
-    password: ZUScp35hVTuyiAMw
+    username: 1538292542@qq.com
+    password: enptfbiitdwkhgjf
     protocol: smtp
     default-encoding: UTF-8
     properties:
@@ -50,7 +50,7 @@ spring:
           auth: true
           ssl:
             enable: true
-            trust: smtp.163.com
+            trust: smtp.qq.com
           timeout: 10000
           connectiontimeout: 10000
           writetimeout: 10000
@@ -67,6 +67,7 @@ spring:
 
   jackson:
     time-zone: Asia/Shanghai
+
   jdbc:
     time-zone: Asia/Shanghai
 
@@ -85,7 +86,7 @@ file:
 
 blog:
   notification:
-    emails: 18071545193@163.com
+    emails: 1538292542@qq.com
 
 logging:
   level:

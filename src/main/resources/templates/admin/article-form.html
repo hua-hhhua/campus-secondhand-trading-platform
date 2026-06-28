@@ -245,8 +245,9 @@
       <div class="checkbox-group">
         <label><input type="checkbox" name="isTop" value="1" th:checked="${article.isTop == 1}"> 🔝 置顶</label>
         <label><input type="checkbox" name="allowComment" value="1" th:checked="${article.allowComment == 1 or article.allowComment == null}"> 💬 允许评论</label>
+        <label><input type="checkbox" name="sendEmail" value="1" th:checked="${article.sendEmail == 1}"> 📧 发送邮件通知</label>
       </div>
-      <div class="help-text">置顶后在你的商品列表中靠前显示</div>
+      <div class="help-text">置顶后在你的商品列表中靠前显示；勾选发送邮件通知后，发布时会向关注用户发送邮件提醒</div>
     </div>
 
     <!-- 按钮 -->
