@@ -2,6 +2,7 @@ package com.campus.trade.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ArticleVO {
 
@@ -24,6 +25,7 @@ public class ArticleVO {
     private String authorAvatar;
     private String categoryName;
     private String categorySlug;
+    private List<String> tagNames;
 
     // ========== 商品字段 ==========
     private BigDecimal price;
@@ -31,7 +33,7 @@ public class ArticleVO {
     private Integer schoolId;
     private String location;
     private String coverImage;
-    private Integer productStatus;   // 0:在售 1:已售 2:已下架
+    private Integer productStatus; // 0:在售 1:已售 2:已下架
 
     // ========== 联系方式 ==========
     private String wechat;
@@ -39,101 +41,259 @@ public class ArticleVO {
     private String phone;
 
     // ========== 购物车字段（用于购物车页面）==========
-    private Integer cartId;      // 购物车记录ID
-    private Integer checked;     // 是否选中：0-未选中，1-选中
-    private Integer quantity;    // 购买数量
+    private Integer cartId; // 购物车记录ID
+    private Integer checked; // 是否选中：0-未选中，1-选中
+    private Integer quantity; // 购买数量
 
     // ========== 浏览历史字段 ==========
-    private LocalDateTime browseTime;  // 浏览时间
+    private LocalDateTime browseTime; // 浏览时间
 
     // ========== Getters and Setters ==========
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public Integer getId() {
+        return id;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    public String getTitle() {
+        return title;
+    }
 
-    public Integer getUserId() { return userId; }
-    public void setUserId(Integer userId) { this.userId = userId; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public Integer getViewCount() { return viewCount; }
-    public void setViewCount(Integer viewCount) { this.viewCount = viewCount; }
+    public String getContent() {
+        return content;
+    }
 
-    public Integer getStatus() { return status; }
-    public void setStatus(Integer status) { this.status = status; }
+    public void setContent(String content) {
+        this.content = content;
+    }
 
-    public LocalDateTime getCreateTime() { return createTime; }
-    public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
+    public Integer getUserId() {
+        return userId;
+    }
 
-    public LocalDateTime getUpdateTime() { return updateTime; }
-    public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
 
-    public LocalDateTime getPublishedAt() { return publishedAt; }
-    public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
+    public Integer getViewCount() {
+        return viewCount;
+    }
 
-    public Integer getIsTop() { return isTop; }
-    public void setIsTop(Integer isTop) { this.isTop = isTop; }
+    public void setViewCount(Integer viewCount) {
+        this.viewCount = viewCount;
+    }
 
-    public Integer getAllowComment() { return allowComment; }
-    public void setAllowComment(Integer allowComment) { this.allowComment = allowComment; }
+    public Integer getStatus() {
+        return status;
+    }
 
-    public Integer getSendEmail() { return sendEmail; }
-    public void setSendEmail(Integer sendEmail) { this.sendEmail = sendEmail; }
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
 
-    public Integer getCategoryId() { return categoryId; }
-    public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
 
-    public Integer getStock() { return stock; }
-    public void setStock(Integer stock) { this.stock = stock; }
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
 
-    public Integer getSchoolId() { return schoolId; }
-    public void setSchoolId(Integer schoolId) { this.schoolId = schoolId; }
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
 
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
+    public LocalDateTime getPublishedAt() {
+        return publishedAt;
+    }
 
-    public String getCoverImage() { return coverImage; }
-    public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
+    public void setPublishedAt(LocalDateTime publishedAt) {
+        this.publishedAt = publishedAt;
+    }
 
-    public Integer getProductStatus() { return productStatus; }
-    public void setProductStatus(Integer productStatus) { this.productStatus = productStatus; }
+    public Integer getIsTop() {
+        return isTop;
+    }
 
-    public String getAuthorName() { return authorName; }
-    public void setAuthorName(String authorName) { this.authorName = authorName; }
+    public void setIsTop(Integer isTop) {
+        this.isTop = isTop;
+    }
 
-    public String getAuthorAvatar() { return authorAvatar; }
-    public void setAuthorAvatar(String authorAvatar) { this.authorAvatar = authorAvatar; }
+    public Integer getAllowComment() {
+        return allowComment;
+    }
 
-    public String getCategoryName() { return categoryName; }
-    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+    public void setAllowComment(Integer allowComment) {
+        this.allowComment = allowComment;
+    }
 
-    public String getCategorySlug() { return categorySlug; }
-    public void setCategorySlug(String categorySlug) { this.categorySlug = categorySlug; }
+    public Integer getSendEmail() {
+        return sendEmail;
+    }
 
-    public String getWechat() { return wechat; }
-    public void setWechat(String wechat) { this.wechat = wechat; }
+    public void setSendEmail(Integer sendEmail) {
+        this.sendEmail = sendEmail;
+    }
 
-    public String getQq() { return qq; }
-    public void setQq(String qq) { this.qq = qq; }
+    public Integer getCategoryId() {
+        return categoryId;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
+    }
 
-    public Integer getCartId() { return cartId; }
-    public void setCartId(Integer cartId) { this.cartId = cartId; }
+    public BigDecimal getPrice() {
+        return price;
+    }
 
-    public Integer getChecked() { return checked; }
-    public void setChecked(Integer checked) { this.checked = checked; }
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
 
-    public Integer getQuantity() { return quantity; }
-    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public Integer getStock() {
+        return stock;
+    }
 
-    public LocalDateTime getBrowseTime() { return browseTime; }
-    public void setBrowseTime(LocalDateTime browseTime) { this.browseTime = browseTime; }
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    public Integer getSchoolId() {
+        return schoolId;
+    }
+
+    public void setSchoolId(Integer schoolId) {
+        this.schoolId = schoolId;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getCoverImage() {
+        return coverImage;
+    }
+
+    public void setCoverImage(String coverImage) {
+        this.coverImage = coverImage;
+    }
+
+    public Integer getProductStatus() {
+        return productStatus;
+    }
+
+    public void setProductStatus(Integer productStatus) {
+        this.productStatus = productStatus;
+    }
+
+    public String getAuthorName() {
+        return authorName;
+    }
+
+    public void setAuthorName(String authorName) {
+        this.authorName = authorName;
+    }
+
+    public String getAuthorAvatar() {
+        return authorAvatar;
+    }
+
+    public void setAuthorAvatar(String authorAvatar) {
+        this.authorAvatar = authorAvatar;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getCategorySlug() {
+        return categorySlug;
+    }
+
+    public void setCategorySlug(String categorySlug) {
+        this.categorySlug = categorySlug;
+    }
+
+    public List<String> getTagNames() {
+        return tagNames;
+    }
+
+    public void setTagNames(List<String> tagNames) {
+        this.tagNames = tagNames;
+    }
+
+    public String getWechat() {
+        return wechat;
+    }
+
+    public void setWechat(String wechat) {
+        this.wechat = wechat;
+    }
+
+    public String getQq() {
+        return qq;
+    }
+
+    public void setQq(String qq) {
+        this.qq = qq;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public Integer getCartId() {
+        return cartId;
+    }
+
+    public void setCartId(Integer cartId) {
+        this.cartId = cartId;
+    }
+
+    public Integer getChecked() {
+        return checked;
+    }
+
+    public void setChecked(Integer checked) {
+        this.checked = checked;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public LocalDateTime getBrowseTime() {
+        return browseTime;
+    }
+
+    public void setBrowseTime(LocalDateTime browseTime) {
+        this.browseTime = browseTime;
+    }
 }
