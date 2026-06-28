@@ -9,6 +9,7 @@
     body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
     .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
 
+    /* 头部样式 */
     .header-section {
       display: flex;
       justify-content: space-between;
@@ -46,18 +47,15 @@
     .btn-sm { padding: 4px 8px; font-size: 12px; }
     .btn-success:hover { background-color: #5daf34; }
     .btn-warning:hover { background-color: #cf9236; }
-
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
     th { background-color: #f5f7fa; font-weight: 600; }
     tr:hover { background-color: #f5f7fa; }
-
     .search-form { display: flex; gap: 10px; align-items: center; }
     .search-form input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 250px; }
     .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
     .pagination a, .pagination span { padding: 6px 12px; border: 1px solid #ddd; text-decoration: none; color: #333; border-radius: 4px; }
     .pagination .active { background-color: #f39c12; color: white; border-color: #f39c12; }
-
     .status-published { color: #67c23a; }
     .status-draft { color: #e6a23c; }
     .title-link { color: #333; text-decoration: none; font-weight: bold; }
@@ -66,28 +64,24 @@
     .status-in-sale { color: #67c23a; }
     .status-sold { color: #e6a23c; }
     .status-off-shelf { color: #f56c6c; }
-
-    .action-buttons { display: flex; gap: 5px; flex-wrap: wrap; }
   </style>
 </head>
 <body>
 <div class="container">
-  <!-- 头部 -->
+  <!-- 头部：标题 + 返回首页 -->
   <div class="header-section">
     <h1>✏️ 我的商品</h1>
     <a href="/" class="btn-home">🏠 返回首页</a>
   </div>
 
-  <!-- 工具栏 -->
   <div class="toolbar">
-    <form class="search-form" method="get" th:action="@{/article/manage}">
+    <form class="search-form" method="get">
       <input type="text" name="keyword" placeholder="搜索我的商品标题或内容" th:value="${keyword}">
       <button type="submit" class="btn btn-primary">搜索</button>
     </form>
-    <a href="/article/form" class="btn btn-add">+ 发布商品</a>
+    <a href="/admin/articles/form" class="btn btn-add">+ 发布商品</a>
   </div>
 
-  <!-- 商品列表 -->
   <div th:if="${articlePage != null and !articlePage.records.isEmpty()}">
     <table>
       <thead>
@@ -126,18 +120,20 @@
         </td>
         <td th:text="${#temporals.format(article.createTime, 'yyyy-MM-dd HH:mm')}">?</td>
         <td>
-          <div class="action-buttons">
-            <a th:href="@{/article/form(id=${article.id})}" class="btn btn-edit btn-sm">编辑</a>
-            <a th:href="@{/article/delete/{id}(id=${article.id})}" class="btn btn-delete btn-sm" onclick="return confirm('确定要删除这个商品吗？')">删除</a>
-            <a th:if="${article.productStatus == 0 or article.productStatus == null}"
-               th:href="@{/article/off-shelf/{id}(id=${article.id})}"
-               class="btn btn-warning btn-sm"
-               onclick="return confirm('确定要下架该商品吗？下架后买家将看不到此商品')">下架</a>
-            <a th:if="${article.productStatus == 2}"
-               th:href="@{/article/on-shelf/{id}(id=${article.id})}"
-               class="btn btn-success btn-sm"
-               onclick="return confirm('确定要重新上架该商品吗？')">上架</a>
-          </div>
+          <a th:href="@{/admin/articles/form(id=${article.id})}" class="btn btn-edit btn-sm">编辑</a>
+          <a th:href="@{/admin/articles/delete/{id}(id=${article.id})}" class="btn btn-delete btn-sm" onclick="return confirm('确定要删除这个商品吗？')">删除</a>
+
+          <!-- 下架按钮：在售状态显示 -->
+          <a th:if="${article.productStatus == 0 or article.productStatus == null}"
+             th:href="@{/admin/articles/off-shelf/{id}(id=${article.id})}"
+             class="btn btn-warning btn-sm"
+             onclick="return confirm('确定要下架该商品吗？下架后买家将看不到此商品')">下架</a>
+
+          <!-- 上架按钮：已下架状态显示 -->
+          <a th:if="${article.productStatus == 2}"
+             th:href="@{/admin/articles/on-shelf/{id}(id=${article.id})}"
+             class="btn btn-success btn-sm"
+             onclick="return confirm('确定要重新上架该商品吗？')">上架</a>
         </td>
       </tr>
       </tbody>
@@ -145,17 +141,12 @@
 
     <!-- 分页 -->
     <div class="pagination" th:if="${articlePage != null and articlePage.pages > 1}">
-      <a th:if="${articlePage.hasPrevious}" th:href="@{/article/manage(page=${articlePage.current-1}, size=10, keyword=${keyword})}">上一页</a>
-      <span th:unless="${articlePage.hasPrevious}" style="color:#ccc;">上一页</span>
-
-      <a th:each="i : ${#numbers.sequence(1, articlePage.pages)}"
-         th:classappend="${i == articlePage.current} ? 'active'"
-         th:text="${i}"
-         th:href="@{/article/manage(page=${i}, size=10, keyword=${keyword})}">
-      </a>
-
-      <a th:if="${articlePage.hasNext}" th:href="@{/article/manage(page=${articlePage.current+1}, size=10, keyword=${keyword})}">下一页</a>
-      <span th:unless="${articlePage.hasNext}" style="color:#ccc;">下一页</span>
+      <a th:if="${articlePage.hasPrevious}" th:href="@{/admin/articles(page=${articlePage.current-1}, size=10, keyword=${keyword})}">上一页</a>
+      <span th:each="i : ${#numbers.sequence(1, articlePage.pages)}"
+            th:classappend="${i == articlePage.current} ? 'active'"
+            th:text="${i}"
+            th:href="@{/admin/articles(page=${i}, size=10, keyword=${keyword})}"></span>
+      <a th:if="${articlePage.hasNext}" th:href="@{/admin/articles(page=${articlePage.current+1}, size=10, keyword=${keyword})}">下一页</a>
     </div>
   </div>
 

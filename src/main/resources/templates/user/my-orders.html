@@ -16,6 +16,56 @@
             background-color: #f5f5f5;
         }
 
+        .pending-fixed {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 20px 30px;
+            z-index: 999;
+            border: 1px solid #e8e8e8;
+            min-width: 280px;
+            display: none;
+        }
+
+        .pending-fixed .label {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .pending-fixed .amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff4d4f;
+        }
+
+        .pending-fixed .pay-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .pending-fixed .pay-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .pending-fixed .flex-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
         .navbar {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -310,426 +360,417 @@
             font-size: 64px;
             margin-bottom: 20px;
         }
-
-        /* 待支付合计浮动按钮 */
-        .pending-fixed {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            padding: 20px 30px;
-            z-index: 999;
-            border: 1px solid #e8e8e8;
-            min-width: 280px;
-            display: none;
-        }
-
-        .pending-fixed .label {
-            font-size: 12px;
-            color: #999;
-        }
-
-        .pending-fixed .amount {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ff4d4f;
-        }
-
-        .pending-fixed .pay-btn {
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
-
-        .pending-fixed .pay-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .pending-fixed .flex-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
     </style>
 </head>
 <body>
-<!-- 导航栏 -->
-<div class="navbar">
-    <h1>🏫 校园交易平台</h1>
-    <div class="user-info">
-        <img th:src="${userAvatar != null ? userAvatar : '/avatars/default.png'}" alt="头像" class="user-avatar">
-        <span th:text="${userNickname != null ? userNickname : username}"></span>
-        <a href="/profile" style="color: white;">个人中心</a>
-    </div>
-</div>
-
-<div class="container">
-    <!-- 头部 -->
-    <div class="header-section">
-        <h2>📦 我的订单</h2>
-        <a href="/profile" class="back-btn">← 返回个人中心</a>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <h1>🏫 校园交易平台</h1>
+        <div class="user-info">
+            <img th:src="${userAvatar != null ? userAvatar : '/avatars/default.png'}" alt="头像" class="user-avatar">
+            <span th:text="${userNickname != null ? userNickname : username}"></span>
+            <a href="/personal-center" style="color: white;">个人中心</a>
+        </div>
     </div>
 
-    <!-- 筛选栏 -->
-    <div class="filter-bar">
-        <select id="statusFilter" onchange="filterOrders()">
-            <option value="">全部状态</option>
-            <option value="0" th:selected="${statusFilter == 0}">待付款</option>
-            <option value="1" th:selected="${statusFilter == 1}">待发货</option>
-            <option value="2" th:selected="${statusFilter == 2}">已发货</option>
-            <option value="3" th:selected="${statusFilter == 3}">已收货</option>
-            <option value="4" th:selected="${statusFilter == 4}">已取消</option>
-            <option value="5" th:selected="${statusFilter == 5}">已完成</option>
-        </select>
-    </div>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header-section">
+            <h2>📦 我的订单</h2>
+            <a href="/personal-center" class="back-btn">← 返回个人中心</a>
+        </div>
 
-    <!-- 表格 -->
-    <div class="table-container">
-        <table>
-            <thead>
-            <tr>
-                <th>订单号</th>
-                <th>商品标题</th>
-                <th>卖家</th>
-                <th>价格</th>
-                <th>数量</th>
-                <th>总金额</th>
-                <th>状态</th>
-                <th>下单时间</th>
-                <th>操作</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="order : ${orderPage.records}">
-                <td th:text="${order.orderNo}"></td>
-                <td th:text="${order.articleTitle}"></td>
-                <td th:text="${order.sellerName}"></td>
-                <td th:text="'¥' + ${#numbers.formatDecimal(order.price, 1, 2)}"></td>
-                <td th:text="${order.quantity}"></td>
-                <td th:text="'¥' + ${#numbers.formatDecimal(order.totalAmount, 1, 2)}"></td>
-                <td>
-                            <span class="status-badge" th:classappend="'status-' + ${order.status}"
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <select id="statusFilter" onchange="filterOrders()">
+                <option value="">全部状态</option>
+                <option value="0" th:selected="${statusFilter == 0}">待付款</option>
+                <option value="1" th:selected="${statusFilter == 1}">待发货</option>
+                <option value="2" th:selected="${statusFilter == 2}">已发货</option>
+                <option value="3" th:selected="${statusFilter == 3}">已收货</option>
+                <option value="4" th:selected="${statusFilter == 4}">已取消</option>
+                <option value="5" th:selected="${statusFilter == 5}">已完成</option>
+            </select>
+        </div>
+
+        <!-- 表格 -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>订单号</th>
+                        <th>商品标题</th>
+                        <th>卖家</th>
+                        <th>价格</th>
+                        <th>数量</th>
+                        <th>总金额</th>
+                        <th>状态</th>
+                        <th>下单时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${orderPage.records}">
+                        <td th:text="${order.orderNo}"></td>
+                        <td th:text="${order.articleTitle}"></td>
+                        <td th:text="${order.sellerName}"></td>
+                        <td th:text="'¥' + ${#numbers.formatDecimal(order.price, 1, 2)}"></td>
+                        <td th:text="${order.quantity}"></td>
+                        <td th:text="'¥' + ${#numbers.formatDecimal(order.totalAmount, 1, 2)}"></td>
+                        <td>
+                            <span class="status-badge" th:classappend="'status-' + ${order.status}" 
                                   th:text="${order.statusText}"></span>
-                </td>
-                <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
-                <td>
-                    <div class="action-btns">
-                        <button class="btn btn-primary" th:onclick="'viewOrder(' + ${order.id} + ')'">详情</button>
+                        </td>
+                        <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn btn-primary" th:onclick="'viewOrder(' + ${order.id} + ')'">详情</button>
+                                
+                                <!-- 待付款：可以取消 -->
+                                <button class="btn btn-danger" th:if="${order.status == 0}" 
+                                        th:onclick="'cancelOrder(' + ${order.id} + ')'">取消订单</button>
+                                
+                                <!-- 待发货：可以取消 -->
+                                <button class="btn btn-danger" th:if="${order.status == 1}" 
+                                        th:onclick="'cancelOrder(' + ${order.id} + ')'">取消订单</button>
+                                
+                                <!-- 已发货：可以确认收货 -->
+                                <button class="btn btn-success" th:if="${order.status == 2}" 
+                                        th:onclick="'confirmReceipt(' + ${order.id} + ')'">确认收货</button>
+                                
+                                <!-- 已完成或已取消：可以删除 -->
+                                <button class="btn btn-warning" th:if="${order.status == 4 or order.status == 5}" 
+                                        th:onclick="'deleteOrder(' + ${order.id} + ')'">删除订单</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${orderPage.records.empty}">
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"></div>
+                                <p>暂无订单记录</p>
+                                <p style="margin-top: 10px; font-size: 12px;">快去挑选心仪的商品吧！</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
 
-                        <!-- 待付款：可以取消 -->
-                        <button class="btn btn-danger" th:if="${order.status == 0}"
-                                th:onclick="'cancelOrder(' + ${order.id} + ')'">取消订单</button>
-
-                        <!-- 待发货：可以取消 -->
-                        <button class="btn btn-danger" th:if="${order.status == 1}"
-                                th:onclick="'cancelOrder(' + ${order.id} + ')'">取消订单</button>
-
-                        <!-- 已发货：可以确认收货 -->
-                        <button class="btn btn-success" th:if="${order.status == 2}"
-                                th:onclick="'confirmReceipt(' + ${order.id} + ')'">确认收货</button>
-
-                        <!-- 已完成或已取消：可以删除 -->
-                        <button class="btn btn-warning" th:if="${order.status == 4 or order.status == 5}"
-                                th:onclick="'deleteOrder(' + ${order.id} + ')'">删除订单</button>
-                    </div>
-                </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(orderPage.records)}">
-                <td colspan="9">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
-                        <p>暂无订单记录</p>
-                        <p style="margin-top: 10px; font-size: 12px;">快去挑选心仪的商品吧！</p>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-
-        <!-- 分页 -->
-        <div class="pagination" th:if="${orderPage.pages > 0}">
-            <div class="pagination-info">
-                共 <span th:text="${orderPage.total}"></span> 条记录，
-                第 <span th:text="${orderPage.current}"></span> / <span th:text="${orderPage.pages}"></span> 页
-            </div>
-            <div class="pagination-buttons">
-                <button th:disabled="${orderPage.current <= 1}"
-                        th:onclick="'goToPage(' + ${orderPage.current - 1} + ')'">上一页</button>
-                <button th:disabled="${orderPage.current >= orderPage.pages}"
-                        th:onclick="'goToPage(' + ${orderPage.current + 1} + ')'">下一页</button>
+            <!-- 分页 -->
+            <div class="pagination" th:if="${orderPage.pages > 0}">
+                <div class="pagination-info">
+                    共 <span th:text="${orderPage.total}"></span> 条记录，
+                    第 <span th:text="${orderPage.current}"></span> / <span th:text="${orderPage.pages}"></span> 页
+                </div>
+                <div class="pagination-buttons">
+                    <button th:disabled="${orderPage.current <= 1}" 
+                            th:onclick="'goToPage(' + ${orderPage.current - 1} + ')'">上一页</button>
+                    <button th:disabled="${orderPage.current >= orderPage.pages}" 
+                            th:onclick="'goToPage(' + ${orderPage.current + 1} + ')'">下一页</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- 待支付订单合计 & 一键支付（浮动按钮） -->
-<div id="pendingFixed" class="pending-fixed">
-    <div class="flex-row">
-        <div>
-            <div class="label">💰 待支付合计</div>
-            <div class="amount" id="totalPendingAmountFixed">¥0.00</div>
+    <!-- 订单详情弹窗 -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div class="modal-header">订单详情</div>
+            <div id="orderDetail"></div>
         </div>
-        <button class="pay-btn" id="payAllBtnFixed" onclick="payAll()">💳 确定支付</button>
     </div>
-</div>
 
-<!-- 订单详情弹窗 -->
-<div id="orderModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <div class="modal-header">订单详情</div>
-        <div id="orderDetail"></div>
+    <!-- 待支付订单合计 & 一键支付（浮动按钮） -->
+    <div id="pendingFixed" class="pending-fixed">
+        <div class="flex-row">
+            <div>
+                <div class="label">💰 待支付合计</div>
+                <div class="amount" id="totalPendingAmountFixed">¥0.00</div>
+            </div>
+            <button class="pay-btn" id="payAllBtnFixed" data-order-id="" data-amount="" onclick="handlePayAll()">💳 确定支付</button>
+        </div>
     </div>
-</div>
 
-<script>
-    // ========== 筛选订单 ==========
-    function filterOrders() {
-        const statusFilter = document.getElementById('statusFilter').value;
-        let url = '/user/my-orders?pageNum=1&pageSize=10';
-        if (statusFilter) url += '&statusFilter=' + statusFilter;
-        window.location.href = url;
-    }
+    <script src="/js/payment.js"></script>
+    <script>
+        // 筛选订单
+        function filterOrders() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            let url = '/user/my-orders?pageNum=1&pageSize=10';
+            if (statusFilter) url += '&statusFilter=' + statusFilter;
+            window.location.href = url;
+        }
 
-    // ========== 跳转到指定页 ==========
-    function goToPage(page) {
-        const statusFilter = document.getElementById('statusFilter').value;
-        let url = '/user/my-orders?pageNum=' + page + '&pageSize=10';
-        if (statusFilter) url += '&statusFilter=' + statusFilter;
-        window.location.href = url;
-    }
+        // 跳转到指定页
+        function goToPage(page) {
+            const statusFilter = document.getElementById('statusFilter').value;
+            let url = '/user/my-orders?pageNum=' + page + '&pageSize=10';
+            if (statusFilter) url += '&statusFilter=' + statusFilter;
+            window.location.href = url;
+        }
 
-    // ========== 查看订单详情 ==========
-    function viewOrder(id) {
-        fetch('/api/orders/' + id)
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(data) {
-                if (data.success) {
-                    var order = data.data;
-                    var detailHtml =
-                        '<div class="detail-row"><div class="detail-label">订单号：</div><div class="detail-value">' + order.orderNo + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">商品标题：</div><div class="detail-value">' + (order.articleTitle || '-') + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">卖家姓名：</div><div class="detail-value">' + (order.sellerName || '-') + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">卖家电话：</div><div class="detail-value">' + (order.sellerPhone || '-') + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">买家地址：</div><div class="detail-value">' + (order.buyerAddress || '-') + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">单价：</div><div class="detail-value">¥' + order.price + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">数量：</div><div class="detail-value">' + order.quantity + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">总金额：</div><div class="detail-value">¥' + order.totalAmount + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">状态：</div><div class="detail-value">' + order.statusText + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">备注：</div><div class="detail-value">' + (order.remark || '-') + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">取消原因：</div><div class="detail-value">' + (order.cancelReason || '-') + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">下单时间：</div><div class="detail-value">' + formatDateTime(order.createdAt) + '</div></div>' +
-                        '<div class="detail-row"><div class="detail-label">更新时间：</div><div class="detail-value">' + formatDateTime(order.updatedAt) + '</div></div>';
-                    document.getElementById('orderDetail').innerHTML = detailHtml;
-                    document.getElementById('orderModal').classList.add('show');
-                } else {
+        // 查看订单详情
+        function viewOrder(id) {
+            fetch('/api/orders/' + id)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const order = data.data;
+                        const detailHtml = `
+                            <div class="detail-row"><div class="detail-label">订单号：</div><div class="detail-value">${order.orderNo}</div></div>
+                            <div class="detail-row"><div class="detail-label">商品标题：</div><div class="detail-value">${order.articleTitle || '-'}</div></div>
+                            <div class="detail-row"><div class="detail-label">卖家姓名：</div><div class="detail-value">${order.sellerName || '-'}</div></div>
+                            <div class="detail-row"><div class="detail-label">卖家电话：</div><div class="detail-value">${order.sellerPhone || '-'}</div></div>
+                            <div class="detail-row"><div class="detail-label">买家地址：</div><div class="detail-value">${order.buyerAddress || '-'}</div></div>
+                            <div class="detail-row"><div class="detail-label">单价：</div><div class="detail-value">¥${order.price}</div></div>
+                            <div class="detail-row"><div class="detail-label">数量：</div><div class="detail-value">${order.quantity}</div></div>
+                            <div class="detail-row"><div class="detail-label">总金额：</div><div class="detail-value">¥${order.totalAmount}</div></div>
+                            <div class="detail-row"><div class="detail-label">状态：</div><div class="detail-value">${order.statusText}</div></div>
+                            <div class="detail-row"><div class="detail-label">备注：</div><div class="detail-value">${order.remark || '-'}</div></div>
+                            <div class="detail-row"><div class="detail-label">取消原因：</div><div class="detail-value">${order.cancelReason || '-'}</div></div>
+                            <div class="detail-row"><div class="detail-label">下单时间：</div><div class="detail-value">${formatDateTime(order.createdAt)}</div></div>
+                            <div class="detail-row"><div class="detail-label">更新时间：</div><div class="detail-value">${formatDateTime(order.updatedAt)}</div></div>
+                        `;
+                        document.getElementById('orderDetail').innerHTML = detailHtml;
+                        document.getElementById('orderModal').classList.add('show');
+                    } else {
+                        alert('获取订单详情失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
                     alert('获取订单详情失败');
-                }
-            })
-            .catch(function(error) {
-                console.error('Error:', error);
-                alert('获取订单详情失败');
-            });
-    }
-
-    // ========== 关闭弹窗 ==========
-    function closeModal() {
-        document.getElementById('orderModal').classList.remove('show');
-    }
-
-    // ========== 通用 POST 操作处理 ==========
-    function handleAction(url, successMsg, failMsg) {
-        fetch(url, {method: 'POST'})
-            .then(function(response) {
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                var contentType = response.headers.get('content-type') || '';
-                if (contentType.includes('application/json')) {
-                    return response.json();
-                }
-                return {success: true};
-            })
-            .then(function(result) {
-                if (result.success === true || result.code === 200) {
-                    alert(successMsg);
-                    location.reload();
-                } else {
-                    alert(failMsg + '：' + (result.message || '未知错误'));
-                }
-            })
-            .catch(function(error) {
-                console.error('Error:', error);
-                alert(failMsg);
-            });
-    }
-
-    // ========== 取消订单 ==========
-    function cancelOrder(id) {
-        if (!confirm('确定要取消这个订单吗？')) return;
-        var reason = prompt('请输入取消原因（可选）：');
-        handleAction('/user/orders/' + id + '/cancel?reason=' + encodeURIComponent(reason || ''), '订单已取消', '取消失败');
-    }
-
-    // ========== 确认收货 ==========
-    function confirmReceipt(id) {
-        if (!confirm('确认已收到商品吗？')) return;
-        handleAction('/user/orders/' + id + '/confirm', '确认收货成功！', '操作失败');
-    }
-
-    // ========== 删除订单 ==========
-    function deleteOrder(id) {
-        if (!confirm('确定要删除这个订单吗？删除后不可恢复。')) return;
-        handleAction('/user/orders/' + id + '/delete', '订单已删除', '删除失败');
-    }
-
-    // ========== 格式化时间 ==========
-    function formatDateTime(dateTime) {
-        if (!dateTime) return '-';
-        var date = new Date(dateTime);
-        return date.toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    // ========== 计算待支付总金额 ==========
-    function calculatePendingTotal() {
-        var rows = document.querySelectorAll('tbody tr');
-        var total = 0;
-        var hasPending = false;
-
-        rows.forEach(function(row) {
-            var statusBadge = row.querySelector('.status-badge');
-            if (statusBadge && statusBadge.textContent.trim() === '待付款') {
-                var cells = row.querySelectorAll('td');
-                if (cells.length >= 6) {
-                    var amountText = cells[5].textContent;
-                    var amount = parseFloat(amountText.replace('¥', ''));
-                    if (!isNaN(amount)) {
-                        total += amount;
-                        hasPending = true;
-                    }
-                }
-            }
-        });
-
-        var totalElement = document.getElementById('totalPendingAmountFixed');
-        var fixedContainer = document.getElementById('pendingFixed');
-
-        if (totalElement) {
-            totalElement.textContent = '¥' + total.toFixed(2);
+                });
         }
 
-        if (fixedContainer) {
-            if (hasPending && total > 0) {
-                fixedContainer.style.display = 'block';
-            } else {
-                fixedContainer.style.display = 'none';
-            }
-        }
-    }
-
-    // ========== 一键支付全部待付款订单 ==========
-    function payAll() {
-        var rows = document.querySelectorAll('tbody tr');
-        var pendingOrders = [];
-        var totalAmount = 0;
-
-        rows.forEach(function(row) {
-            var statusBadge = row.querySelector('.status-badge');
-            if (statusBadge && statusBadge.textContent.trim() === '待付款') {
-                var detailBtn = row.querySelector('.btn-primary');
-                if (detailBtn) {
-                    var onclickAttr = detailBtn.getAttribute('onclick');
-                    var match = onclickAttr.match(/\d+/);
-                    if (match) {
-                        pendingOrders.push(parseInt(match[0]));
-                    }
-                }
-                var cells = row.querySelectorAll('td');
-                if (cells.length >= 6) {
-                    var amountText = cells[5].textContent;
-                    var amount = parseFloat(amountText.replace('¥', ''));
-                    if (!isNaN(amount)) {
-                        totalAmount += amount;
-                    }
-                }
-            }
-        });
-
-        if (pendingOrders.length === 0) {
-            alert('没有待付款的订单');
-            return;
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('orderModal').classList.remove('show');
         }
 
-        if (!confirm('确认支付 ' + pendingOrders.length + ' 个待付款订单，总金额 ¥' + totalAmount.toFixed(2) + ' 吗？')) {
-            return;
-        }
-
-        var completed = 0;
-        var failed = 0;
-        var total = pendingOrders.length;
-
-        pendingOrders.forEach(function(id) {
-            // ========== 关键修改：使用 /pay 接口 ==========
-            fetch('/user/orders/' + id + '/pay', {
+        // 取消订单
+        function cancelOrder(id) {
+            if (!confirm('确定要取消这个订单吗？')) return;
+            
+            const reason = prompt('请输入取消原因（可选）：');
+            
+            fetch('/user/orders/' + id + '/cancel?reason=' + encodeURIComponent(reason || ''), {
                 method: 'POST'
             })
-                .then(function(response) {
-                    return response.json();
-                })
-                .then(function(result) {
-                    if (result.code === 200 || result.success === true) {
-                        completed++;
-                    } else {
-                        failed++;
-                    }
-                    if (completed + failed === total) {
-                        if (failed === 0) {
-                            alert('支付成功！所有订单已进入待发货状态');
-                            window.location.href = '/user/my-orders';
-                        } else {
-                            alert('支付完成：成功 ' + completed + ' 个，失败 ' + failed + ' 个');
-                            location.reload();
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('订单已取消');
+                    location.reload();
+                } else {
+                    alert('取消失败：' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('取消失败');
+            });
+        }
+
+        // 确认收货
+        function confirmReceipt(id) {
+            if (!confirm('确认已收到商品吗？')) return;
+            
+            fetch('/user/orders/' + id + '/confirm', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('确认收货成功！');
+                    location.reload();
+                } else {
+                    alert('操作失败：' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('操作失败');
+            });
+        }
+
+        // 删除订单
+        function deleteOrder(id) {
+            if (!confirm('确定要删除这个订单吗？删除后不可恢复。')) return;
+            
+            fetch('/user/orders/' + id + '/delete', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('订单已删除');
+                    location.reload();
+                } else {
+                    alert('删除失败：' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('删除失败');
+            });
+        }
+
+        // 格式化时间
+        function formatDateTime(dateTime) {
+            if (!dateTime) return '-';
+            const date = new Date(dateTime);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 点击弹窗外部关闭
+        document.getElementById('orderModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // 计算待支付总金额
+        function calculatePendingTotal() {
+            var rows = document.querySelectorAll('tbody tr');
+            var total = 0;
+            var hasPending = false;
+
+            rows.forEach(function(row) {
+                var statusBadge = row.querySelector('.status-badge');
+                if (statusBadge && statusBadge.textContent.trim() === '待付款') {
+                    var cells = row.querySelectorAll('td');
+                    if (cells.length >= 6) {
+                        var amountText = cells[5].textContent;
+                        var amount = parseFloat(amountText.replace('¥', ''));
+                        if (!isNaN(amount)) {
+                            total += amount;
+                            hasPending = true;
                         }
                     }
-                })
-                .catch(function(error) {
-                    failed++;
-                    if (completed + failed === total) {
-                        alert('支付完成：成功 ' + completed + ' 个，失败 ' + failed + ' 个');
-                        location.reload();
-                    }
-                });
-        });
-    }
+                }
+            });
 
-    // ========== 点击弹窗外部关闭 ==========
-    document.getElementById('orderModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeModal();
+            var totalElement = document.getElementById('totalPendingAmountFixed');
+            var fixedContainer = document.getElementById('pendingFixed');
+
+            if (totalElement) {
+                totalElement.textContent = '¥' + total.toFixed(2);
+            }
+
+            if (fixedContainer) {
+                if (hasPending && total > 0) {
+                    fixedContainer.style.display = 'block';
+                } else {
+                    fixedContainer.style.display = 'none';
+                }
+            }
         }
-    });
 
-    // ========== 页面加载时计算待支付总金额 ==========
-    document.addEventListener('DOMContentLoaded', function() {
-        calculatePendingTotal();
-    });
-</script>
+        // 一键支付全部待付款订单
+        function handlePayAll() {
+            var rows = document.querySelectorAll('tbody tr');
+            var pendingOrders = [];
+            var totalAmount = 0;
+
+            rows.forEach(function(row) {
+                var statusBadge = row.querySelector('.status-badge');
+                if (statusBadge && statusBadge.textContent.trim() === '待付款') {
+                    var detailBtn = row.querySelector('.btn-primary');
+                    if (detailBtn) {
+                        var onclickAttr = detailBtn.getAttribute('onclick');
+                        var match = onclickAttr.match(/\d+/);
+                        if (match) {
+                            pendingOrders.push(parseInt(match[0]));
+                        }
+                    }
+                    var cells = row.querySelectorAll('td');
+                    if (cells.length >= 6) {
+                        var amountText = cells[5].textContent;
+                        var amount = parseFloat(amountText.replace('¥', ''));
+                        if (!isNaN(amount)) {
+                            totalAmount += amount;
+                        }
+                    }
+                }
+            });
+
+            if (pendingOrders.length === 0) {
+                alert('没有待付款的订单');
+                return;
+            }
+
+            if (!confirm('确认支付 ' + pendingOrders.length + ' 个待付款订单，总金额 ¥' + totalAmount.toFixed(2) + ' 吗？')) {
+                return;
+            }
+
+            rows.forEach(function(row) {
+                var badge = row.querySelector('.status-badge');
+                if (badge && badge.textContent.trim() === '待付款') {
+                    badge.textContent = '待发货';
+                    badge.className = 'status-badge status-1';
+
+                    var actionDiv = row.querySelector('.action-btns');
+                    if (actionDiv) {
+                        var cancelBtns = actionDiv.querySelectorAll('.btn-danger');
+                        cancelBtns.forEach(function(btn) {
+                            if (btn.textContent.trim() === '取消订单') {
+                                btn.remove();
+                            }
+                        });
+                    }
+                }
+            });
+
+            calculatePendingTotal();
+
+            var completed = 0;
+            var total = pendingOrders.length;
+            var successCount = 0;
+
+            pendingOrders.forEach(function(id) {
+                fetch('/api/orders/' + id + '/pay', {
+                    method: 'POST'
+                })
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(result) {
+                        completed++;
+                        if (result.success === true) {
+                            successCount++;
+                        }
+                        if (completed === total) {
+                            if (successCount === total) {
+                                handlePayment(pendingOrders, totalAmount);
+                            } else {
+                                alert('部分订单支付失败，请刷新页面重试');
+                                location.reload();
+                            }
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('支付请求失败:', error);
+                        completed++;
+                        if (completed === total) {
+                            alert('支付请求失败，请刷新页面重试');
+                            location.reload();
+                        }
+                    });
+            });
+        }
+
+        // 页面加载时计算待支付总金额
+        document.addEventListener('DOMContentLoaded', function() {
+            calculatePendingTotal();
+        });
+    </script>
 </body>
 </html>

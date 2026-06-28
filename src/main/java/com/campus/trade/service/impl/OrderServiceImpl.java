@@ -279,7 +279,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return orderMapper.deleteById(orderId) > 0;
     }
 
-
     // ========== 支付相关 ==========
     @Override
     public BigDecimal calculatePendingAmount(Integer buyerId) {
@@ -307,7 +306,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         return updateStatus(orderId, 1);
     }
-
 
     // ========== 评价 ==========
     @Override

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -184,7 +183,7 @@ public class AdminController {
     }
 
     // ============================================================
-    //  3. 商品管理（文章管理）
+    //  3. 文章管理（使用联表查询）
     // ============================================================
 
     @GetMapping("/articles")
@@ -195,19 +194,9 @@ public class AdminController {
                                 @RequestParam(required = false) Integer categoryId,
                                 @RequestParam(required = false) String startTime,
                                 @RequestParam(required = false) String endTime,
-                                HttpSession session,
                                 Model model) {
-
-        User currentUser = (User) session.getAttribute("currentUser");
-
         Page<Article> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
-
-        // ========== 根据角色过滤 ==========
-        if (currentUser != null && currentUser.getRole() != 1) {
-            // 普通用户只能看到自己的商品
-            wrapper.eq(Article::getUserId, currentUser.getId());
-        }
 
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.like(Article::getTitle, keyword)
@@ -273,110 +262,34 @@ public class AdminController {
     }
 
     @PostMapping("/articles/save")
-    public String saveArticle(Article article, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            return "redirect:/toLoginPage";
-        }
-
-        // 设置用户ID
-        article.setUserId(currentUser.getId());
-
+    public String saveArticle(Article article) {
         if (article.getId() == null) {
-            // 新增文章
+            article.setStatus(1);
             article.setViewCount(0);
             article.setIsTop(0);
             article.setAllowComment(1);
             article.setSendEmail(0);
             article.setCreateTime(LocalDateTime.now());
             article.setUpdateTime(LocalDateTime.now());
-            
-            // ========== 根据 status 设置 productStatus ==========
-            if (article.getStatus() == null) {
-                article.setStatus(1); // 默认立即发布
-            }
-            
-            if (article.getStatus() == 0) {
-                // 草稿：设置为已下架，不在首页显示
-                article.setProductStatus(2);
-                article.setPublishedAt(null);
-            } else if (article.getStatus() == 2) {
-                // 定时发布：先设置为已下架，等定时任务触发时再上架
-                article.setProductStatus(2);
-                if (article.getPublishedAt() == null) {
-                    article.setPublishedAt(LocalDateTime.now().plusHours(1));
-                }
-            } else {
-                // 立即发布：设置为在售
-                article.setProductStatus(0);
-                if (article.getPublishedAt() == null) {
-                    article.setPublishedAt(LocalDateTime.now());
-                }
-            }
-            
             articleService.save(article);
         } else {
-            // 更新文章
             article.setUpdateTime(LocalDateTime.now());
-            // 如果是更新，保留原有的 user_id
-            Article existing = articleService.getById(article.getId());
-            if (existing != null) {
-                article.setUserId(existing.getUserId());
-                
-                // ========== 更新时也需要同步设置 productStatus ==========
-                if (article.getStatus() == null) {
-                    article.setStatus(existing.getStatus());
-                }
-                
-                if (article.getStatus() == 0) {
-                    // 草稿：设置为已下架
-                    article.setProductStatus(2);
-                    article.setPublishedAt(null);
-                } else if (article.getStatus() == 2) {
-                    // 定时发布：保持已下架状态
-                    article.setProductStatus(2);
-                    if (article.getPublishedAt() == null && existing.getPublishedAt() == null) {
-                        article.setPublishedAt(LocalDateTime.now().plusHours(1));
-                    }
-                } else {
-                    // 立即发布：如果之前是下架状态，则恢复为在售
-                    if (existing.getProductStatus() == 2) {
-                        article.setProductStatus(0);
-                    } else {
-                        article.setProductStatus(existing.getProductStatus());
-                    }
-                    if (article.getPublishedAt() == null && existing.getPublishedAt() == null) {
-                        article.setPublishedAt(LocalDateTime.now());
-                    }
-                }
-            }
             articleService.updateById(article);
         }
         return "redirect:/admin/articles";
     }
 
     @GetMapping("/articles/delete/{id}")
-    public String deleteArticle(@PathVariable Integer id, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
-        Article article = articleService.getById(id);
-
-        // 管理员或作者本人才能删除
-        if (article != null && currentUser != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
-            articleService.removeById(id);
-        }
+    public String deleteArticle(@PathVariable Integer id) {
+        articleService.removeById(id);
         return "redirect:/admin/articles";
     }
 
     @GetMapping("/articles/batchDelete")
-    public String batchDeleteArticles(@RequestParam String ids, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
+    public String batchDeleteArticles(@RequestParam String ids) {
         String[] idArray = ids.split(",");
         for (String id : idArray) {
-            Article article = articleService.getById(Integer.parseInt(id));
-            if (article != null && currentUser != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
-                articleService.removeById(Integer.parseInt(id));
-            }
+            articleService.removeById(Integer.parseInt(id));
         }
         return "redirect:/admin/articles";
     }
@@ -389,44 +302,6 @@ public class AdminController {
         article.setStatus(status);
         article.setUpdateTime(LocalDateTime.now());
         return articleService.updateById(article);
-    }
-
-    // 下架商品
-    @GetMapping("/articles/off-shelf/{id}")
-    public String offShelf(@PathVariable Integer id, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
-        
-        if (currentUser == null) {
-            return "redirect:/toLoginPage";
-        }
-        
-        Article article = articleService.getById(id);
-        
-        if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
-            article.setProductStatus(2); // 2=已下架
-            article.setUpdateTime(LocalDateTime.now());
-            articleService.updateById(article);
-        }
-        return "redirect:/admin/articles";
-    }
-
-    // 上架商品
-    @GetMapping("/articles/on-shelf/{id}")
-    public String onShelf(@PathVariable Integer id, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
-        
-        if (currentUser == null) {
-            return "redirect:/toLoginPage";
-        }
-        
-        Article article = articleService.getById(id);
-        
-        if (article != null && (currentUser.getRole() == 1 || article.getUserId().equals(currentUser.getId()))) {
-            article.setProductStatus(0); // 0=在售
-            article.setUpdateTime(LocalDateTime.now());
-            articleService.updateById(article);
-        }
-        return "redirect:/admin/articles";
     }
 
     // ============================================================

@@ -1,13 +1,18 @@
 package com.campus.trade.service;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.campus.trade.entity.Order;
 import com.campus.trade.entity.OrderReview;
+import com.campus.trade.mapper.OrderMapper;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.math.BigDecimal;
 
 public interface OrderService extends IService<Order> {
+
+    @Override
+    OrderMapper getBaseMapper();
 
     // 单商品下单
     Order createOrder(Integer buyerId, Integer articleId, Integer quantity, String address, String remark);
@@ -35,11 +40,9 @@ public interface OrderService extends IService<Order> {
 
     boolean adminDeleteOrder(Long orderId);
 
-    // ========== 支付 ==========
-    // 统计待支付总额
+    // ========== 支付相关 ==========
     BigDecimal calculatePendingAmount(Integer buyerId);
 
-    // 确认支付
     boolean payOrder(Long orderId, Integer buyerId);
 
     // ========== 评价 ==========
@@ -55,6 +58,4 @@ public interface OrderService extends IService<Order> {
     List<Order> searchOrders(Integer userId, String role, String keyword, Integer status);
 
     boolean isValidStatusTransition(int fromStatus, int toStatus);
-
-
 }

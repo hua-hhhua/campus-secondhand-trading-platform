@@ -372,8 +372,8 @@
     <div class="navbar">
         <h1>🛒 校园交易平台</h1>
         <div>
-            <a th:href="@{/index}">首页</a>
-            <a th:href="@{/personal-center}">个人中心</a>
+            <a th:href="@{/}">首页</a>
+            <a th:href="@{/profile}">个人中心</a>
         </div>
     </div>
 
@@ -524,7 +524,7 @@
             })
             .then(response => response.json())
             .then(result => {
-                if (result.code === 200) {
+                if (result.success) {
                     alert(result.message);
                     location.reload();
                 } else {
@@ -551,7 +551,7 @@
             })
             .then(response => response.json())
             .then(result => {
-                if (result.code === 200) {
+                if (result.success) {
                     alert(result.message);
                     location.reload();
                 } else {

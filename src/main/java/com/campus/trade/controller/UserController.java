@@ -25,10 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.math.BigDecimal;
 
 @Controller
-@RequestMapping("/user")
 public class UserController {
 
     @Autowired
@@ -45,7 +43,7 @@ public class UserController {
 
     // ========== 个人信息 ==========
 
-    @GetMapping("/profile")
+    @GetMapping("/user/profile")
     public String profile(Model model, Authentication authentication) {
         // 检查是否已登录
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -60,55 +58,37 @@ public class UserController {
         return "user/profile";
     }
 
-    /**
-     * 更新个人信息 - 返回 Map（兼容前端）
-     */
-    @PostMapping("/update")
+    @PostMapping("/user/update")
     @ResponseBody
-    public Map<String, Object> updateProfile(@RequestBody UserUpdateDTO dto, Authentication authentication) {
-        Map<String, Object> result = new HashMap<>();
-        try {
-            String username = authentication.getName();
-            User user = userService.findByUsername(username);
+    public Result updateProfile(@RequestBody UserUpdateDTO dto, Authentication authentication) {
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
 
-            if (user == null) {
-                result.put("success", false);
-                result.put("message", "用户不存在");
-                return result;
-            }
-
-            if (dto.getNickname() != null && !dto.getNickname().isEmpty()) {
-                user.setNickname(dto.getNickname());
-            }
-
-            if (dto.getPhone() != null && !dto.getPhone().isEmpty()) {
-                user.setPhone(dto.getPhone());
-            }
-
-            if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
-                BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-                if (!encoder.matches(dto.getPassword(), user.getPassword())) {
-                    result.put("success", false);
-                    result.put("message", "原密码错误");
-                    return result;
-                }
-                if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
-                    result.put("success", false);
-                    result.put("message", "两次密码输入不一致");
-                    return result;
-                }
-                user.setPassword(encoder.encode(dto.getNewPassword()));
-            }
-
-            userService.updateById(user);
-            result.put("success", true);
-            result.put("message", "个人信息更新成功");
-        } catch (Exception e) {
-            e.printStackTrace();
-            result.put("success", false);
-            result.put("message", "更新失败：" + e.getMessage());
+        if (user == null) {
+            return Result.error("用户不存在");
         }
-        return result;
+
+        if (dto.getNickname() != null && !dto.getNickname().isEmpty()) {
+            user.setNickname(dto.getNickname());
+        }
+
+        if (dto.getPhone() != null && !dto.getPhone().isEmpty()) {
+            user.setPhone(dto.getPhone());
+        }
+
+        if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+            if (!encoder.matches(dto.getPassword(), user.getPassword())) {
+                return Result.error("原密码错误");
+            }
+            if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+                return Result.error("两次密码输入不一致");
+            }
+            user.setPassword(encoder.encode(dto.getNewPassword()));
+        }
+
+        userService.updateById(user);
+        return Result.success("个人信息更新成功");
     }
 
     /**
@@ -123,10 +103,10 @@ public class UserController {
     /**
      * 上传头像
      */
-    @PostMapping("/uploadAvatar")
+    @PostMapping("/users/upload-avatar")
     @ResponseBody
     public Map<String, Object> uploadAvatar(@RequestParam("file") MultipartFile file,
-                                            Authentication authentication) {
+                                            @RequestParam("userId") Integer userId) {
         Map<String, Object> result = new HashMap<>();
         try {
             if (file.isEmpty()) {
@@ -145,16 +125,11 @@ public class UserController {
                 result.put("message", "图片大小不能超过 5MB");
                 return result;
             }
-
-            // 从 Authentication 获取当前用户ID
-            String username = authentication.getName();
-            User user = userService.findByUsername(username);
-            Integer userId = user.getId();
-
             String avatarPath = userService.uploadAvatar(file, userId);
             result.put("success", true);
-            result.put("data", avatarPath);
+            result.put("avatarPath", avatarPath);
             result.put("message", "上传成功");
+            asyncService.asyncLogOperation("user_" + userId, "上传头像", "头像路径: " + avatarPath);
         } catch (Exception e) {
             result.put("success", false);
             result.put("message", "上传失败：" + e.getMessage());
@@ -201,36 +176,13 @@ public class UserController {
         return user;
     }
 
-    /**
-     * 用户注册 - 返回 Map（兼容前端，解决 No acceptable representation 错误）
-     */
-    @PostMapping("/api/register")
+    @PostMapping("/api/users/register")
     @ResponseBody
-    public Map<String, Object> register(@RequestBody User user) {
-        Map<String, Object> result = new HashMap<>();
-        try {
-            // 校验用户名是否已存在
-            User existingUser = userService.findByUsername(user.getUsername());
-            if (existingUser != null) {
-                result.put("success", false);
-                result.put("message", "用户名已存在");
-                return result;
-            }
-
-            boolean success = userService.register(user);
-            if (success) {
-                asyncService.asyncLogOperation(user.getUsername(), "用户注册", "注册成功");
-                asyncService.asyncSendNotification(user.getUsername(), "欢迎注册", "感谢您注册校园交易平台");
-                result.put("success", true);
-                result.put("message", "注册成功");
-            } else {
-                result.put("success", false);
-                result.put("message", "注册失败，请稍后重试");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            result.put("success", false);
-            result.put("message", "注册失败：" + e.getMessage());
+    public boolean register(@RequestBody User user) {
+        boolean result = userService.register(user);
+        if (result) {
+            asyncService.asyncLogOperation(user.getUsername(), "用户注册", "注册成功");
+            asyncService.asyncSendNotification(user.getUsername(), "欢迎注册", "感谢您注册校园交易平台");
         }
         return result;
     }
@@ -287,6 +239,7 @@ public class UserController {
     }
 
     // ========== 内部类 ==========
+
     public static class LoginRequest {
         private String username;
         private String password;
@@ -298,7 +251,7 @@ public class UserController {
 
     // ========== 我的订单 ==========
 
-    @GetMapping("/my-orders")
+    @GetMapping("/user/my-orders")
     public String myOrders(@RequestParam(defaultValue = "1") Integer pageNum,
                            @RequestParam(defaultValue = "10") Integer pageSize,
                            @RequestParam(required = false) Integer statusFilter,
@@ -335,7 +288,7 @@ public class UserController {
         return "user/my-orders";
     }
 
-    @PostMapping("/orders/{id}/cancel")
+    @PostMapping("/user/orders/{id}/cancel")
     @ResponseBody
     public Result cancelOrder(@PathVariable Long id, @RequestParam(required = false) String reason,
                               Authentication authentication) {
@@ -350,7 +303,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/orders/{id}/confirm")
+    @PostMapping("/user/orders/{id}/confirm")
     @ResponseBody
     public Result confirmReceipt(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -364,7 +317,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/orders/{id}/delete")
+    @PostMapping("/user/orders/{id}/delete")
     @ResponseBody
     public Result deleteOrder(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -378,7 +331,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/orders/{id}")
+    @GetMapping("/user/orders/{id}")
     public String orderDetail(@PathVariable Long id, Model model, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
@@ -401,7 +354,7 @@ public class UserController {
         return "user/order-detail";
     }
 
-    @GetMapping("/seller-orders")
+    @GetMapping("/user/seller-orders")
     public String sellerOrders(@RequestParam(defaultValue = "1") Integer pageNum,
                                @RequestParam(defaultValue = "10") Integer pageSize,
                                @RequestParam(required = false) Integer statusFilter,
@@ -438,7 +391,7 @@ public class UserController {
         return "user/seller-orders";
     }
 
-    @PostMapping("/orders/{id}/ship")
+    @PostMapping("/user/orders/{id}/ship")
     @ResponseBody
     public Result shipOrder(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -450,41 +403,5 @@ public class UserController {
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }
-    }
-
-    // ========== 支付订单 ==========
-    @PostMapping("/orders/{id}/pay")
-    @ResponseBody
-    public Result payOrder(@PathVariable Long id, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return Result.error("请先登录");
-        }
-        String username = authentication.getName();
-        User user = userService.findByUsername(username);
-        if (user == null) {
-            return Result.error("用户不存在");
-        }
-        try {
-            boolean success = orderService.payOrder(id, user.getId());
-            return success ? Result.success("支付成功") : Result.error("支付失败");
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
-    }
-
-    // ========== 获取待支付总额（用于前端显示） ==========
-    @GetMapping("/orders/pending-amount")
-    @ResponseBody
-    public Result getPendingAmount(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return Result.error("请先登录");
-        }
-        String username = authentication.getName();
-        User user = userService.findByUsername(username);
-        if (user == null) {
-            return Result.error("用户不存在");
-        }
-        BigDecimal amount = orderService.calculatePendingAmount(user.getId());
-        return Result.success(String.valueOf(amount));
     }
 }

@@ -92,15 +92,10 @@ public class SecurityConfig {
                     session.setAttribute("loginErrorUsername", username);
                     try {
                         User user = userService.findByUsername(username);
-                        if (user == null) {
-                            // 用户不存在 → 已被删除
-                            session.setAttribute("loginErrorDeleted", true);
-                        } else if (user.getStatus() == 0) {
-                            // 用户被禁用
+                        if (user != null && user.getStatus() == 0) {
                             session.setAttribute("loginErrorDisabled", true);
                         } else {
                             session.removeAttribute("loginErrorDisabled");
-                            session.removeAttribute("loginErrorDeleted");
                         }
                     } catch (Exception e) {
                         // 忽略
@@ -123,8 +118,7 @@ public class SecurityConfig {
                                 "/error", "/favicon.ico",
                                 "/css/**", "/js/**", "/images/**", "/avatars/**",
                                 "/api/**",
-                                "/register",
-                                "/user/uploadAvatar"
+                                "/register"
                         ).permitAll()
                         // 用户管理仅限管理员访问
                         .requestMatchers("/admin/users/**").hasRole("ADMIN")
@@ -134,6 +128,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/dashboard").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+                // ===== 关键修改：使用默认的 /login 处理登录 =====
                 .formLogin(form -> form
                         .loginPage("/toLoginPage")
                         .loginProcessingUrl("/login")

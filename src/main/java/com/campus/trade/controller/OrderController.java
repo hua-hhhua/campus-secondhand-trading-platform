@@ -313,4 +313,50 @@ public class OrderController {
             return ResponseEntity.badRequest().body(result);
         }
     }
+
+    /**
+     * 支付订单（买家支付，状态从待付款改为待发货）
+     */
+    @PostMapping("/{id}/pay")
+    public ResponseEntity<Map<String, Object>> payOrder(@PathVariable Long id) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            User user = getCurrentUser();
+            if (user == null) {
+                result.put("success", false);
+                result.put("message", "请先登录");
+                return ResponseEntity.status(401).body(result);
+            }
+
+            Order order = orderService.getById(id);
+            if (order == null) {
+                result.put("success", false);
+                result.put("message", "订单不存在");
+                return ResponseEntity.notFound().build();
+            }
+
+            if (!order.getBuyerId().equals(user.getId())) {
+                result.put("success", false);
+                result.put("message", "无权限支付此订单");
+                return ResponseEntity.status(403).body(result);
+            }
+
+            if (order.getStatus() != 0) {
+                result.put("success", false);
+                result.put("message", "订单状态不正确，当前状态：" + order.getStatusText());
+                return ResponseEntity.badRequest().body(result);
+            }
+
+            boolean success = orderService.payOrder(id, user.getId());
+            result.put("success", success);
+            result.put("message", success ? "支付成功" : "支付失败");
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(result);
+        }
+    }
 }
