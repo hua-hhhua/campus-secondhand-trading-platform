@@ -23,6 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 【订单模块-服务实现层】订单服务实现类
+ * 实现订单相关的业务逻辑，包括订单创建、查询、状态变更、支付、统计搜索、超时自动取消等功能
+ */
 @Service
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements OrderService {
 
@@ -38,11 +42,28 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Autowired
     private OrderStatusHistoryMapper orderStatusHistoryMapper;
 
+    /**
+     * 【订单模块-生成订单编号】
+     * 生成唯一的订单编号，格式为"ORD" + 当前时间戳
+     * 
+     * @return 订单编号字符串
+     */
     private String generateOrderNo() {
         return "ORD" + System.currentTimeMillis();
     }
 
-    // ========== 单商品下单 ==========
+    /**
+     * 【订单模块-单商品下单】
+     * 创建单个商品的订单，校验商品存在性、库存、不能购买自己的商品，扣减库存并生成订单记录
+     * 
+     * @param buyerId   买家用户ID
+     * @param articleId 商品ID
+     * @param quantity  购买数量
+     * @param address   收货地址
+     * @param remark    订单备注
+     * @return 创建成功的订单对象
+     * @throws RuntimeException 商品不存在、库存不足、不能购买自己的商品等异常
+     */
     @Override
     @Transactional
     public Order createOrder(Integer buyerId, Integer articleId, Integer quantity, String address, String remark) {
@@ -52,6 +73,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         if (article.getStock() < quantity) {
             throw new RuntimeException("库存不足，当前库存: " + article.getStock());
+        }
+        if (article.getUserId().equals(buyerId)) {
+            throw new RuntimeException("不能购买自己发布的商品");
         }
         User buyer = userMapper.selectById(buyerId);
         User seller = userMapper.selectById(article.getUserId());
@@ -83,10 +107,21 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return order;
     }
 
-    // ========== 多商品下单 ==========
+    /**
+     * 【订单模块-多商品下单】
+     * 批量创建多个商品的订单，每个商品生成一个独立订单，统一扣减库存，支持批量校验
+     * 
+     * @param buyerId    买家用户ID
+     * @param articleIds 商品ID列表
+     * @param quantities 对应商品的数量列表，数量不足时默认1
+     * @param address    收货地址
+     * @return 创建成功的订单对象列表
+     * @throws RuntimeException 商品不存在、库存不足、不能购买自己的商品等异常
+     */
     @Override
     @Transactional
-    public List<Order> createOrder(Integer buyerId, List<Integer> articleIds, List<Integer> quantities, String address) {
+    public List<Order> createOrder(Integer buyerId, List<Integer> articleIds, List<Integer> quantities,
+            String address) {
         if (articleIds == null || articleIds.isEmpty()) {
             throw new RuntimeException("请选择商品");
         }
@@ -107,6 +142,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
             if (article.getStock() < quantity) {
                 throw new RuntimeException("商品 " + article.getTitle() + " 库存不足");
+            }
+            if (article.getUserId().equals(buyerId)) {
+                throw new RuntimeException("不能购买自己发布的商品: " + article.getTitle());
             }
 
             article.setStock(article.getStock() - quantity);
@@ -140,23 +178,51 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return orders;
     }
 
-    // ========== 查询 ==========
+    /**
+     * 【订单模块-获取买家订单列表】
+     * 根据买家ID查询该用户的所有订单，按创建时间倒序排列
+     * 
+     * @param buyerId 买家用户ID
+     * @return 买家的订单列表
+     */
     @Override
     public List<Order> getBuyerOrders(Integer buyerId) {
         return orderMapper.selectByBuyerId(buyerId);
     }
 
+    /**
+     * 【订单模块-根据订单号查询订单】
+     * 根据订单编号查询订单详情
+     * 
+     * @param orderNo 订单编号
+     * @return 订单对象，不存在则返回null
+     */
     @Override
     public Order getOrderByNo(String orderNo) {
         return orderMapper.selectByOrderNo(orderNo);
     }
 
+    /**
+     * 【订单模块-获取卖家订单列表】
+     * 根据卖家ID查询该用户的所有售出订单，按创建时间倒序排列
+     * 
+     * @param sellerId 卖家用户ID
+     * @return 卖家的订单列表
+     */
     @Override
     public List<Order> getSellerOrders(Integer sellerId) {
         return orderMapper.selectBySellerId(sellerId);
     }
 
-    // ========== 订单操作 ==========
+    /**
+     * 【订单模块-取消订单】
+     * 取消订单，仅允许取消待支付(0)和待发货(1)状态的订单，取消后归还商品库存并记录状态变更历史
+     * 
+     * @param orderId 订单ID
+     * @param reason  取消原因
+     * @return 取消成功返回true，失败返回false
+     * @throws RuntimeException 当前状态无法取消订单时抛出
+     */
     @Override
     @Transactional
     public boolean cancelOrder(Long orderId, String reason) {
@@ -174,8 +240,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                     order.getStatus(),
                     4,
                     reason,
-                    LocalDateTime.now()
-            );
+                    LocalDateTime.now());
             Article article = articleMapper.selectById(order.getArticleId());
             if (article != null) {
                 article.setStock(article.getStock() + order.getQuantity());
@@ -186,6 +251,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return false;
     }
 
+    /**
+     * 【订单模块-确认收货】
+     * 买家确认收货，将订单状态从已发货(2)更新为已完成(3)，记录状态变更历史
+     * 
+     * @param orderId 订单ID
+     * @return 确认成功返回true，失败返回false
+     * @throws RuntimeException 当前状态无法确认收货时抛出
+     */
     @Override
     @Transactional
     public boolean confirmReceipt(Long orderId) {
@@ -200,13 +273,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                     order.getStatus(),
                     3,
                     "买家确认收货",
-                    LocalDateTime.now()
-            );
+                    LocalDateTime.now());
             return true;
         }
         return false;
     }
 
+    /**
+     * 【订单模块-删除订单】
+     * 买家删除自己的订单，仅已取消(4)或已完成(5)状态的订单可删除
+     * 
+     * @param orderId 订单ID
+     * @param userId  操作用户ID（用于权限校验）
+     * @return 删除成功返回true，失败返回false
+     */
     @Override
     @Transactional
     public boolean deleteOrder(Long orderId, Integer userId) {
@@ -220,6 +300,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return orderMapper.deleteById(orderId) > 0;
     }
 
+    /**
+     * 【订单模块-卖家发货】
+     * 卖家对订单进行发货操作，将订单状态从待发货(1)更新为已发货(2)，记录状态变更历史
+     * 
+     * @param orderId 订单ID
+     * @return 发货成功返回true，失败返回false
+     * @throws RuntimeException 当前状态无法发货时抛出
+     */
     @Override
     @Transactional
     public boolean shipOrder(Long orderId) {
@@ -234,13 +322,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                     order.getStatus(),
                     2,
                     "卖家已发货",
-                    LocalDateTime.now()
-            );
+                    LocalDateTime.now());
             return true;
         }
         return false;
     }
 
+    /**
+     * 【订单模块-更新订单状态】
+     * 更新订单状态，并记录状态变更历史，由管理员修改状态时调用
+     * 
+     * @param id     订单ID
+     * @param status 目标状态值
+     * @return 更新成功返回true，失败返回false
+     */
     @Override
     public boolean updateStatus(Long id, Integer status) {
         Order order = getById(id);
@@ -256,12 +351,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                     oldStatus,
                     status,
                     "管理员修改状态",
-                    LocalDateTime.now()
-            );
+                    LocalDateTime.now());
         }
         return result;
     }
 
+    /**
+     * 【订单模块-管理员删除订单】
+     * 管理员删除订单，同时归还商品库存
+     * 
+     * @param orderId 订单ID
+     * @return 删除成功返回true，失败返回false
+     */
     @Override
     @Transactional
     public boolean adminDeleteOrder(Long orderId) {
@@ -277,7 +378,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return orderMapper.deleteById(orderId) > 0;
     }
 
-    // ========== 支付相关 ==========
+    /**
+     * 【订单模块-计算待支付金额】
+     * 计算指定买家所有待支付(状态0)订单的总金额
+     * 
+     * @param buyerId 买家用户ID
+     * @return 待支付总金额，无待支付订单时返回0
+     */
     @Override
     public BigDecimal calculatePendingAmount(Integer buyerId) {
         LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
@@ -289,6 +396,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    /**
+     * 【订单模块-支付订单】
+     * 支付订单，将订单状态从待支付(0)更新为待发货(1)，校验订单归属和状态
+     * 
+     * @param orderId 订单ID
+     * @param buyerId 买家用户ID（用于权限校验）
+     * @return 支付成功返回true，失败返回false
+     * @throws RuntimeException 订单不存在、无权操作、状态不正确时抛出
+     */
     @Override
     @Transactional
     public boolean payOrder(Long orderId, Integer buyerId) {
@@ -305,7 +421,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return updateStatus(orderId, 1);
     }
 
-    // ========== 统计和搜索 ==========
+    /**
+     * 【订单模块-获取订单统计数据】
+     * 获取用户的订单统计信息，包括总订单数及各状态（待支付、待发货、已发货、已完成、已取消、交易完成）的订单数量
+     * 
+     * @param userId 用户ID
+     * @param role   用户角色（buyer-买家，seller-卖家）
+     * @return 包含各状态订单数量的统计Map
+     */
     @Override
     public Map<String, Object> getOrderStats(Integer userId, String role) {
         Map<String, Object> stats = new HashMap<>();
@@ -332,6 +455,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return stats;
     }
 
+    /**
+     * 【订单模块-搜索订单】
+     * 根据关键词和状态搜索订单，支持按订单号和商品标题模糊搜索，可按用户角色筛选
+     * 
+     * @param userId  用户ID
+     * @param role    用户角色（buyer-买家，seller-卖家）
+     * @param keyword 搜索关键词，匹配订单号或商品标题
+     * @param status  订单状态筛选，为null则不筛选
+     * @return 符合条件的订单列表
+     */
     @Override
     public List<Order> searchOrders(Integer userId, String role, String keyword, Integer status) {
         LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
@@ -351,6 +484,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return list(wrapper);
     }
 
+    /**
+     * 【订单模块-校验状态流转合法性】
+     * 校验订单状态流转是否合法，确保订单状态只能按照预设流程变更：
+     * 0(待支付) → 1(待发货) 或 4(已取消)
+     * 1(待发货) → 2(已发货) 或 4(已取消)
+     * 2(已发货) → 3(已完成)
+     * 3(已完成)、4(已取消)、5(交易完成) 为终态，不可变更
+     * 
+     * @param currentStatus 当前状态
+     * @param newStatus     目标状态
+     * @return 合法返回true，非法返回false
+     */
     @Override
     public boolean isValidStatusTransition(int currentStatus, int newStatus) {
         switch (currentStatus) {
@@ -369,6 +514,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
+    /**
+     * 【订单模块-检查超时订单】
+     * 定时任务，每分钟执行一次，自动取消创建超过30分钟仍未支付的订单并归还库存
+     */
     @Scheduled(fixedRate = 60000)
     @Transactional
     public void checkTimeoutOrders() {
@@ -381,6 +530,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         });
     }
 
+    /**
+     * 【订单模块-发送订单通知】
+     * 异步发送订单相关通知，如订单创建、支付、发货、收货等状态变更通知
+     * 
+     * @param order 订单对象
+     * @param type  通知类型
+     */
     @Async
     public void sendOrderNotification(Order order, String type) {
         // 实现发送订单通知逻辑

@@ -62,6 +62,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
     // ========== 方案三：MyBatis ResultMap 关联查询（支持懒加载） ==========
 
     /**
+     * 【商品模块-ResultMap关联查询商品列表】
      * 使用ResultMap关联查询文章列表（包含author和category对象）
      * 支持懒加载，只有在访问author或category时才执行对应的查询
      *

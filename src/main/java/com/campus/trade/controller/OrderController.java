@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 【订单模块-控制层】订单控制器
+ * 提供订单相关的HTTP接口，包括创建订单、取消订单、确认收货、发货、查询订单、支付订单等功能
+ */
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -30,7 +34,10 @@ public class OrderController {
     private HttpSession session;
 
     /**
-     * 获取当前登录用户
+     * 【订单模块-获取当前登录用户】
+     * 从Spring Security上下文中获取当前登录的用户信息，支持User类型和Spring Security内置User类型的principal
+     * 
+     * @return 当前登录的用户对象，未登录则返回null
      */
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -52,7 +59,14 @@ public class OrderController {
     }
 
     /**
-     * 创建订单（支持多商品下单）
+     * 【订单模块-创建订单】
+     * 创建订单，支持多商品批量下单，每个商品生成一个独立订单
+     * 
+     * @param params 包含商品ID列表、数量列表、收货地址的参数Map
+     *               - articleIds: 商品ID列表
+     *               - quantities: 对应商品的数量列表
+     *               - address: 收货地址，为空时默认"校园内交易"
+     * @return 包含创建结果的响应实体，成功时返回订单ID列表和订单号列表
      */
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Map<String, Object> params) {
@@ -99,7 +113,12 @@ public class OrderController {
     }
 
     /**
-     * 取消订单
+     * 【订单模块-取消订单】
+     * 买家取消自己的订单，仅允许取消待支付和待发货状态的订单，取消后库存会自动归还
+     * 
+     * @param id     订单ID
+     * @param reason 取消原因，可选参数
+     * @return 包含取消结果的响应实体
      */
     @PostMapping("/{id}/cancel")
     public ResponseEntity<Map<String, Object>> cancelOrder(
@@ -133,7 +152,11 @@ public class OrderController {
     }
 
     /**
-     * 确认收货
+     * 【订单模块-确认收货】
+     * 买家确认收货，将订单状态从已发货更新为已完成，仅买家本人可操作
+     * 
+     * @param id 订单ID
+     * @return 包含确认结果的响应实体
      */
     @PostMapping("/{id}/confirm")
     public ResponseEntity<Map<String, Object>> confirmReceipt(@PathVariable Long id) {
@@ -165,7 +188,11 @@ public class OrderController {
     }
 
     /**
-     * 卖家发货
+     * 【订单模块-卖家发货】
+     * 卖家对订单进行发货操作，将订单状态从待发货更新为已发货，仅卖家本人可操作
+     * 
+     * @param id 订单ID
+     * @return 包含发货结果的响应实体
      */
     @PostMapping("/{id}/ship")
     public ResponseEntity<Map<String, Object>> shipOrder(@PathVariable Long id) {
@@ -197,7 +224,10 @@ public class OrderController {
     }
 
     /**
-     * 获取我的订单（买家）
+     * 【订单模块-获取买家订单列表】
+     * 获取当前登录用户作为买家的所有订单列表
+     * 
+     * @return 包含买家订单列表的响应实体
      */
     @GetMapping("/my")
     public ResponseEntity<Map<String, Object>> getMyOrders() {
@@ -222,7 +252,10 @@ public class OrderController {
     }
 
     /**
-     * 获取卖家订单
+     * 【订单模块-获取卖家订单列表】
+     * 获取当前登录用户作为卖家的所有订单列表
+     * 
+     * @return 包含卖家订单列表的响应实体
      */
     @GetMapping("/seller")
     public ResponseEntity<Map<String, Object>> getSellerOrders() {
@@ -247,7 +280,11 @@ public class OrderController {
     }
 
     /**
-     * 获取订单详情
+     * 【订单模块-获取订单详情】
+     * 根据订单ID获取订单的详细信息
+     * 
+     * @param id 订单ID
+     * @return 包含订单详情的响应实体，订单不存在时返回404
      */
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getOrderDetail(@PathVariable Long id) {
@@ -270,7 +307,11 @@ public class OrderController {
     }
 
     /**
-     * 支付订单
+     * 【订单模块-支付订单】
+     * 买家支付订单，将订单状态从待支付更新为待发货，仅订单买家本人可操作，且订单状态必须为待支付
+     * 
+     * @param id 订单ID
+     * @return 包含支付结果的响应实体
      */
     @PostMapping("/{id}/pay")
     public ResponseEntity<Map<String, Object>> payOrder(@PathVariable Long id) {

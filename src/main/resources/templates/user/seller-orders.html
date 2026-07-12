@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +24,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .navbar h1 {
@@ -39,7 +40,7 @@
         }
 
         .navbar a:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .container {
@@ -53,7 +54,7 @@
             padding: 25px 30px;
             border-radius: 12px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .page-title {
@@ -73,7 +74,7 @@
             padding: 20px 30px;
             border-radius: 12px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             display: flex;
             gap: 15px;
             align-items: center;
@@ -114,7 +115,7 @@
             background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         table {
@@ -203,7 +204,8 @@
             color: #0c5460;
         }
 
-        .status-3, .status-5 {
+        .status-3,
+        .status-5 {
             background: #d4edda;
             color: #0f5132;
         }
@@ -276,7 +278,8 @@
             margin-top: 20px;
         }
 
-        .pagination a, .pagination span {
+        .pagination a,
+        .pagination span {
             padding: 8px 16px;
             border: 2px solid #e0e0e0;
             border-radius: 6px;
@@ -348,6 +351,111 @@
             color: #999;
         }
 
+        /* 订单详情弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0 8px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .detail-label {
+            width: 120px;
+            font-weight: bold;
+            color: #666;
+            flex-shrink: 0;
+        }
+
+        .detail-value {
+            flex: 1;
+            color: #333;
+        }
+
+        .detail-value .price {
+            color: #ff4757;
+            font-size: 18px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 0 10px;
@@ -367,6 +475,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- 导航栏 -->
     <div class="navbar">
@@ -387,27 +496,20 @@
         <!-- 筛选栏 -->
         <div class="filter-bar">
             <span class="filter-label">订单状态：</span>
-            <a th:href="@{/user/seller-orders(statusFilter=null)}" 
-               class="filter-btn" 
-               th:classappend="${statusFilter == null ? 'active' : ''}">全部</a>
-            <a th:href="@{/user/seller-orders(statusFilter=0)}" 
-               class="filter-btn" 
-               th:classappend="${statusFilter == 0 ? 'active' : ''}">待付款</a>
-            <a th:href="@{/user/seller-orders(statusFilter=1)}" 
-               class="filter-btn" 
-               th:classappend="${statusFilter == 1 ? 'active' : ''}">待发货</a>
-            <a th:href="@{/user/seller-orders(statusFilter=2)}" 
-               class="filter-btn" 
-               th:classappend="${statusFilter == 2 ? 'active' : ''}">已发货</a>
-            <a th:href="@{/user/seller-orders(statusFilter=3)}" 
-               class="filter-btn" 
-               th:classappend="${statusFilter == 3 ? 'active' : ''}">已收货</a>
-            <a th:href="@{/user/seller-orders(statusFilter=4)}" 
-               class="filter-btn" 
-               th:classappend="${statusFilter == 4 ? 'active' : ''}">已取消</a>
-            <a th:href="@{/user/seller-orders(statusFilter=5)}" 
-               class="filter-btn" 
-               th:classappend="${statusFilter == 5 ? 'active' : ''}">已完成</a>
+            <a th:href="@{/user/seller-orders(statusFilter=null)}" class="filter-btn"
+                th:classappend="${statusFilter == null ? 'active' : ''}">全部</a>
+            <a th:href="@{/user/seller-orders(statusFilter=0)}" class="filter-btn"
+                th:classappend="${statusFilter == 0 ? 'active' : ''}">待付款</a>
+            <a th:href="@{/user/seller-orders(statusFilter=1)}" class="filter-btn"
+                th:classappend="${statusFilter == 1 ? 'active' : ''}">待发货</a>
+            <a th:href="@{/user/seller-orders(statusFilter=2)}" class="filter-btn"
+                th:classappend="${statusFilter == 2 ? 'active' : ''}">已发货</a>
+            <a th:href="@{/user/seller-orders(statusFilter=3)}" class="filter-btn"
+                th:classappend="${statusFilter == 3 ? 'active' : ''}">已收货</a>
+            <a th:href="@{/user/seller-orders(statusFilter=4)}" class="filter-btn"
+                th:classappend="${statusFilter == 4 ? 'active' : ''}">已取消</a>
+            <a th:href="@{/user/seller-orders(statusFilter=5)}" class="filter-btn"
+                th:classappend="${statusFilter == 5 ? 'active' : ''}">已完成</a>
         </div>
 
         <!-- 订单表格 -->
@@ -429,17 +531,18 @@
                 <tbody>
                     <tr th:each="order : ${orderPage.records}">
                         <td>
-                            <a th:href="@{'/user/orders/' + ${order.id}}" 
-                               style="color: #667eea; text-decoration: none; font-weight: bold;"
-                               th:text="${#strings.substring(order.orderNo, 0, 12) + '...'}">ORD...</a>
+                            <a th:href="@{'/user/orders/' + ${order.id}}"
+                                style="color: #667eea; text-decoration: none; font-weight: bold;"
+                                th:text="${#strings.substring(order.orderNo, 0, 12) + '...'}">ORD...</a>
                         </td>
                         <td>
                             <div class="product-cell">
-                                <img th:src="${order.articleCover != null ? order.articleCover : '/images/default-product.png'}" 
-                                     alt="商品" class="product-thumb">
+                                <img th:src="${order.articleCover != null ? order.articleCover : '/images/default-product.png'}"
+                                    alt="商品" class="product-thumb">
                                 <div class="product-info">
                                     <div class="product-title" th:text="${order.articleTitle}">商品标题</div>
-                                    <div class="product-meta" th:if="${order.remark}" th:text="'备注: ' + ${order.remark}"></div>
+                                    <div class="product-meta" th:if="${order.remark}"
+                                        th:text="'备注: ' + ${order.remark}"></div>
                                 </div>
                             </div>
                         </td>
@@ -451,8 +554,8 @@
                             <span class="price" th:text="'¥' + ${order.totalAmount}">¥99.00</span>
                         </td>
                         <td>
-                            <span class="status-badge" th:classappend="'status-' + ${order.status}" 
-                                  th:text="${order.statusText}">状态</span>
+                            <span class="status-badge" th:classappend="'status-' + ${order.status}"
+                                th:text="${order.statusText}">状态</span>
                         </td>
                         <td>
                             <div class="buyer-info">
@@ -463,17 +566,17 @@
                         <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
                         <td>
                             <div class="action-cell">
-                                <a th:href="@{'/user/orders/' + ${order.id}}" class="btn btn-primary">查看</a>
-                                
+                                <button class="btn btn-primary"
+                                    th:onclick="'viewOrderDetail(' + ${order.id} + ')'">查看</button>
+
                                 <!-- 待发货状态显示发货按钮 -->
-                                <button th:if="${order.status == 1}" 
-                                        class="btn btn-success" 
-                                        th:onclick="'shipOrder(' + ${order.id} + ')'">发货</button>
-                                
+                                <button th:if="${order.status == 1}" class="btn btn-success"
+                                    th:onclick="'shipOrder(' + ${order.id} + ')'">发货</button>
+
                                 <!-- 已完成/已取消可删除 -->
-                                <button th:if="${order.status == 3 or order.status == 5 or order.status == 4}" 
-                                        class="btn btn-secondary" 
-                                        th:onclick="'deleteOrder(' + ${order.id} + ')'">删除</button>
+                                <button th:if="${order.status == 3 or order.status == 5 or order.status == 4}"
+                                    class="btn btn-secondary"
+                                    th:onclick="'deleteOrder(' + ${order.id} + ')'">删除</button>
                             </div>
                         </td>
                     </tr>
@@ -483,21 +586,23 @@
             <!-- 分页 -->
             <div class="pagination" th:if="${orderPage.pages > 1}">
                 <span th:if="${orderPage.current <= 1}" class="disabled">« 上一页</span>
-                <a th:if="${orderPage.current > 1}" 
-                   th:href="@{/user/seller-orders(pageNum=${orderPage.current - 1}, statusFilter=${statusFilter})}">« 上一页</a>
-                
-                <span th:each="i : ${#numbers.sequence(1, orderPage.pages)}" 
-                      th:if="${i >= orderPage.current - 2 and i <= orderPage.current + 2}"
-                      th:classappend="${i == orderPage.current ? 'active' : ''}">
-                    <a th:if="${i != orderPage.current}" 
-                       th:href="@{/user/seller-orders(pageNum=${i}, statusFilter=${statusFilter})}" 
-                       th:text="${i}">1</a>
+                <a th:if="${orderPage.current > 1}"
+                    th:href="@{/user/seller-orders(pageNum=${orderPage.current - 1}, statusFilter=${statusFilter})}">«
+                    上一页</a>
+
+                <span th:each="i : ${#numbers.sequence(1, orderPage.pages)}"
+                    th:if="${i >= orderPage.current - 2 and i <= orderPage.current + 2}"
+                    th:classappend="${i == orderPage.current ? 'active' : ''}">
+                    <a th:if="${i != orderPage.current}"
+                        th:href="@{/user/seller-orders(pageNum=${i}, statusFilter=${statusFilter})}"
+                        th:text="${i}">1</a>
                     <span th:if="${i == orderPage.current}" th:text="${i}">1</span>
                 </span>
-                
+
                 <span th:if="${orderPage.current >= orderPage.pages}" class="disabled">下一页 »</span>
-                <a th:if="${orderPage.current < orderPage.pages}" 
-                   th:href="@{/user/seller-orders(pageNum=${orderPage.current + 1}, statusFilter=${statusFilter})}">下一页 »</a>
+                <a th:if="${orderPage.current < orderPage.pages}"
+                    th:href="@{/user/seller-orders(pageNum=${orderPage.current + 1}, statusFilter=${statusFilter})}">下一页
+                    »</a>
             </div>
         </div>
 
@@ -509,7 +614,148 @@
         </div>
     </div>
 
+    <!-- 订单详情弹窗 -->
+    <div id="orderDetailModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>订单详情</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 订单详情内容将通过JS动态填充 -->
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 40px; margin-bottom: 10px;">⏳</div>
+                    <div style="color: #999;">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // 查看订单详情
+        function viewOrderDetail(orderId) {
+            var modal = document.getElementById('orderDetailModal');
+            var modalBody = document.getElementById('modalBody');
+
+            modalBody.innerHTML = '<div style="text-align: center; padding: 40px;"><div style="font-size: 40px; margin-bottom: 10px;">⏳</div><div style="color: #999;">加载中...</div></div>';
+            modal.classList.add('show');
+
+            fetch('/api/orders/' + orderId, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.data) {
+                        var order = result.data;
+                        var statusText = getStatusText(order.status);
+                        var statusClass = 'status-' + order.status;
+
+                        modalBody.innerHTML = `
+                        <div class="detail-row">
+                            <div class="detail-label">订单号:</div>
+                            <div class="detail-value">${order.orderNo}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">商品标题:</div>
+                            <div class="detail-value">${order.articleTitle}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">卖家姓名:</div>
+                            <div class="detail-value">${order.sellerName || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">卖家电话:</div>
+                            <div class="detail-value">${order.sellerPhone || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">买家姓名:</div>
+                            <div class="detail-value">${order.buyerName || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">买家电话:</div>
+                            <div class="detail-value">${order.buyerPhone || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">买家地址:</div>
+                            <div class="detail-value">${order.buyerAddress || '校园内交易'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">单价:</div>
+                            <div class="detail-value"><span class="price">¥${order.price}</span></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">数量:</div>
+                            <div class="detail-value">${order.quantity}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">总金额:</div>
+                            <div class="detail-value"><span class="price">¥${order.totalAmount}</span></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">状态:</div>
+                            <div class="detail-value"><span class="status-badge ${statusClass}">${statusText}</span></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">备注:</div>
+                            <div class="detail-value">${order.remark || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">取消原因:</div>
+                            <div class="detail-value">${order.cancelReason || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">下单时间:</div>
+                            <div class="detail-value">${formatDateTime(order.createdAt)}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">更新时间:</div>
+                            <div class="detail-value">${formatDateTime(order.updatedAt)}</div>
+                        </div>
+                    `;
+                    } else {
+                        modalBody.innerHTML = '<div style="text-align: center; padding: 40px;"><div style="font-size: 40px; margin-bottom: 10px;">❌</div><div style="color: #999;">加载失败: ' + (result.message || '未知错误') + '</div></div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalBody.innerHTML = '<div style="text-align: center; padding: 40px;"><div style="font-size: 40px; margin-bottom: 10px;">❌</div><div style="color: #999;">请求失败，请重试</div></div>';
+                });
+        }
+
+        // 关闭弹窗
+        function closeModal(event) {
+            var modal = document.getElementById('orderDetailModal');
+            modal.classList.remove('show');
+        }
+
+        // 获取订单状态文字
+        function getStatusText(status) {
+            var statusMap = {
+                0: '待付款',
+                1: '待发货',
+                2: '已发货',
+                3: '已收货',
+                4: '已取消',
+                5: '已完成'
+            };
+            return statusMap[status] || '未知状态';
+        }
+
+        // 格式化日期时间
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            var date = new Date(dateStr);
+            return date.getFullYear() + '-' +
+                String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                String(date.getDate()).padStart(2, '0') + ' ' +
+                String(date.getHours()).padStart(2, '0') + ':' +
+                String(date.getMinutes()).padStart(2, '0') + ':' +
+                String(date.getSeconds()).padStart(2, '0');
+        }
+
         // 发货
         function shipOrder(orderId) {
             if (!confirm('确认已发货？发货后订单状态将更新为"已发货"。')) {
@@ -522,19 +768,19 @@
                     'Content-Type': 'application/x-www-form-urlencoded',
                 }
             })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    alert(result.message);
-                    location.reload();
-                } else {
-                    alert('失败：' + result.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('请求失败，请重试');
-            });
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        location.reload();
+                    } else {
+                        alert('失败：' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('请求失败，请重试');
+                });
         }
 
         // 删除订单
@@ -549,20 +795,21 @@
                     'Content-Type': 'application/x-www-form-urlencoded',
                 }
             })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    alert(result.message);
-                    location.reload();
-                } else {
-                    alert('失败：' + result.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('请求失败，请重试');
-            });
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        location.reload();
+                    } else {
+                        alert('失败：' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('请求失败，请重试');
+                });
         }
     </script>
 </body>
+
 </html>

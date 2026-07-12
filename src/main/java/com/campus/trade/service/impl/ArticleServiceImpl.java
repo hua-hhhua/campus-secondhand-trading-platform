@@ -35,6 +35,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 【商品模块-服务实现层】
+ * 商品服务实现类
+ * 实现商品模块的核心业务逻辑，包括商品的增删改查、发布状态管理、标签关联、库存管理、Redis缓存等功能
+ */
 @Service
 public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements ArticleService {
 
@@ -56,6 +61,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Value("${file.upload.path:./uploads}")
     private String uploadPath;
 
+    /**
+     * 分页查询所有文章（管理后台使用）
+     *
+     * @param page    页码
+     * @param size    每页数量
+     * @param keyword 关键词（搜索标题或内容）
+     * @return 分页结果
+     */
     @Override
     public IPage<Article> findAllPage(Integer page, Integer size, String keyword) {
         Page<Article> pageParam = new Page<>(page, size);
@@ -69,6 +82,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return this.page(pageParam, wrapper);
     }
 
+    /**
+     * 分页查询我的文章（普通用户使用）
+     *
+     * @param page    页码
+     * @param size    每页数量
+     * @param keyword 关键词
+     * @param userId  用户ID
+     * @return 分页结果
+     */
     @Override
     public IPage<Article> findMyPage(Integer page, Integer size, String keyword, Integer userId) {
         Page<Article> pageParam = new Page<>(page, size);
@@ -83,6 +105,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return this.page(pageParam, wrapper);
     }
 
+    /**
+     * 增加浏览量
+     * 每次访问文章详情页时调用，同步更新数据库并异步记录统计信息
+     *
+     * @param id 文章ID
+     */
     @Override
     public void incrementViewCount(Integer id) {
         Article article = this.getById(id);
@@ -95,6 +123,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 重写MyBatis-Plus方法，统一清除缓存 ==========
 
+    /**
+     * 保存商品（重写）
+     * 保存成功后自动清除所有商品列表缓存
+     *
+     * @param article 商品实体
+     * @return 是否保存成功
+     */
     @Override
     public boolean save(Article article) {
         boolean result = super.save(article);
@@ -105,6 +140,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
+    /**
+     * 【商品模块-更新商品】
+     * 更新商品（重写）
+     * 更新成功后自动清除商品列表缓存和该商品详情缓存
+     *
+     * @param article 商品实体
+     * @return 是否更新成功
+     */
     @Override
     public boolean updateById(Article article) {
         boolean result = super.updateById(article);
@@ -118,6 +161,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
+    /**
+     * 删除商品（重写，传入实体）
+     * 删除成功后自动清除商品列表缓存和该商品详情缓存
+     *
+     * @param article 商品实体
+     * @return 是否删除成功
+     */
     @Override
     public boolean removeById(Article article) {
         boolean result = super.removeById(article);
@@ -131,6 +181,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
+    /**
+     * 删除商品（重写，传入ID）
+     * 删除成功后自动清除商品列表缓存和该商品详情缓存
+     *
+     * @param id 商品ID
+     * @return 是否删除成功
+     */
     @Override
     public boolean removeById(Serializable id) {
         boolean result = super.removeById(id);
@@ -144,6 +201,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 消息中间件相关方法 ==========
 
+    /**
+     * 【商品模块-发布商品】
+     * 发布文章
+     * 设置默认值后保存，并异步发送通知
+     *
+     * @param article 文章实体
+     * @return 是否发布成功
+     */
     @Override
     public boolean publishArticle(Article article) {
         if (article.getViewCount() == null) {
@@ -166,6 +231,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
+    /**
+     * 【商品模块-更新商品】
+     * 更新文章
+     * 更新成功后清除缓存并异步发送通知
+     *
+     * @param article 文章实体
+     * @return 是否更新成功
+     */
     @Override
     public boolean updateArticle(Article article) {
         boolean result = this.updateById(article);
@@ -180,6 +253,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
+    /**
+     * 删除文章
+     * 删除成功后清除缓存并异步发送删除通知
+     *
+     * @param id 文章ID
+     * @return 是否删除成功
+     */
     @Override
     public boolean deleteArticle(Integer id) {
         Article article = this.getById(id);
@@ -198,6 +278,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 定时任务相关方法 ==========
 
+    /**
+     * 获取已发布的文章列表（定时任务使用）
+     * 查询状态为已发布且发布时间不超过当前时间的文章
+     *
+     * @return 已发布的文章列表
+     */
     @Override
     public List<Article> getPublishedArticles() {
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
@@ -208,6 +294,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return this.list(wrapper);
     }
 
+    /**
+     * 获取待发布的定时文章
+     * 查询状态为定时发布且发布时间已到的文章
+     *
+     * @return 待发布的文章列表
+     */
     @Override
     public List<Article> getScheduledArticlesToPublish() {
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
@@ -218,6 +310,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     private static final Object PUBLISH_LOCK = new Object();
 
+    /**
+     * 发布定时文章（定时任务调用）
+     * 使用synchronized防止并发执行，保证事务一致性
+     *
+     * @param now 当前时间（Asia/Shanghai时区）
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void publishScheduledArticles(LocalDateTime now) {
@@ -248,6 +346,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 新增方法 ==========
 
+    /**
+     * 【商品模块-保存或更新商品】
+     * 保存或更新文章（核心方法）
+     * 根据文章ID判断是新增还是更新，设置默认值并校验，处理标签关联
+     *
+     * @param article       文章实体
+     * @param currentUserId 当前用户ID
+     * @return 是否保存成功
+     */
     @Override
     @Transactional
     public boolean saveOrUpdateArticle(Article article, Integer currentUserId) {
@@ -289,6 +396,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
+    /**
+     * 创建文章（内部方法）
+     * 设置创建时间和更新时间，处理定时发布时间，保存并清除缓存
+     *
+     * @param article 文章实体
+     * @return 是否创建成功
+     */
     private boolean doCreateArticle(Article article) {
         article.setCreateTime(LocalDateTime.now());
         article.setUpdateTime(LocalDateTime.now());
@@ -331,6 +445,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
+    /**
+     * 【商品模块-更新商品（内部）】
+     * 更新文章（内部方法）
+     * 设置更新时间，保留定时发布时间，更新并清除缓存
+     *
+     * @param article 文章实体
+     * @return 是否更新成功
+     */
     private boolean doUpdateArticle(Article article) {
         article.setUpdateTime(LocalDateTime.now());
 
@@ -359,6 +481,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
+    /**
+     * 【商品模块-验证商品发布】
+     * 验证文章是否可以发布
+     * 检查标题、内容是否非空，定时发布时检查发布时间是否有效
+     *
+     * @param article 文章实体
+     * @return 是否验证通过
+     */
     @Override
     public boolean validateArticleForPublish(Article article) {
         if (article.getTitle() == null || article.getTitle().trim().isEmpty()) {
@@ -387,6 +517,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return true;
     }
 
+    /**
+     * 分页查询已发布的文章
+     * 查询状态为已发布且发布时间不超过当前时间的文章，支持关键词搜索
+     *
+     * @param page    页码
+     * @param size    每页数量
+     * @param keyword 关键词
+     * @return 分页结果
+     */
     @Override
     public IPage<Article> getPublishedArticlesPage(Integer page, Integer size, String keyword) {
         Page<Article> pageParam = new Page<>(page, size);
@@ -409,9 +548,21 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 多表查询方法（支持时间范围） ==========
 
+    /**
+     * 分页查询文章VO（带作者、分类等信息）
+     * 使用JOIN查询，返回包含作者昵称、头像、分类名称等扩展信息的文章列表
+     *
+     * @param page         页码
+     * @param size         每页数量
+     * @param keyword      关键词
+     * @param statusFilter 状态筛选（0=草稿，1=已发布，2=定时发布）
+     * @param startTime    开始时间
+     * @param endTime      结束时间
+     * @return 分页结果
+     */
     @Override
     public IPage<ArticleVO> getArticleVOPage(Integer page, Integer size, String keyword, Integer statusFilter,
-                                             LocalDateTime startTime, LocalDateTime endTime) {
+            LocalDateTime startTime, LocalDateTime endTime) {
         Page<ArticleVO> pageParam = new Page<>(page, size);
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
@@ -437,10 +588,23 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 按用户ID查询商品 ==========
 
+    /**
+     * 按用户ID分页查询文章VO
+     * 查询指定用户发布的文章，包含作者、分类等扩展信息
+     *
+     * @param page         页码
+     * @param size         每页数量
+     * @param keyword      关键词
+     * @param statusFilter 状态筛选
+     * @param startTime    开始时间
+     * @param endTime      结束时间
+     * @param userId       用户ID
+     * @return 分页结果
+     */
     @Override
     public IPage<ArticleVO> getArticleVOPageByUserId(Integer page, Integer size, String keyword,
-                                                     Integer statusFilter, LocalDateTime startTime,
-                                                     LocalDateTime endTime, Integer userId) {
+            Integer statusFilter, LocalDateTime startTime,
+            LocalDateTime endTime, Integer userId) {
         Page<ArticleVO> pageParam = new Page<>(page, size);
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
@@ -469,6 +633,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 方案二：JOIN查询（首页）实现 ==========
 
+    /**
+     * 首页查询已发布的文章VO
+     * 查询首页展示的商品列表，只查询在售商品，包含标签信息
+     *
+     * @param keyword 关键词
+     * @return 文章VO列表
+     */
     @Override
     public List<ArticleVO> getPublishedArticleVOsForHome(String keyword) {
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
@@ -503,10 +674,22 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 方案三：MyBatis ResultMap 关联查询（懒加载）实现 ==========
 
+    /**
+     * 分页查询文章ResultMap VO（懒加载）
+     * 使用MyBatis ResultMap关联查询，支持懒加载作者和分类信息
+     *
+     * @param page         页码
+     * @param size         每页数量
+     * @param keyword      关键词
+     * @param statusFilter 状态筛选
+     * @param startTime    开始时间
+     * @param endTime      结束时间
+     * @return 分页结果
+     */
     @Override
     public IPage<ArticleResultMapVO> getArticleResultMapVOsByPage(Integer page, Integer size, String keyword,
-                                                                  Integer statusFilter, LocalDateTime startTime,
-                                                                  LocalDateTime endTime) {
+            Integer statusFilter, LocalDateTime startTime,
+            LocalDateTime endTime) {
         IPage<Article> pageParam = new Page<>(page, size);
         QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
 
@@ -535,11 +718,26 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 标签关联方法 ==========
 
+    /**
+     * 获取文章的标签ID列表
+     * 查询文章关联的所有标签ID
+     *
+     * @param articleId 文章ID
+     * @return 标签ID列表
+     */
     @Override
     public List<Integer> getTagIdsByArticleId(Integer articleId) {
         return articleTagMapper.selectTagIdsByArticleId(articleId);
     }
 
+    /**
+     * 【商品模块-保存商品标签关联】
+     * 保存文章标签关联
+     * 先删除原有标签关联，再保存新的标签关联，最后清除缓存
+     *
+     * @param articleId 文章ID
+     * @param tagIds    标签ID列表
+     */
     @Override
     @Transactional
     public void saveArticleTags(Integer articleId, List<Integer> tagIds) {
@@ -576,6 +774,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 图片上传方法 ==========
 
+    /**
+     * 【商品模块-上传封面图片】
+     * 上传封面图片
+     * 将图片保存到服务器指定目录（uploads/articles/），生成UUID文件名，并返回图片访问路径
+     *
+     * @param file   图片文件
+     * @param userId 用户ID（用于生成存储路径）
+     * @return 图片访问路径（/uploads/articles/xxx.jpg）
+     */
     @Override
     public String uploadCoverImage(MultipartFile file, Integer userId) {
         try {
@@ -608,12 +815,25 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 私有辅助方法 ==========
 
+    /**
+     * 获取内容摘要（内部方法）
+     * 如果内容超过200字符，截取前200字符
+     *
+     * @param content 内容
+     * @return 摘要
+     */
     private String getSummary(String content) {
         if (content == null)
             return "";
         return content.length() > 200 ? content.substring(0, 200) : content;
     }
 
+    /**
+     * 获取当前用户名（内部方法）
+     * 从Spring Security上下文获取当前登录用户的用户名
+     *
+     * @return 用户名（未登录返回"system"）
+     */
     private String getCurrentUsername() {
         try {
             org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
@@ -629,69 +849,102 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 多条件查询（关键词 + 学校 + 分类） ==========
 
+    /**
+     * 多条件查询文章（关键词 + 学校 + 分类）
+     * 支持Redis缓存，首页搜索功能使用，查询结果包含标签名称
+     *
+     * @param keyword    关键词（搜索标题或内容）
+     * @param schoolId   学校ID
+     * @param categoryId 分类ID
+     * @return 文章VO列表
+     */
     @Override
     public List<ArticleVO> getArticlesByConditions(String keyword, Integer schoolId, Integer categoryId) {
-        // 构建缓存key
         String cacheKey = buildArticleListCacheKey(keyword, schoolId, categoryId);
 
-        // 尝试从缓存获取
-        List<ArticleVO> cachedList = cacheService.getArticleList(cacheKey);
-        if (cachedList != null) {
-            System.out.println("【Redis缓存命中】商品列表 - " + cacheKey + "，数量: " + cachedList.size());
-            return cachedList;
+        try {
+            List<ArticleVO> cachedList = cacheService.getArticleList(cacheKey);
+            if (cachedList != null && !cachedList.isEmpty()) {
+                System.out.println("【Redis缓存命中】商品列表 - " + cacheKey + "，数量: " + cachedList.size());
+                return cachedList;
+            }
+        } catch (Exception e) {
+            System.out.println("【Redis缓存】获取商品列表异常，清除缓存并从数据库查询: " + e.getMessage());
+            cacheService.deleteArticleList(cacheKey);
         }
 
         System.out.println("【Redis缓存未命中】商品列表 - " + cacheKey + "，从数据库查询");
 
-        QueryWrapper<Article> wrapper = new QueryWrapper<>();
+        try {
+            QueryWrapper<Article> wrapper = new QueryWrapper<>();
 
-        wrapper.eq("a.status", ArticleStatus.PUBLISHED);
-        wrapper.eq("a.product_status", 0);
-        wrapper.le("a.published_at", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
+            wrapper.eq("a.status", ArticleStatus.PUBLISHED);
+            wrapper.eq("a.product_status", 0);
+            wrapper.le("a.published_at", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
 
-        if (StrUtil.isNotBlank(keyword)) {
-            wrapper.and(w -> w.like("a.title", keyword)
-                    .or()
-                    .like("a.content", keyword));
-        }
-
-        if (schoolId != null && schoolId > 0) {
-            wrapper.eq("a.school_id", schoolId);
-        }
-
-        if (categoryId != null && categoryId > 0) {
-            wrapper.eq("a.category_id", categoryId);
-        }
-
-        wrapper.orderByDesc("a.is_top")
-                .orderByDesc("a.published_at");
-
-        Page<ArticleVO> page = new Page<>(1, 100);
-        IPage<ArticleVO> result = baseMapper.selectArticleVOPage(page, wrapper);
-        List<ArticleVO> articles = result.getRecords();
-
-        for (ArticleVO articleVO : articles) {
-            List<Integer> tagIds = articleTagMapper.selectTagIdsByArticleId(articleVO.getId());
-            if (tagIds != null && !tagIds.isEmpty()) {
-                LambdaQueryWrapper<com.campus.trade.entity.Tag> tagWrapper = new LambdaQueryWrapper<>();
-                tagWrapper.in(com.campus.trade.entity.Tag::getId, tagIds);
-                List<com.campus.trade.entity.Tag> tags = tagMapper.selectList(tagWrapper);
-                List<String> tagNames = tags.stream()
-                        .map(com.campus.trade.entity.Tag::getName)
-                        .toList();
-                articleVO.setTagNames(tagNames);
+            if (StrUtil.isNotBlank(keyword)) {
+                wrapper.and(w -> w.like("a.title", keyword)
+                        .or()
+                        .like("a.content", keyword));
             }
+
+            if (schoolId != null && schoolId > 0) {
+                wrapper.eq("a.school_id", schoolId);
+            }
+
+            if (categoryId != null && categoryId > 0) {
+                wrapper.eq("a.category_id", categoryId);
+            }
+
+            wrapper.orderByDesc("a.is_top")
+                    .orderByDesc("a.published_at");
+
+            Page<ArticleVO> page = new Page<>(1, 100);
+            IPage<ArticleVO> result = baseMapper.selectArticleVOPage(page, wrapper);
+            List<ArticleVO> articles = result.getRecords();
+
+            if (articles != null && !articles.isEmpty()) {
+                for (ArticleVO articleVO : articles) {
+                    try {
+                        List<Integer> tagIds = articleTagMapper.selectTagIdsByArticleId(articleVO.getId());
+                        if (tagIds != null && !tagIds.isEmpty()) {
+                            LambdaQueryWrapper<com.campus.trade.entity.Tag> tagWrapper = new LambdaQueryWrapper<>();
+                            tagWrapper.in(com.campus.trade.entity.Tag::getId, tagIds);
+                            List<com.campus.trade.entity.Tag> tags = tagMapper.selectList(tagWrapper);
+                            List<String> tagNames = tags.stream()
+                                    .map(com.campus.trade.entity.Tag::getName)
+                                    .toList();
+                            articleVO.setTagNames(tagNames);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("【标签查询】获取商品标签失败，商品ID: " + articleVO.getId() + ", 错误: " + e.getMessage());
+                    }
+                }
+
+                try {
+                    cacheService.setArticleList(cacheKey, articles);
+                    System.out.println("【Redis缓存】商品列表已存入缓存 - " + cacheKey + "，数量: " + articles.size());
+                } catch (Exception e) {
+                    System.out.println("【Redis缓存】设置商品列表缓存失败: " + e.getMessage());
+                }
+            }
+
+            return articles != null ? articles : new java.util.ArrayList<>();
+        } catch (Exception e) {
+            System.out.println("【数据库查询】获取商品列表失败: " + e.getMessage());
+            e.printStackTrace();
+            return new java.util.ArrayList<>();
         }
-
-        // 存入缓存
-        cacheService.setArticleList(cacheKey, articles);
-        System.out.println("【Redis缓存】商品列表已存入缓存 - " + cacheKey + "，数量: " + articles.size());
-
-        return articles;
     }
 
     /**
-     * 构建商品列表缓存key
+     * 构建商品列表缓存key（内部方法）
+     * 根据关键词、学校ID、分类ID生成唯一缓存key
+     *
+     * @param keyword    关键词
+     * @param schoolId   学校ID
+     * @param categoryId 分类ID
+     * @return 缓存key
      */
     private String buildArticleListCacheKey(String keyword, Integer schoolId, Integer categoryId) {
         StringBuilder key = new StringBuilder("home:");
@@ -709,6 +962,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     // ========== 库存管理方法 ==========
 
+    /**
+     * 【商品模块-扣减库存】
+     * 扣减库存
+     * 下单成功后调用，扣减商品库存，库存为0时自动下架商品
+     *
+     * @param articleId 文章ID
+     * @param quantity  扣减数量
+     * @return 是否扣减成功（库存充足返回true，库存不足返回false）
+     */
     @Override
     @Transactional
     public boolean deductStock(Integer articleId, Integer quantity) {

@@ -148,7 +148,7 @@ public class ArticleDetailController {
         // ========== 判断当前用户是否可以评论 ==========
         boolean canComment = false;
         if (currentUserId != null && article.getStatus() != 0) {
-            if (!isAdmin && !currentUserId.equals(article.getUserId())) {
+            if (!currentUserId.equals(article.getUserId())) {
                 canComment = true;
             }
         }
@@ -186,8 +186,8 @@ public class ArticleDetailController {
      */
     @PostMapping("/article/{id}/comment")
     public String addComment(@PathVariable Integer id,
-                             @RequestParam String content,
-                             @RequestParam(required = false) Integer parentId) {
+            @RequestParam String content,
+            @RequestParam(required = false) Integer parentId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getPrincipal() instanceof String) {
             return "redirect:/toLoginPage";
@@ -208,9 +208,7 @@ public class ArticleDetailController {
             return "redirect:/article/" + id + "?error=commentDisabled";
         }
 
-        boolean isAdmin = currentUser.getRole() != null && currentUser.getRole() == 1;
-
-        if (!isAdmin && currentUser.getId().equals(article.getUserId())) {
+        if (currentUser.getId().equals(article.getUserId())) {
             System.out.println("【评论拦截】用户不能评论自己发布的文章 - 用户: " + username + ", 文章作者ID: " + article.getUserId());
             return "redirect:/article/" + id + "?error=selfComment";
         }

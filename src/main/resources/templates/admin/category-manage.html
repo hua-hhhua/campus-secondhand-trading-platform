@@ -1,323 +1,569 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分类管理</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
-        h1 { color: #333; font-size: 28px; margin: 0; }
-        .home-link { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 30px; font-size: 14px; transition: all 0.3s; }
-        .home-link:hover { opacity: 0.9; transform: translateY(-2px); }
-        .search-form { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; align-items: center; }
-        .form-group { display: flex; align-items: center; gap: 8px; }
-        .form-group label { font-weight: 500; color: #555; }
-        .form-control { padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; min-width: 200px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.3s; text-decoration: none; display: inline-block; }
-        .btn-primary { background-color: #409EFF; color: white; }
-        .btn-primary:hover { background-color: #66b1ff; }
-        .btn-reset { background-color: #909399; color: white; }
-        .btn-add { background-color: #67c23a; color: white; }
-        .btn-danger { background-color: #f56c6c; color: white; }
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        thead { background-color: #f5f7fa; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ebeef5; }
-        th { font-weight: 600; color: #606266; }
-        tr:hover { background-color: #f5f7fa; }
-        .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
-        .pagination a, .pagination span { padding: 8px 15px; border: 1px solid #dcdfe6; border-radius: 4px; text-decoration: none; color: #606266; transition: all 0.3s; }
-        .pagination a:hover { color: #409EFF; border-color: #c6e2ff; background-color: #ecf5ff; }
-        .pagination .active { background-color: #409EFF; color: white; border-color: #409EFF; }
-        .action-buttons { display: flex; gap: 10px; }
-        .btn-edit, .btn-delete { padding: 5px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; }
-        .btn-edit { background-color: #e6a23c; color: white; }
-        .btn-delete { background-color: #f56c6c; color: white; }
-        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background: white; margin: 10% auto; padding: 30px; width: 500px; border-radius: 8px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-close { font-size: 24px; cursor: pointer; color: #999; }
-        .modal-body .form-item { margin-bottom: 15px; }
-        .modal-body label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
-        .modal-body input, .modal-body textarea, .modal-body select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .hint { font-size: 12px; color: #999; margin-top: 5px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .home-link:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-control {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: #409EFF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #66b1ff;
+        }
+
+        .btn-reset {
+            background-color: #909399;
+            color: white;
+        }
+
+        .btn-add {
+            background-color: #67c23a;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #f56c6c;
+            color: white;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        thead {
+            background-color: #f5f7fa;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        th {
+            font-weight: 600;
+            color: #606266;
+        }
+
+        tr:hover {
+            background-color: #f5f7fa;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .pagination a,
+        .pagination span {
+            padding: 8px 15px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #606266;
+            transition: all 0.3s;
+        }
+
+        .pagination a:hover {
+            color: #409EFF;
+            border-color: #c6e2ff;
+            background-color: #ecf5ff;
+        }
+
+        .pagination .active {
+            background-color: #409EFF;
+            color: white;
+            border-color: #409EFF;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-edit,
+        .btn-delete {
+            padding: 5px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .btn-edit {
+            background-color: #e6a23c;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #f56c6c;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            width: 500px;
+            border-radius: 8px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-body .form-item {
+            margin-bottom: 15px;
+        }
+
+        .modal-body label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .modal-body input,
+        .modal-body textarea,
+        .modal-body select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <div class="header">
-        <h1>📂 分类管理</h1>
-        <a href="/" class="home-link">🏠 返回首页</a>
-    </div>
-
-    <form class="search-form" method="get" action="/admin/categories">
-        <div class="form-group">
-            <label for="keyword">关键词：</label>
-            <input type="text" id="keyword" name="keyword" class="form-control" placeholder="请输入分类名称" th:value="${keyword}">
+    <div class="container">
+        <div class="header">
+            <h1>📂 分类管理</h1>
+            <a href="/" class="home-link">🏠 返回首页</a>
         </div>
-        <button type="submit" class="btn btn-primary">查询</button>
-        <button type="button" class="btn btn-reset" onclick="resetForm()">重置</button>
-        <button type="button" class="btn btn-add" onclick="showAddModal()">+ 新增分类</button>
-        <button type="button" class="btn btn-danger" id="batchDeleteBtn">批量删除</button>
-    </form>
 
-    <div class="total-info" th:if="${categoryPage}">
-        共找到 <strong th:text="${categoryPage.total}">0</strong> 个分类，当前第 <strong th:text="${categoryPage.current}">1</strong> 页
-    </div>
+        <form class="search-form" method="get" action="/admin/categories">
+            <div class="form-group">
+                <label for="keyword">关键词：</label>
+                <input type="text" id="keyword" name="keyword" class="form-control" placeholder="请输入分类名称"
+                    th:value="${keyword}">
+            </div>
+            <button type="submit" class="btn btn-primary">查询</button>
+            <button type="button" class="btn btn-reset" onclick="resetForm()">重置</button>
+            <button type="button" class="btn btn-add" onclick="showAddModal()">+ 新增分类</button>
+            <button type="button" class="btn btn-danger" id="batchDeleteBtn">批量删除</button>
+        </form>
 
-    <div class="table-container">
-        <table th:if="${categoryPage} and ${categoryPage.records.size() > 0}">
-            <thead>
-            <tr>
-                <th><input type="checkbox" id="selectAll"></th>
-                <th>分类名称</th>
-                <th>URL别名</th>
-                <th>描述</th>
-                <th>创建时间</th>
-                <th>操作</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="category : ${categoryPage.records}">
-                <td><input type="checkbox" class="itemCheckbox" th:value="${category.id}"></td>
-                <td th:text="${category.name}" style="font-weight: 500;">?</td>
-                <td th:text="${category.slug}">?</td>
-                <td th:text="${category.description != null ? category.description : '-'}">?</td>
-                <td th:text="${#temporals.format(category.createTime, 'yyyy-MM-dd HH:mm:ss')}">?</td>
-                <td class="action-buttons">
-                    <a href="#" class="btn-edit" th:attr="onclick='showEditModal(' + ${category.id} + ', \'' + ${category.name} + '\', \'' + ${category.slug} + '\', \'' + (category.description != null ? category.description : '') + '\', ' + (category.parentId != null ? category.parentId : 0) + ', ' + ${category.sortOrder} + ')'">编辑</a>
-                    <a href="#" class="btn-delete" th:attr="onclick='deleteCategory(' + ${category.id} + ')'">删除</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        <div class="no-data" th:if="${categoryPage} and ${categoryPage.records.size() == 0}" style="text-align: center; padding: 40px; color: #999;">暂无分类数据</div>
-    </div>
-
-    <div class="pagination" th:if="${categoryPage} and ${categoryPage.pages > 1}">
-        <a th:if="${categoryPage.hasPrevious}" th:href="@{/admin/categories(pageNum=${categoryPage.current - 1}, pageSize=${categoryPage.size}, keyword=${keyword})}">上一页</a>
-        <span th:unless="${categoryPage.hasPrevious}" class="disabled">上一页</span>
-        <a th:each="i : ${#numbers.sequence(1, categoryPage.pages)}" th:classappend="${i == categoryPage.current} ? 'active'" th:text="${i}" th:href="@{/admin/categories(pageNum=${i}, pageSize=${categoryPage.size}, keyword=${keyword})}"></a>
-        <a th:if="${categoryPage.hasNext}" th:href="@{/admin/categories(pageNum=${categoryPage.current + 1}, pageSize=${categoryPage.size}, keyword=${keyword})}">下一页</a>
-        <span th:unless="${categoryPage.hasNext}" class="disabled">下一页</span>
-    </div>
-</div>
-
-<!-- 新增/编辑模态框 -->
-<div id="categoryModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modalTitle">新增分类</h3>
-            <span class="modal-close" onclick="closeModal()">&times;</span>
+        <div class="total-info" th:if="${categoryPage}">
+            共找到 <strong th:text="${categoryPage.total}">0</strong> 个分类，当前第 <strong
+                th:text="${categoryPage.current}">1</strong> 页
         </div>
-        <div class="modal-body">
-            <input type="hidden" id="categoryId">
-            <div class="form-item">
-                <label>分类名称 *</label>
-                <input type="text" id="categoryName" required placeholder="例如：电子产品、图书教材">
-                <div class="hint">请输入分类的中文名称</div>
-            </div>
-            <div class="form-item">
-                <label>URL别名 *</label>
-                <input type="text" id="categorySlug" required placeholder="例如：electronics、books">
-                <div class="hint">用于URL的英文标识，建议使用小写字母和连字符</div>
-            </div>
-            <div class="form-item">
-                <label>描述</label>
-                <textarea id="categoryDescription" rows="3" placeholder="请输入分类描述（可选）"></textarea>
-            </div>
-            <div class="form-item">
-                <label>父分类</label>
-                <select id="categoryParentId">
-                    <option value="0">无（作为顶级分类）</option>
-                    <option th:each="cat : ${allCategories}" th:value="${cat.id}" th:text="${cat.name}"></option>
-                </select>
-                <div class="hint">选择该分类的上级分类，不选择则作为顶级分类</div>
-            </div>
-            <div class="form-item">
-                <label>排序</label>
-                <input type="number" id="categorySortOrder" value="0" min="0">
-                <div class="hint">数字越小越靠前，默认为0</div>
-            </div>
+
+        <div class="table-container">
+            <table th:if="${categoryPage} and ${categoryPage.records.size() > 0}">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>分类名称</th>
+                        <th>URL别名</th>
+                        <th>描述</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="category : ${categoryPage.records}">
+                        <td><input type="checkbox" class="itemCheckbox" th:value="${category.id}"></td>
+                        <td th:text="${category.name}" style="font-weight: 500;">?</td>
+                        <td th:text="${category.slug}">?</td>
+                        <td th:text="${category.description != null ? category.description : '-'}">?</td>
+                        <td th:text="${#temporals.format(category.createTime, 'yyyy-MM-dd HH:mm:ss')}">?</td>
+                        <td class="action-buttons">
+                            <button class="btn-edit" type="button" th:data-id="${category.id}"
+                                th:data-name="${category.name}" th:data-slug="${category.slug}"
+                                th:data-description="${category.description}" th:data-parent-id="${category.parentId}"
+                                th:data-sort-order="${category.sortOrder}" onclick="showEditModal(this)">编辑</button>
+                            <button class="btn-delete" type="button" th:data-id="${category.id}"
+                                onclick="deleteCategory(this)">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="no-data" th:if="${categoryPage} and ${categoryPage.records.size() == 0}"
+                style="text-align: center; padding: 40px; color: #999;">暂无分类数据</div>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-reset" onclick="closeModal()">取消</button>
-            <button type="button" class="btn btn-primary" onclick="saveCategory()">保存</button>
+
+        <div class="pagination" th:if="${categoryPage} and ${categoryPage.pages > 1}">
+            <a th:if="${categoryPage.hasPrevious}"
+                th:href="@{/admin/categories(pageNum=${categoryPage.current - 1}, pageSize=${categoryPage.size}, keyword=${keyword})}">上一页</a>
+            <span th:unless="${categoryPage.hasPrevious}" class="disabled">上一页</span>
+            <a th:each="i : ${#numbers.sequence(1, categoryPage.pages)}"
+                th:classappend="${i == categoryPage.current} ? 'active'" th:text="${i}"
+                th:href="@{/admin/categories(pageNum=${i}, pageSize=${categoryPage.size}, keyword=${keyword})}"></a>
+            <a th:if="${categoryPage.hasNext}"
+                th:href="@{/admin/categories(pageNum=${categoryPage.current + 1}, pageSize=${categoryPage.size}, keyword=${keyword})}">下一页</a>
+            <span th:unless="${categoryPage.hasNext}" class="disabled">下一页</span>
         </div>
     </div>
-</div>
 
-<script th:inline="javascript">
-    var allCategories = [[${allCategories}]];
+    <!-- 新增/编辑模态框 -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">新增分类</h3>
+                <span class="modal-close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="categoryId">
+                <div class="form-item">
+                    <label>分类名称 *</label>
+                    <input type="text" id="categoryName" required placeholder="例如：电子产品、图书教材">
+                    <div class="hint">请输入分类的中文名称</div>
+                </div>
+                <div class="form-item">
+                    <label>URL别名 *</label>
+                    <input type="text" id="categorySlug" required placeholder="例如：electronics、books">
+                    <div class="hint">用于URL的英文标识，建议使用小写字母和连字符</div>
+                </div>
+                <div class="form-item">
+                    <label>描述</label>
+                    <textarea id="categoryDescription" rows="3" placeholder="请输入分类描述（可选）"></textarea>
+                </div>
+                <div class="form-item">
+                    <label>父分类</label>
+                    <select id="categoryParentId">
+                        <option value="0">无（作为顶级分类）</option>
+                        <option th:each="cat : ${allCategories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                    </select>
+                    <div class="hint">选择该分类的上级分类，不选择则作为顶级分类</div>
+                </div>
+                <div class="form-item">
+                    <label>排序</label>
+                    <input type="number" id="categorySortOrder" value="0" min="0">
+                    <div class="hint">数字越小越靠前，默认为0</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-reset" onclick="closeModal()">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveCategory()">保存</button>
+            </div>
+        </div>
+    </div>
 
-    function resetForm() {
-        document.getElementById('keyword').value = '';
-        window.location.href = '/admin/categories';
-    }
+    <script th:inline="javascript">
+        var allCategories = [[${ allCategories }]];
 
-    var selectAll = document.getElementById('selectAll');
-    if (selectAll) {
-        selectAll.addEventListener('change', function() {
-            var checkboxes = document.querySelectorAll('.itemCheckbox');
-            checkboxes.forEach(function(cb) { cb.checked = this.checked; }, this);
-        });
-    }
+        function resetForm() {
+            document.getElementById('keyword').value = '';
+            window.location.href = '/admin/categories';
+        }
 
-    var batchDeleteBtn = document.getElementById('batchDeleteBtn');
-    if (batchDeleteBtn) {
-        batchDeleteBtn.addEventListener('click', function() {
-            var checkboxes = document.querySelectorAll('.itemCheckbox:checked');
-            if (checkboxes.length === 0) { alert('请至少选择一条数据'); return; }
-            var ids = [];
-            checkboxes.forEach(function(cb) { ids.push(cb.value); });
-            if (confirm('确定要删除选中的 ' + ids.length + ' 个分类吗？删除后不可恢复！')) {
-                fetch('/admin/categories/delete-batch', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(ids)
-                }).then(res => res.json()).then(success => {
-                    if (success) { alert('删除成功'); location.reload(); }
-                    else { alert('删除失败'); }
-                }).catch(err => { alert('操作失败：' + err); });
-            }
-        });
-    }
+        var selectAll = document.getElementById('selectAll');
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                var checkboxes = document.querySelectorAll('.itemCheckbox');
+                checkboxes.forEach(function (cb) { cb.checked = this.checked; }, this);
+            });
+        }
 
-    function generateSlug(name) {
-        var slug = name.toLowerCase()
-            .replace(/[\u4e00-\u9fa5]/g, '')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-        return slug || 'category-' + Date.now();
-    }
-
-    function showAddModal() {
-        document.getElementById('modalTitle').textContent = '新增分类';
-        document.getElementById('categoryId').value = '';
-        document.getElementById('categoryName').value = '';
-        document.getElementById('categorySlug').value = '';
-        document.getElementById('categoryDescription').value = '';
-        document.getElementById('categoryParentId').value = '0';
-        document.getElementById('categorySortOrder').value = '0';
-
-        populateParentSelect();
-        document.getElementById('categoryModal').style.display = 'block';
-    }
-
-    function populateParentSelect(excludeId) {
-        var select = document.getElementById('categoryParentId');
-        select.innerHTML = '<option value="0">无（作为顶级分类）</option>';
-
-        if (allCategories && allCategories.length > 0) {
-            allCategories.forEach(function(cat) {
-                if (cat.id !== excludeId) {
-                    var option = document.createElement('option');
-                    option.value = cat.id;
-                    option.textContent = cat.name;
-                    select.appendChild(option);
+        var batchDeleteBtn = document.getElementById('batchDeleteBtn');
+        if (batchDeleteBtn) {
+            batchDeleteBtn.addEventListener('click', function () {
+                var checkboxes = document.querySelectorAll('.itemCheckbox:checked');
+                if (checkboxes.length === 0) { alert('请至少选择一条数据'); return; }
+                var ids = [];
+                checkboxes.forEach(function (cb) { ids.push(cb.value); });
+                if (confirm('确定要删除选中的 ' + ids.length + ' 个分类吗？删除后不可恢复！')) {
+                    fetch('/admin/categories/delete-batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(ids)
+                    }).then(res => res.json()).then(success => {
+                        if (success) { alert('删除成功'); location.reload(); }
+                        else { alert('删除失败'); }
+                    }).catch(err => { alert('操作失败：' + err); });
                 }
             });
         }
-    }
 
-    function showEditModal(id, name, slug, description, parentId, sortOrder) {
-        document.getElementById('modalTitle').textContent = '编辑分类';
-        document.getElementById('categoryId').value = id;
-        document.getElementById('categoryName').value = name;
-        document.getElementById('categorySlug').value = slug;
-        document.getElementById('categoryDescription').value = description || '';
-        document.getElementById('categorySortOrder').value = sortOrder || '0';
-
-        populateParentSelect(id);
-        document.getElementById('categoryParentId').value = parentId || '0';
-        document.getElementById('categoryModal').style.display = 'block';
-    }
-
-    function closeModal() {
-        document.getElementById('categoryModal').style.display = 'none';
-    }
-
-    function saveCategory() {
-        var id = document.getElementById('categoryId').value;
-        var name = document.getElementById('categoryName').value.trim();
-        var slug = document.getElementById('categorySlug').value.trim();
-
-        if (!name) {
-            alert('请填写分类名称');
-            return;
-        }
-        if (!slug) {
-            alert('请填写URL别名');
-            return;
+        function generateSlug(name) {
+            var slug = name.toLowerCase()
+                .replace(/[\u4e00-\u9fa5]/g, '')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            return slug || 'category-' + Date.now();
         }
 
-        var data = {
-            name: name,
-            slug: slug,
-            description: document.getElementById('categoryDescription').value.trim(),
-            parentId: parseInt(document.getElementById('categoryParentId').value) || 0,
-            sortOrder: parseInt(document.getElementById('categorySortOrder').value) || 0
-        };
+        function showAddModal() {
+            document.getElementById('modalTitle').textContent = '新增分类';
+            document.getElementById('categoryId').value = '';
+            document.getElementById('categoryName').value = '';
+            document.getElementById('categorySlug').value = '';
+            document.getElementById('categoryDescription').value = '';
+            document.getElementById('categoryParentId').value = '0';
+            document.getElementById('categorySortOrder').value = '0';
 
-        var url = id ? '/admin/categories/update' : '/admin/categories/add';
-        if (id) data.id = parseInt(id);
+            populateParentSelect();
+            document.getElementById('categoryModal').style.display = 'block';
+        }
 
-        fetch(url, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        }).then(res => res.json()).then(success => {
-            if (success) {
-                alert('保存成功');
-                location.reload();
-            } else {
-                alert('保存失败');
-            }
-        }).catch(err => {
-            alert('操作失败：' + err);
-        });
-    }
+        function populateParentSelect(excludeId) {
+            var select = document.getElementById('categoryParentId');
+            select.innerHTML = '<option value="0">无（作为顶级分类）</option>';
 
-    function deleteCategory(id) {
-        if (confirm('确定要删除该分类吗？删除后不可恢复！')) {
-            fetch('/admin/categories/delete/' + id, {method: 'POST'})
-                .then(res => res.json())
-                .then(success => {
-                    if (success) {
-                        alert('删除成功');
-                        location.reload();
-                    } else {
-                        alert('删除失败，可能该分类下还有子分类或关联商品');
+            if (allCategories && allCategories.length > 0) {
+                allCategories.forEach(function (cat) {
+                    if (cat.id !== excludeId) {
+                        var option = document.createElement('option');
+                        option.value = cat.id;
+                        option.textContent = cat.name;
+                        select.appendChild(option);
                     }
-                })
-                .catch(err => {
-                    alert('操作失败：' + err);
                 });
+            }
         }
-    }
 
-    document.getElementById('categoryName').addEventListener('blur', function() {
-        var slugField = document.getElementById('categorySlug');
-        if (!slugField.value.trim() && this.value.trim()) {
-            slugField.value = generateSlug(this.value);
-        }
-    });
+        function showEditModal(btn) {
+            var id = btn.dataset.id;
+            var name = btn.dataset.name || '';
+            var slug = btn.dataset.slug || '';
+            var description = btn.dataset.description || '';
+            var parentId = btn.dataset.parentId || '0';
+            var sortOrder = btn.dataset.sortOrder || '0';
 
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
-    });
+            document.getElementById('modalTitle').textContent = '编辑分类';
+            document.getElementById('categoryId').value = id;
+            document.getElementById('categoryName').value = name;
+            document.getElementById('categorySlug').value = slug;
+            document.getElementById('categoryDescription').value = description;
+            document.getElementById('categorySortOrder').value = sortOrder;
 
-    document.getElementById('categoryModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeModal();
+            populateParentSelect(parseInt(id));
+            document.getElementById('categoryParentId').value = parentId;
+            document.getElementById('categoryModal').style.display = 'block';
         }
-    });
-</script>
+
+        function closeModal() {
+            document.getElementById('categoryModal').style.display = 'none';
+        }
+
+        function saveCategory() {
+            var id = document.getElementById('categoryId').value;
+            var name = document.getElementById('categoryName').value.trim();
+            var slug = document.getElementById('categorySlug').value.trim();
+
+            if (!name) {
+                alert('请填写分类名称');
+                return;
+            }
+            if (!slug) {
+                alert('请填写URL别名');
+                return;
+            }
+
+            var data = {
+                name: name,
+                slug: slug,
+                description: document.getElementById('categoryDescription').value.trim(),
+                parentId: parseInt(document.getElementById('categoryParentId').value) || 0,
+                sortOrder: parseInt(document.getElementById('categorySortOrder').value) || 0
+            };
+
+            var url = id ? '/admin/categories/update' : '/admin/categories/add';
+            if (id) data.id = parseInt(id);
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(res => res.json()).then(success => {
+                if (success) {
+                    alert('保存成功');
+                    location.reload();
+                } else {
+                    alert('保存失败');
+                }
+            }).catch(err => {
+                alert('操作失败：' + err);
+            });
+        }
+
+        function deleteCategory(btn) {
+            var id = btn.dataset.id;
+            if (confirm('确定要删除该分类吗？删除后不可恢复！')) {
+                fetch('/admin/categories/delete/' + id, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(success => {
+                        if (success) {
+                            alert('删除成功');
+                            location.reload();
+                        } else {
+                            alert('删除失败，可能该分类下还有子分类或关联商品');
+                        }
+                    })
+                    .catch(err => {
+                        alert('操作失败：' + err);
+                    });
+            }
+        }
+
+        document.getElementById('categoryName').addEventListener('blur', function () {
+            var slugField = document.getElementById('categorySlug');
+            if (!slugField.value.trim() && this.value.trim()) {
+                slugField.value = generateSlug(this.value);
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        document.getElementById('categoryModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
 </body>
+
 </html>

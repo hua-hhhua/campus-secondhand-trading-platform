@@ -116,8 +116,8 @@ public class SecurityConfig {
                                 "/", "/index",
                                 "/toLoginPage", "/login", "/logout",
                                 "/error", "/favicon.ico",
-                                "/css/**", "/js/**", "/images/**", "/avatars/**",
-                                "/api/**",
+                                "/css/**", "/js/**", "/images/**", "/avatars/**", "/uploads/**",
+                                "/api/**", "/article/upload-image",
                                 "/register"
                         ).permitAll()
                         // 用户管理仅限管理员访问
