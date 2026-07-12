@@ -1,92 +1,208 @@
-# b67Y6rerXpQd1
+# Campus Trade - 校园二手交易平台
 
+基于 Spring Boot 3.2.0 构建的校园二手交易平台，为学生提供便捷的二手物品交易服务。
 
+## 技术栈
 
-## Getting started
+- **框架**: Spring Boot 3.2.0
+- **语言**: Java 17
+- **数据库**: MySQL 8.0+
+- **持久层**: MyBatis-Plus 3.5.5
+- **连接池**: Druid 1.2.18
+- **缓存**: Redis
+- **消息队列**: RabbitMQ
+- **安全**: Spring Security
+- **模板引擎**: Thymeleaf
+- **邮件服务**: Spring Mail
+- **工具类**: Hutool 5.8.23
+- **代码简化**: Lombok
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## 项目结构
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.omniedu.com/root/b67Y6rerXpQd1.git
-git branch -M main
-git push -uf origin main
+src/main/java/com/campus/trade/
+├── CampusTradeApplication.java    # 启动类
+├── config/                        # 配置类
+│   ├── SecurityConfig.java        # 安全配置
+│   ├── RedisConfig.java           # Redis配置
+│   ├── RabbitMQConfig.java        # RabbitMQ配置
+│   ├── MyBatisPlusConfig.java     # MyBatis-Plus配置
+│   └── ...
+├── controller/                    # 控制器层
+│   ├── HomeController.java        # 首页
+│   ├── ArticleController.java     # 商品管理
+│   ├── OrderController.java       # 订单管理
+│   ├── UserController.java        # 用户管理
+│   ├── AdminController.java       # 后台管理
+│   └── ...
+├── service/                       # 服务层
+│   ├── impl/                      # 服务实现
+│   └── ...
+├── mapper/                        # 数据访问层
+├── entity/                        # 实体类
+├── dto/                           # 数据传输对象
+├── exception/                     # 异常处理
+└── constant/                      # 常量定义
+
+src/main/resources/
+├── application.yml                # 应用配置
+├── mapper/                        # MyBatis映射文件
+├── templates/                     # Thymeleaf模板
+│   ├── admin/                     # 后台管理页面
+│   ├── user/                      # 用户页面
+│   └── ...
+└── i18n/                          # 国际化资源文件
 ```
 
-## Integrate with your tools
+## 功能特性
 
-- [ ] [Set up project integrations](https://gitlab.omniedu.com/root/b67Y6rerXpQd1/-/settings/integrations)
+### 用户功能
 
-## Collaborate with your team
+- 用户注册、登录（支持记住我）
+- 个人信息管理（头像、昵称、联系方式）
+- 多学校支持，用户可选择所在学校
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+### 商品功能
 
-## Test and Deploy
+- 商品发布（标题、描述、价格、分类、标签、图片）
+- 商品浏览（首页展示、分类筛选、搜索）
+- 商品详情查看
+- 商品收藏
+- 浏览历史记录
 
-Use the built-in continuous integration in GitLab.
+### 交易功能
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+- 购物车管理（添加、删除、数量调整）
+- 订单创建与支付
+- 订单状态管理（待支付、待发货、已发货、已完成、已取消）
+- 订单评价
 
-***
+### 互动功能
 
-# Editing this README
+- 商品评论（支持多级回复）
+- 评论点赞
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### 后台管理
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+- 用户管理（查看、禁用、编辑）
+- 商品管理（审核、编辑、删除）
+- 分类管理（增删改查）
+- 标签管理（增删改查）
+- 订单管理（查看订单状态、处理订单）
+- 学校管理（增删改查）
 
-## Name
-Choose a self-explaining name for your project.
+### 系统功能
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+- 邮件通知（商品发布通知）
+- 异步任务处理
+- 定时任务支持
+- 国际化支持（中文/英文）
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## 环境要求
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- JDK 17+
+- MySQL 8.0+
+- Redis 7.0+
+- RabbitMQ 3.10+
+- Maven 3.8+
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## 快速开始
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### 1. 数据库配置
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+创建数据库并导入初始化脚本：
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+```sql
+CREATE DATABASE campus_trade CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE campus_trade;
+SOURCE sql/campus_trade.sql;
+```
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### 2. 修改配置文件
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+编辑 `src/main/resources/application.yml`，配置数据库连接信息：
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/campus_trade?useSSL=false&serverTimezone=Asia/Shanghai
+    username: your_username
+    password: your_password
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### 3. 启动应用
+
+使用 Maven 运行：
+
+```bash
+mvn spring-boot:run
+```
+
+或打包后运行：
+
+```bash
+mvn clean package
+java -jar target/xiehh_campus_trade-0.0.1-SNAPSHOT.jar
+```
+
+### 4. 访问应用
+
+- 前台首页：`http://localhost:8080/`
+- 后台管理：`http://localhost:8080/admin/dashboard`
+
+### 默认账号
+
+| 用户名 | 密码     | 角色 |
+|--------|--------|------|
+| user001 | 156565 | 普通用户 |
+| user004 | 156565 | 管理员 |
+
+## 数据库表结构
+
+### 核心表
+
+| 表名 | 说明 |
+|------|------|
+| users | 用户表 |
+| article | 商品表 |
+| category | 分类表 |
+| tag | 标签表 |
+| shopping_cart | 购物车表 |
+| orders | 订单表 |
+| favorite | 收藏表 |
+| comment | 评论表 |
+| browse_history | 浏览历史表 |
+| school | 学校表 |
+
+## 配置说明
+
+### 文件上传路径
+
+```yaml
+file:
+  upload:
+    path: D:/campus_trade_files
+```
+
+### 邮件配置
+
+```yaml
+spring:
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: your_email@qq.com
+    password: your_email_password
+```
+
+## 开发规范
+
+- 代码风格遵循阿里巴巴 Java 开发规范
+- 使用 Lombok 简化实体类代码
+- Service 层使用接口 + 实现类模式
+- 异常处理使用全局异常处理器
+- 日志使用 Logback
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+MIT License
